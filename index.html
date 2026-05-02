@@ -102,8 +102,6 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', initStripe);
-
   async function submitPay() {
     if (!stripe || !cardElement) { alert('Payment system loading, please wait.'); return; }
     if (!selectedBar) { alert('Please select a bar first.'); return; }
