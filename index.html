@@ -107,18 +107,28 @@
   async function submitPay() {
     if (!stripe || !cardElement) { alert('Payment system loading, please wait.'); return; }
     if (!selectedBar) { alert('Please select a bar first.'); return; }
-    if (!tipAmt || tipAmt < 20) { alert('Minimum amount is 20.'); return; }
+    if (!tipAmt || tipAmt < 20) { alert('Minimum amount is 20 THB.'); return; }
+
     var btn = document.getElementById('sub-btn');
     btn.disabled = true;
     btn.textContent = 'Processing...';
-    var nameVal = document.getElementById('uname').value || 'Anonymous';
+
+    var nameVal = document.getElementById('uname') ? (document.getElementById('uname').value || 'Anonymous') : 'Anonymous';
+    var staffName = document.getElementById('sname') ? (document.getElementById('sname').value || 'Staff Member') : 'Staff Member';
+    var staffNo = document.getElementById('snum') ? document.getElementById('snum').value : '';
+    var msgVal = document.getElementById('umsg') ? document.getElementById('umsg').value : '';
+    var fee = calcFee(tipAmt, true);
+    var total = tipAmt + fee;
+
     var result = await stripe.createToken(cardElement, { name: nameVal });
     if (result.error) {
       document.getElementById('card-err').textContent = result.error.message;
       btn.disabled = false;
-      btn.innerHTML = 'Send a Drink <span class="submit-arrow">-></span>';
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
       return;
     }
+
+    var payData = {};
     try {
       var payRes = await fetch('/.netlify/functions/pay', {
         method: 'POST',
@@ -127,54 +137,53 @@
           token: result.token.id,
           amount: tipAmt,
           bar: selectedBar,
-          staffName: document.getElementById('sname') ? document.getElementById('sname').value : '',
-          staffNo: document.getElementById('snum') ? document.getElementById('snum').value : '',
+          staffName: staffName,
+          staffNo: staffNo,
           fromName: nameVal,
-          message: document.getElementById('umsg') ? document.getElementById('umsg').value : ''
+          message: msgVal
         })
       });
-      var payData = await payRes.json();
+      payData = await payRes.json();
       if (!payData.success) {
         document.getElementById('card-err').textContent = payData.error || 'Payment failed.';
         btn.disabled = false;
-        btn.innerHTML = 'Send a Drink <span class="submit-arrow">-></span>';
+        btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
         return;
       }
     } catch(e) {
       document.getElementById('card-err').textContent = 'Connection error. Please try again.';
       btn.disabled = false;
-      btn.innerHTML = 'Send a Drink <span class="submit-arrow">-></span>';
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
       return;
     }
-    var fee = calcFee(tipAmt, true);
-    var total = tipAmt + fee;
-    var staffName = document.getElementById('sname') ? (document.getElementById('sname').value || 'Staff Member') : 'Staff Member';
-    var staffNo = document.getElementById('snum') ? document.getElementById('snum').value : '';
-    var msgVal = document.getElementById('umsg') ? document.getElementById('umsg').value : '';
 
+    // 성공 화면
     document.getElementById('form-area').style.display = 'none';
     var success = document.getElementById('success-pg');
     if (success) {
       success.style.display = 'block';
       document.getElementById('r-bar').textContent = selectedBar || '—';
       document.getElementById('r-staff').textContent = staffName + (staffNo ? ' (#' + staffNo + ')' : '');
-      document.getElementById('r-from').textContent = nameVal || 'Anonymous';
+      document.getElementById('r-from').textContent = nameVal;
       document.getElementById('r-tip').textContent = '฿' + tipAmt.toLocaleString();
       document.getElementById('r-fee').textContent = '฿' + fee.toLocaleString();
       document.getElementById('r-total').textContent = '฿' + total.toLocaleString();
       if (msgVal) {
-        document.getElementById('r-msg-row').style.display = 'flex';
-        document.getElementById('r-msg').textContent = '"' + msgVal + '"';
+        var msgRow = document.getElementById('r-msg-row');
+        if (msgRow) msgRow.style.display = 'flex';
+        var msgEl = document.getElementById('r-msg');
+        if (msgEl) msgEl.textContent = '"' + msgVal + '"';
       }
       var now = new Date();
       var dateStr = now.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) + ', ' + now.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
-      document.getElementById('r-date').textContent = dateStr;
-      if (payData && payData.chargeId) {
-        document.getElementById('r-charge-id').textContent = 'Ref: ' + payData.chargeId;
-      }
+      var dateEl = document.getElementById('r-date');
+      if (dateEl) dateEl.textContent = dateStr;
+      var refEl = document.getElementById('r-charge-id');
+      if (refEl && payData.chargeId) refEl.textContent = 'Ref: ' + payData.chargeId;
     }
+
     btn.disabled = false;
-    btn.innerHTML = 'Send a Drink <span class="submit-arrow">-></span>';
+    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
   }
   </script>
   <style>
