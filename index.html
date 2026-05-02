@@ -62,8 +62,11 @@
 
   // ══ 수수료 계산 ══
   function calcFee(amt, intl) {
-    if (intl) return Math.ceil(amt * 0.0675 + 10);
-    return Math.ceil(amt * 0.0365 + 10);
+    // Stripe Thailand + VAT 7%
+    // Thai card: 3.65% x 1.07 = 3.91%
+    // International: (3.65% + 2%) x 1.07 = 6.05%
+    if (intl) return Math.ceil(amt * 0.0605);
+    return Math.ceil(amt * 0.0391);
   }
 
   function updateFeeNote() {
@@ -75,7 +78,7 @@
       var feeIntl = calcFee(amt, true);
       note.innerHTML = 'Processing fee: <span>฿' + feeDom + '</span> Thai card &nbsp;/&nbsp; <span>฿' + feeIntl + '</span> International card';
     } else {
-      note.innerHTML = 'Stripe fee: 3.65%+฿10 (Thai) / 4.75%+฿10+2% (International)';
+      note.innerHTML = 'Processing fee: 3.91% Thai card / 6.05% International card (incl. VAT)';
     }
   }
 
@@ -854,7 +857,7 @@
         <div class="stripe-wrap" id="stripe-wrap"></div>
         <div id="card-err"></div>
 
-        <p class="fee-note" id="fee-note">Stripe fee: 3.65%+฿10 (Thai) / 4.75%+฿10+2% (International)</p>
+        <p class="fee-note" id="fee-note">Processing fee: 3.91% Thai card / 6.05% International card (incl. VAT)</p>
         <button class="submit-btn" id="sub-btn" onclick="submitPay()">
           Send Tip <span class="submit-arrow">→</span>
         </button>
