@@ -79,16 +79,18 @@
     }
   }
 
-  // ══ Stripe ══
+  // Stripe
+  var STRIPE_PK = "pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP";
   var stripe, cardElement;
+
   function initStripe() {
     if (typeof Stripe === 'undefined') { setTimeout(initStripe, 100); return; }
-    stripe = Stripe( + LIVE_KEY + );
+    stripe = Stripe(STRIPE_PK);
     var elements = stripe.elements({
-      appearance: { theme:'night', variables:{ colorPrimary:'#d4a843', colorBackground:'#1a1a1a', colorText:'#f0ebe3', colorDanger:'#e05c5c', borderRadius:'2px' } }
+      appearance: { theme: 'night', variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' } }
     });
     cardElement = elements.create('card', {
-      style: { base: { color:'#f0ebe3', fontSize:'15px', '::placeholder':{ color:'rgba(240,235,227,0.35)' } } },
+      style: { base: { color: '#f0ebe3', fontSize: '15px', '::placeholder': { color: 'rgba(240,235,227,0.35)' } } },
       hidePostalCode: true
     });
     cardElement.mount('#stripe-wrap');
@@ -97,102 +99,56 @@
     });
   }
 
+  document.addEventListener('DOMContentLoaded', initStripe);
+
   async function submitPay() {
     if (!stripe || !cardElement) { alert('Payment system loading, please wait.'); return; }
     if (!selectedBar) { alert('Please select a bar first.'); return; }
-    if (!tipAmt || tipAmt < 20) { alert('Minimum tip is ฿20.'); return; }
+    if (!tipAmt || tipAmt < 20) { alert('Minimum amount is 20.'); return; }
     var btn = document.getElementById('sub-btn');
     btn.disabled = true;
-    btn.textContent = 'Processing…';
+    btn.textContent = 'Processing...';
     var nameVal = document.getElementById('uname').value || 'Anonymous';
     var result = await stripe.createToken(cardElement, { name: nameVal });
     if (result.error) {
       document.getElementById('card-err').textContent = result.error.message;
       btn.disabled = false;
-      btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">-></span>';
       return;
     }
-    var fee = calcFee(tipAmt, true);
-    var total = tipAmt + fee;
-    var staffName = document.getElementById('sname').value || 'Staff Member';
-    var staffNo = document.getElementById('snum') ? document.getElementById('snum').value : '';
-    var msgVal = document.getElementById('umsg') ? document.getElementById('umsg').value : '';
+    try {
+      var payRes = await fetch('/.netlify/functions/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: result.token.id,
+          amount: tipAmt,
+          bar: selectedBar,
+          staffName: document.getElementById('sname') ? document.getElementById('sname').value : '',
+          staffNo: document.getElementById('snum') ? document.getElementById('snum').value : '',
+          fromName: nameVal,
+          message: document.getElementById('umsg') ? document.getElementById('umsg').value : ''
+        })
+      });
+      var payData = await payRes.json();
+      if (!payData.success) {
+        document.getElementById('card-err').textContent = payData.error || 'Payment failed.';
+        btn.disabled = false;
+        btn.innerHTML = 'Send a Drink <span class="submit-arrow">-></span>';
+        return;
+      }
+    } catch(e) {
+      document.getElementById('card-err').textContent = 'Connection error. Please try again.';
+      btn.disabled = false;
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">-></span>';
+      return;
+    }
     document.getElementById('form-area').style.display = 'none';
     var success = document.getElementById('success-pg');
-    if (success) {
-      success.style.display = 'block';
-      document.getElementById('r-bar').textContent = selectedBar || '—';
-      document.getElementById('r-staff').textContent = staffName + (staffNo ? ' (#' + staffNo + ')' : '');
-      document.getElementById('r-from').textContent = nameVal;
-      document.getElementById('r-tip').textContent = '฿' + tipAmt.toLocaleString();
-      document.getElementById('r-fee').textContent = '฿' + fee.toLocaleString() + ' (Stripe fee)';
-      document.getElementById('r-total').textContent = '฿' + total.toLocaleString();
-      document.getElementById('s-staff2').textContent = staffName;
-      var msgRow = document.getElementById('r-msg-row');
-      if (msgVal && msgRow) {
-        msgRow.style.display = 'flex';
-        document.getElementById('r-msg').textContent = '"' + msgVal + '"';
-      }
-    }
+    if (success) success.style.display = 'block';
     btn.disabled = false;
-    btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
+    btn.innerHTML = 'Send a Drink <span class="submit-arrow">-></span>';
   }
-
-  function resetAll() {
-    document.getElementById('success-pg').style.display = 'none';
-    document.getElementById('form-area').style.display = 'block';
-    document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
-    selectedBar = null; tipAmt = 630;
-    ['sname','snum','uname','umsg'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    document.getElementById('card-err').textContent = '';
-    document.getElementById('form-desc').textContent = 'Select a bar and enter a staff name above.';
-    var btn = document.getElementById('sub-btn');
-    btn.disabled = false;
-    btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
-    document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.toggle('on', b.dataset.v === '630'); });
-    document.getElementById('custom-row').style.display = 'none';
-    updateFeeNote();
-  }
-
-  // ══ 슬라이드쇼 ══
-  var _si = 0, _total = 3, _timer = null, _touchX = null;
-  function goSlide(n) {
-    var slides = document.querySelectorAll('.slide-bg .slide');
-    if (!slides.length) return;
-    slides[_si].classList.remove('active');
-    _si = (n + _total) % _total;
-    slides[_si].classList.add('active');
-    clearInterval(_timer);
-    _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    initStripe();
-    updateFeeNote();
-
-    var hero = document.querySelector('.voucher-hero');
-    if (hero) {
-      hero.addEventListener('touchstart', function(e) { _touchX = e.touches[0].clientX; }, { passive: true });
-      hero.addEventListener('touchend', function(e) {
-        if (_touchX === null) return;
-        var dx = e.changedTouches[0].clientX - _touchX;
-        if (Math.abs(dx) > 40) goSlide(_si + (dx < 0 ? 1 : -1));
-        _touchX = null;
-      }, { passive: true });
-    }
-
-    document.getElementById('custom-amt').addEventListener('input', function() {
-      tipAmt = parseInt(this.value) || 0;
-      updateFeeNote();
-    });
-
-    document.getElementById('sname').addEventListener('input', syncSubtitle);
-
-    _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
-  });
   </script>
   <style>
     :root {
@@ -870,7 +826,7 @@
     <div id="form-area">
       <div class="form-card">
         <div class="form-head">
-          <p class="form-h">Support</p>
+          <p class="form-h">Send Your Tip</p>
           <p class="form-p" id="form-desc">Select a bar and enter a name above to get started.</p>
         </div>
 
@@ -917,14 +873,10 @@
       <p class="success-tag">✦ Payment Confirmed ✦</p>
       <h2 class="success-h">Thank you for<br>your generosity.</h2>
       <p class="success-body" id="success-body"></p>
-
-      <div class="lb">
-        <p class="lb-head">Tonight's Top Tippers</p>
-        <div id="lb-rows"></div>
       </div>
 
       <div class="act-row">
-        <button class="act-btn" onclick="copyLink()">↗ &nbsp;Share</button>
+        
         <button class="act-btn" onclick="resetAll()">↺ &nbsp;Send Another</button>
       </div>
     </div>
@@ -1052,247 +1004,171 @@
 
 
 <script>
-  // ══ Navigation ══
+  var selectedBar = null;
+  var tipAmt = 630;
+
   function go(id) {
-    document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
-    document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('on'));
-    document.getElementById('pg-' + id).classList.add('on');
-    document.getElementById('n-' + id).classList.add('on');
+    document.querySelectorAll('.pg').forEach(function(p) { p.classList.remove('on'); });
+    document.querySelectorAll('.nav-menu a').forEach(function(a) { a.classList.remove('on'); });
+    var pg = document.getElementById('pg-' + id);
+    var nav = document.getElementById('n-' + id);
+    if (!pg || !nav) return;
+    pg.style.animation = 'none';
+    pg.offsetHeight;
+    pg.style.animation = '';
+    pg.classList.add('on');
+    nav.classList.add('on');
     document.getElementById('nav-menu').classList.remove('open');
     window.scrollTo(0, 0);
   }
-  function toggleNav() { document.getElementById('nav-menu').classList.toggle('open'); }
 
-  // ══ State ══
-  let selBar = null, tipAmt = 500;
+  function toggleNav() {
+    document.getElementById('nav-menu').classList.toggle('open');
+  }
 
   function pickBar(el) {
-    document.querySelectorAll('.bar-tile').forEach(t => t.classList.remove('on'));
+    document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
     el.classList.add('on');
-    selBar = el.dataset.bar;
+    selectedBar = el.dataset.bar;
     syncSubtitle();
   }
 
   function syncSubtitle() {
-    const name = document.getElementById('sname').value.trim();
-    const desc = document.getElementById('form-desc');
-    if (selBar && name)
-      desc.innerHTML = `Sending a tip to <strong>${name}</strong> at ${selBar}.`;
-    else if (selBar)
-      desc.textContent = `Enter the staff name above.`;
+    var name = document.getElementById('sname').value.trim();
+    var desc = document.getElementById('form-desc');
+    if (selectedBar && name)
+      desc.innerHTML = 'Sending a drink to <strong>' + name + '</strong> at ' + selectedBar + '.';
+    else if (selectedBar)
+      desc.textContent = 'Enter the staff name above.';
     else
-      desc.textContent = `Select a bar and enter a staff name above.`;
+      desc.textContent = 'Select a bar and enter a staff name above.';
   }
 
   function pickAmt(btn) {
-    document.querySelectorAll('.amt-tile').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.remove('on'); });
     btn.classList.add('on');
-    const v = parseInt(btn.dataset.v);
+    var v = parseInt(btn.dataset.v);
     document.getElementById('custom-row').style.display = v === 0 ? 'flex' : 'none';
     tipAmt = v;
-  }
-  document.getElementById('custom-amt').addEventListener('input', function() { tipAmt = parseInt(this.value) || 0; });
-
-  // ══ Stripe ══
-  // Stripe
-  // Get your keys at https://dashboard.omise.co
-  const OMISE_PK = 'YOUR_OMISE_PUBLIC_KEY';
-
-  (function boot() {
-    if (!OMISE_PK || OMISE_PK === 'YOUR_OMISE_PUBLIC_KEY') {
-      document.getElementById('stripe-wrap').innerHTML =
-        '<div style="padding:14px 0;font-size:.8rem;color:rgba(240,235,227,.3);letter-spacing:.06em">[ Card field — add your Stripe public key ]</div>';
-      return;
-    }
-    OmiseCard.configure({
-      publicKey: OMISE_PK,
-      frameLabel: 'Soi 6 Bar',
-      submitLabel: 'Send Tip',
-      buttonLabel: 'Pay with Card',
-      currency: 'THB',
-      frameDescription: 'Staff Gratuity',
-      defaultPaymentMethod: 'credit_card',
-      otherPaymentMethods: [],
-      locale: 'en',
-    });
-    // Show inline card fields using Omise custom form approach
-    document.getElementById('stripe-wrap').innerHTML = `
-      <div style="display:grid;gap:10px;">
-        <div>
-          <div class="f-label" style="margin-bottom:6px">Card Number</div>
-          <input type="tel" id="omise-card-number" class="f-input" placeholder="4242 4242 4242 4242" maxlength="19" style="margin-bottom:0"/>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div>
-            <div class="f-label" style="margin-bottom:6px">Expiry</div>
-            <input type="tel" id="omise-expiry" class="f-input" placeholder="MM / YY" maxlength="7" style="margin-bottom:0"/>
-          </div>
-          <div>
-            <div class="f-label" style="margin-bottom:6px">CVC</div>
-            <input type="tel" id="omise-cvc" class="f-input" placeholder="123" maxlength="4" style="margin-bottom:0"/>
-          </div>
-        </div>
-        <div>
-          <div class="f-label" style="margin-bottom:6px">Name on Card</div>
-          <input type="text" id="omise-name" class="f-input" placeholder="JOHN SMITH" style="margin-bottom:0"/>
-        </div>
-      </div>`;
-
-    // Format card number input
-    document.getElementById('omise-card-number').addEventListener('input', function() {
-      let v = this.value.replace(/\D/g,'').slice(0,16);
-      this.value = v.replace(/(\d{4})(?=\d)/g,'$1 ');
-    });
-    // Format expiry
-    document.getElementById('omise-expiry').addEventListener('input', function() {
-      let v = this.value.replace(/\D/g,'').slice(0,4);
-      if (v.length >= 2) v = v.slice(0,2) + ' / ' + v.slice(2);
-      this.value = v;
-    });
-  })();
-
-  // ══ Leaderboard (demo) ══
-  let donors = [
-    { uname:'Mike',    sname:'Ning',  bar:'Nikki Bar',  amt:2000 },
-    { uname:'James',   sname:'Nook',  bar:'Lollipop',   amt:1000 },
-    { uname:'Anonymous',sname:'Pim', bar:'PG Bar',  amt:500  },
-  ];
-  function renderLB() {
-    const sorted = [...donors].sort((a,b) => b.amt - a.amt).slice(0,5);
-    document.getElementById('lb-rows').innerHTML = sorted.map((d,i) => `
-      <div class="lb-row">
-        <span class="lb-n ${i===0?'gold':''}">${i+1}</span>
-        <div class="lb-info">
-          <div class="lb-donor">${d.uname}</div>
-          <div class="lb-staff">${d.sname} · ${d.bar}</div>
-        </div>
-        <span class="lb-amt">฿${d.amt.toLocaleString()}</span>
-      </div>`).join('');
-  }
-
-  // ══ Submit ══
-  async function submitPay() {
-    const errEl = document.getElementById('card-err');
-    errEl.textContent = '';
-
-    if (!selBar) return (errEl.textContent = 'Please select a bar first.');
-    const sname = document.getElementById('sname').value.trim().replace(/[<>"'&]/g,'').slice(0,50);
-    const snum  = document.getElementById('snum').value.trim().replace(/[<>"'&]/g,'').slice(0,10);
-    if (!sname) return (errEl.textContent = 'Please enter the staff name.');
-    if (!tipAmt || tipAmt < 20)    return (errEl.textContent = 'Minimum tip is ฿20.');
-    if (tipAmt > 100000)           return (errEl.textContent = 'Maximum tip is ฿100,000.');
-
-    const uname = document.getElementById('uname').value.replace(/[<>"'&]/g,'').slice(0,50) || 'Anonymous';
-    const umsg  = document.getElementById('umsg').value.replace(/[<>"'&]/g,'').slice(0,100);
-    const btn   = document.getElementById('sub-btn');
-
-    // Demo mode (no Omise key set)
-    if (!OMISE_PK || OMISE_PK === 'YOUR_OMISE_PUBLIC_KEY') {
-      showSuccess(uname, sname, snum, umsg, tipAmt);
-      return;
-    }
-
-    // Validate card fields
-    const cardNum = (document.getElementById('omise-card-number')?.value || '').replace(/\s/g,'');
-    const expiry  = (document.getElementById('omise-expiry')?.value || '').replace(/\s/g,'');
-    const cvc     = (document.getElementById('omise-cvc')?.value || '').trim();
-    const cardName= (document.getElementById('omise-name')?.value || '').trim();
-    if (cardNum.length < 13) return (errEl.textContent = 'Please enter a valid card number.');
-    if (expiry.replace('/','').length < 4) return (errEl.textContent = 'Please enter a valid expiry date.');
-    if (cvc.length < 3) return (errEl.textContent = 'Please enter your CVC.');
-
-    const exParts = expiry.replace(/\s/g,'').split('/');
-    const expMonth = parseInt(exParts[0]);
-    const expYear  = 2000 + parseInt(exParts[1]);
-
-    btn.disabled = true;
-    btn.innerHTML = 'Processing <span class="submit-arrow">…</span>';
-
-    // Tokenize card via Omise
-    Omise.setPublicKey(OMISE_PK);
-    Omise.createToken('card', {
-      name: cardName || uname,
-      number: cardNum,
-      expiration_month: expMonth,
-      expiration_year: expYear,
-      security_code: cvc,
-    }, async function(statusCode, response) {
-      if (statusCode !== 200 || response.object === 'error') {
-        errEl.textContent = response.message || 'Card tokenization failed.';
-        btn.disabled = false;
-        btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/create-charge', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: response.id,
-            amount: tipAmt,
-            donorName: uname,
-            staffName: sname,
-            staffNumber: snum,
-            message: umsg,
-          })
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || 'Payment failed.');
-        showSuccess(uname, sname, snum, umsg, tipAmt);
-      } catch(e) {
-        errEl.textContent = e.message || 'Something went wrong. Please try again.';
-        btn.disabled = false;
-        btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
-      }
-    });
-  }
-
-  function showSuccess(uname, sname, snum, umsg, amt) {
-    donors.unshift({ uname, sname, bar: selBar, amt });
-    document.getElementById('form-area').style.display = 'none';
-    document.getElementById('success-pg').style.display = 'block';
-    const staffLabel = snum ? `${sname} (#${snum})` : sname;
-    document.getElementById('success-body').innerHTML =
-      `<strong>${uname}</strong> sent ฿${amt.toLocaleString()} to <strong>${staffLabel}</strong> at ${selBar}.
-      ${umsg ? `<br><em style="color:var(--smoke2);font-size:.85rem">"${umsg}"</em>` : ''}
-      <br><br><span style="font-size:.8rem;color:var(--smoke3)">Your message will be passed on within 24 hours.</span>`;
-    renderLB();
   }
 
   function resetAll() {
     document.getElementById('success-pg').style.display = 'none';
     document.getElementById('form-area').style.display = 'block';
-    document.querySelectorAll('.bar-tile').forEach(t => t.classList.remove('on'));
-    selBar = null; tipAmt = 500;
-    ['sname','snum','uname','umsg'].forEach(id => document.getElementById(id).value = '');
+    document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
+    selectedBar = null; tipAmt = 630;
+    ['sname','snum','uname','umsg'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
     document.getElementById('card-err').textContent = '';
     document.getElementById('form-desc').textContent = 'Select a bar and enter a staff name above.';
-    const btn = document.getElementById('sub-btn');
+    var btn = document.getElementById('sub-btn');
     btn.disabled = false;
-    btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
-    document.querySelectorAll('.amt-tile').forEach(b => b.classList.toggle('on', b.dataset.v === '500'));
+    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+    document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.toggle('on', b.dataset.v === '630'); });
     document.getElementById('custom-row').style.display = 'none';
   }
 
-  function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      const t = document.getElementById('toast');
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2200);
+  // Stripe
+  var STRIPE_PK = "pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP";
+  var stripe, cardElement;
+
+  function initStripe() {
+    if (typeof Stripe === 'undefined') { setTimeout(initStripe, 100); return; }
+    stripe = Stripe(STRIPE_PK);
+    var elements = stripe.elements({
+      appearance: { theme: 'night', variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' } }
+    });
+    cardElement = elements.create('card', {
+      style: { base: { color: '#f0ebe3', fontSize: '15px', '::placeholder': { color: 'rgba(240,235,227,0.35)' } } },
+      hidePostalCode: true
+    });
+    cardElement.mount('#stripe-wrap');
+    cardElement.on('change', function(e) {
+      document.getElementById('card-err').textContent = e.error ? e.error.message : '';
     });
   }
 
-  // ══ Voucher page slideshow ══
-  let slideIdx = 0;
-  function runSlideshow() {
-    const slides = document.querySelectorAll('.slide-bg .slide');
-    if (!slides.length) return;
-    slides[slideIdx].classList.remove('active');
-    slideIdx = (slideIdx + 1) % slides.length;
-    slides[slideIdx].classList.add('active');
+  async function submitPay() {
+    if (!stripe || !cardElement) { alert('Payment system loading, please wait.'); return; }
+    if (!selectedBar) { alert('Please select a bar first.'); return; }
+    if (!tipAmt || tipAmt < 20) { alert('Minimum amount is 20 THB.'); return; }
+    var btn = document.getElementById('sub-btn');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+    var nameVal = document.getElementById('uname').value || 'Anonymous';
+    var result = await stripe.createToken(cardElement, { name: nameVal });
+    if (result.error) {
+      document.getElementById('card-err').textContent = result.error.message;
+      btn.disabled = false;
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+      return;
+    }
+    try {
+      var payRes = await fetch('/.netlify/functions/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: result.token.id,
+          amount: tipAmt,
+          bar: selectedBar,
+          staffName: document.getElementById('sname') ? document.getElementById('sname').value : '',
+          staffNo: document.getElementById('snum') ? document.getElementById('snum').value : '',
+          fromName: nameVal,
+          message: document.getElementById('umsg') ? document.getElementById('umsg').value : ''
+        })
+      });
+      var payData = await payRes.json();
+      if (!payData.success) {
+        document.getElementById('card-err').textContent = payData.error || 'Payment failed.';
+        btn.disabled = false;
+        btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+        return;
+      }
+    } catch(e) {
+      document.getElementById('card-err').textContent = 'Connection error. Please try again.';
+      btn.disabled = false;
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+      return;
+    }
+    document.getElementById('form-area').style.display = 'none';
+    var success = document.getElementById('success-pg');
+    if (success) success.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
   }
-  setInterval(runSlideshow, 3500);
 
+  // Slideshow
+  var _si = 0, _total = 3, _timer = null, _touchX = null;
+  function goSlide(n) {
+    var slides = document.querySelectorAll('.slide-bg .slide');
+    if (!slides.length) return;
+    slides[_si].classList.remove('active');
+    _si = (n + _total) % _total;
+    slides[_si].classList.add('active');
+    clearInterval(_timer);
+    _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initStripe();
+    var hero = document.querySelector('.voucher-hero');
+    if (hero) {
+      hero.addEventListener('touchstart', function(e) { _touchX = e.touches[0].clientX; }, { passive: true });
+      hero.addEventListener('touchend', function(e) {
+        if (_touchX === null) return;
+        var dx = e.changedTouches[0].clientX - _touchX;
+        if (Math.abs(dx) > 40) goSlide(_si + (dx < 0 ? 1 : -1));
+        _touchX = null;
+      }, { passive: true });
+    }
+    var customAmt = document.getElementById('custom-amt');
+    if (customAmt) customAmt.addEventListener('input', function() { tipAmt = parseInt(this.value) || 0; });
+    var sname = document.getElementById('sname');
+    if (sname) sname.addEventListener('input', syncSubtitle);
+    _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
+  });
 </script>
 </body>
 </html>
