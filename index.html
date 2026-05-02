@@ -62,11 +62,8 @@
 
   // ══ 수수료 계산 ══
   function calcFee(amt, intl) {
-    // Stripe Thailand + VAT 7%
-    // Thai card: 3.65% x 1.07 = 3.91%
-    // International: (3.65% + 2%) x 1.07 = 6.05%
-    if (intl) return Math.ceil(amt * 0.0605);
-    return Math.ceil(amt * 0.0391);
+    if (intl) return Math.ceil(amt * 0.0675 + 10);
+    return Math.ceil(amt * 0.0365 + 10);
   }
 
   function updateFeeNote() {
@@ -78,22 +75,20 @@
       var feeIntl = calcFee(amt, true);
       note.innerHTML = 'Processing fee: <span>฿' + feeDom + '</span> Thai card &nbsp;/&nbsp; <span>฿' + feeIntl + '</span> International card';
     } else {
-      note.innerHTML = 'Processing fee: 3.91% Thai card / 6.05% International card (incl. VAT)';
+      note.innerHTML = 'Stripe fee: 3.65%+฿10 (Thai) / 4.75%+฿10+2% (International)';
     }
   }
 
-  // Stripe
-  var STRIPE_PK = "pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP";
+  // ══ Stripe ══
   var stripe, cardElement;
-
   function initStripe() {
     if (typeof Stripe === 'undefined') { setTimeout(initStripe, 100); return; }
-    stripe = Stripe(STRIPE_PK);
+    stripe = Stripe('pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP');
     var elements = stripe.elements({
-      appearance: { theme: 'night', variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' } }
+      appearance: { theme:'night', variables:{ colorPrimary:'#d4a843', colorBackground:'#1a1a1a', colorText:'#f0ebe3', colorDanger:'#e05c5c', borderRadius:'2px' } }
     });
     cardElement = elements.create('card', {
-      style: { base: { color: '#f0ebe3', fontSize: '15px', '::placeholder': { color: 'rgba(240,235,227,0.35)' } } },
+      style: { base: { color:'#f0ebe3', fontSize:'15px', '::placeholder':{ color:'rgba(240,235,227,0.35)' } } },
       hidePostalCode: true
     });
     cardElement.mount('#stripe-wrap');
@@ -105,57 +100,23 @@
   async function submitPay() {
     if (!stripe || !cardElement) { alert('Payment system loading, please wait.'); return; }
     if (!selectedBar) { alert('Please select a bar first.'); return; }
-    if (!tipAmt || tipAmt < 20) { alert('Minimum amount is 20 THB.'); return; }
-
+    if (!tipAmt || tipAmt < 20) { alert('Minimum tip is ฿20.'); return; }
     var btn = document.getElementById('sub-btn');
     btn.disabled = true;
-    btn.textContent = 'Processing...';
-
-    var nameVal = document.getElementById('uname') ? (document.getElementById('uname').value || 'Anonymous') : 'Anonymous';
-    var staffName = document.getElementById('sname') ? (document.getElementById('sname').value || 'Staff Member') : 'Staff Member';
-    var staffNo = document.getElementById('snum') ? document.getElementById('snum').value : '';
-    var msgVal = document.getElementById('umsg') ? document.getElementById('umsg').value : '';
-    var fee = calcFee(tipAmt, true);
-    var total = tipAmt + fee;
-
+    btn.textContent = 'Processing…';
+    var nameVal = document.getElementById('uname').value || 'Anonymous';
     var result = await stripe.createToken(cardElement, { name: nameVal });
     if (result.error) {
       document.getElementById('card-err').textContent = result.error.message;
       btn.disabled = false;
-      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+      btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
       return;
     }
-
-    var payData = {};
-    try {
-      var payRes = await fetch('/.netlify/functions/pay', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: result.token.id,
-          amount: tipAmt,
-          bar: selectedBar,
-          staffName: staffName,
-          staffNo: staffNo,
-          fromName: nameVal,
-          message: msgVal
-        })
-      });
-      payData = await payRes.json();
-      if (!payData.success) {
-        document.getElementById('card-err').textContent = payData.error || 'Payment failed.';
-        btn.disabled = false;
-        btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-        return;
-      }
-    } catch(e) {
-      document.getElementById('card-err').textContent = 'Connection error. Please try again.';
-      btn.disabled = false;
-      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-      return;
-    }
-
-    // 성공 화면
+    var fee = calcFee(tipAmt, true);
+    var total = tipAmt + fee;
+    var staffName = document.getElementById('sname').value || 'Staff Member';
+    var staffNo = document.getElementById('snum') ? document.getElementById('snum').value : '';
+    var msgVal = document.getElementById('umsg') ? document.getElementById('umsg').value : '';
     document.getElementById('form-area').style.display = 'none';
     var success = document.getElementById('success-pg');
     if (success) {
@@ -164,25 +125,74 @@
       document.getElementById('r-staff').textContent = staffName + (staffNo ? ' (#' + staffNo + ')' : '');
       document.getElementById('r-from').textContent = nameVal;
       document.getElementById('r-tip').textContent = '฿' + tipAmt.toLocaleString();
-      document.getElementById('r-fee').textContent = '฿' + fee.toLocaleString();
+      document.getElementById('r-fee').textContent = '฿' + fee.toLocaleString() + ' (Stripe fee)';
       document.getElementById('r-total').textContent = '฿' + total.toLocaleString();
-      if (msgVal) {
-        var msgRow = document.getElementById('r-msg-row');
-        if (msgRow) msgRow.style.display = 'flex';
-        var msgEl = document.getElementById('r-msg');
-        if (msgEl) msgEl.textContent = '"' + msgVal + '"';
+      document.getElementById('s-staff2').textContent = staffName;
+      var msgRow = document.getElementById('r-msg-row');
+      if (msgVal && msgRow) {
+        msgRow.style.display = 'flex';
+        document.getElementById('r-msg').textContent = '"' + msgVal + '"';
       }
-      var now = new Date();
-      var dateStr = now.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) + ', ' + now.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
-      var dateEl = document.getElementById('r-date');
-      if (dateEl) dateEl.textContent = dateStr;
-      var refEl = document.getElementById('r-charge-id');
-      if (refEl && payData.chargeId) refEl.textContent = 'Ref: ' + payData.chargeId;
+    }
+    btn.disabled = false;
+    btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
+  }
+
+  function resetAll() {
+    document.getElementById('success-pg').style.display = 'none';
+    document.getElementById('form-area').style.display = 'block';
+    document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
+    selectedBar = null; tipAmt = 630;
+    ['sname','snum','uname','umsg'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('card-err').textContent = '';
+    document.getElementById('form-desc').textContent = 'Select a bar and enter a staff name above.';
+    var btn = document.getElementById('sub-btn');
+    btn.disabled = false;
+    btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
+    document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.toggle('on', b.dataset.v === '630'); });
+    document.getElementById('custom-row').style.display = 'none';
+    updateFeeNote();
+  }
+
+  // ══ 슬라이드쇼 ══
+  var _si = 0, _total = 3, _timer = null, _touchX = null;
+  function goSlide(n) {
+    var slides = document.querySelectorAll('.slide-bg .slide');
+    if (!slides.length) return;
+    slides[_si].classList.remove('active');
+    _si = (n + _total) % _total;
+    slides[_si].classList.add('active');
+    clearInterval(_timer);
+    _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initStripe();
+    updateFeeNote();
+
+    var hero = document.querySelector('.voucher-hero');
+    if (hero) {
+      hero.addEventListener('touchstart', function(e) { _touchX = e.touches[0].clientX; }, { passive: true });
+      hero.addEventListener('touchend', function(e) {
+        if (_touchX === null) return;
+        var dx = e.changedTouches[0].clientX - _touchX;
+        if (Math.abs(dx) > 40) goSlide(_si + (dx < 0 ? 1 : -1));
+        _touchX = null;
+      }, { passive: true });
     }
 
-    btn.disabled = false;
-    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-  }
+    document.getElementById('custom-amt').addEventListener('input', function() {
+      tipAmt = parseInt(this.value) || 0;
+      updateFeeNote();
+    });
+
+    document.getElementById('sname').addEventListener('input', syncSubtitle);
+
+    _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
+  });
   </script>
   <style>
     :root {
@@ -733,88 +743,25 @@
     .fee-note span { color:var(--amber); font-weight:600; }
 
     .receipt-box {
-      background: rgba(212,168,67,0.07);
-      border: 1px solid rgba(212,168,67,0.25);
-      padding: 20px 24px;
-      margin: 24px auto;
-      max-width: 360px;
-      text-align: left;
-    }
-    .receipt-title {
-      font-size: .6rem; letter-spacing: .2em; text-transform: uppercase;
-      color: var(--amber); margin-bottom: 14px; text-align: center;
-    }
-    .receipt-row {
-      display: flex; justify-content: space-between;
-      padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
-      font-size: .82rem;
-    }
-    .receipt-row:last-child { border-bottom: none; }
-    .receipt-label { color: var(--smoke3); }
-    .receipt-value { color: var(--smoke); font-weight: 500; }
-    .receipt-total { color: var(--amber); font-weight: 700; font-size: .95rem; }
-    .receipt-id { font-size: .68rem; color: var(--smoke3); text-align: center; margin-top: 12px; }
-
-  
-    /* ══ RECEIPT ══ */
-    .receipt-box {
-      background: #0d0d0d;
+      background: #111;
       border: 2px solid var(--amber);
       padding: 28px 24px;
-      margin: 24px auto;
-      max-width: 340px;
+      margin: 20px auto;
+      max-width: 320px;
       text-align: center;
-      font-family: var(--body);
     }
-    .receipt-site {
-      font-size: .65rem;
-      letter-spacing: .15em;
-      color: var(--smoke3);
-      margin-bottom: 6px;
-    }
-    .receipt-icon { font-size: 1.8rem; margin-bottom: 8px; }
-    .receipt-confirmed {
-      font-size: .6rem;
-      letter-spacing: .25em;
-      color: var(--amber);
-      text-transform: uppercase;
-      margin-bottom: 20px;
-    }
-    .receipt-divider {
-      border: none;
-      border-top: 1px solid rgba(212,168,67,0.2);
-      margin: 14px 0;
-    }
-    .receipt-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 0;
-      font-size: .83rem;
-    }
-    .receipt-label { color: var(--smoke3); text-align: left; }
-    .receipt-value { color: var(--smoke); font-weight: 500; text-align: right; }
-    .receipt-total-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      margin-top: 4px;
-      border-top: 1px solid rgba(212,168,67,0.3);
-      font-size: .9rem;
-    }
-    .receipt-total-label { color: var(--smoke); font-weight: 600; }
-    .receipt-total-val { color: var(--amber); font-weight: 700; font-size: 1rem; }
-    .receipt-ref {
-      font-size: .62rem;
-      color: var(--smoke3);
-      margin-top: 14px;
-      word-break: break-all;
-    }
-    .receipt-footer {
-      margin-top: 16px;
-      font-size: .72rem;
-      color: var(--amber);
-      letter-spacing: .05em;
-    }
+    .receipt-site { font-size:.65rem; letter-spacing:.15em; color:var(--smoke3); margin-bottom:6px; }
+    .receipt-icon { font-size:1.8rem; margin-bottom:8px; }
+    .receipt-confirmed { font-size:.6rem; letter-spacing:.25em; color:var(--amber); text-transform:uppercase; margin-bottom:16px; }
+    .receipt-line { border:none; border-top:1px solid rgba(212,168,67,0.2); margin:12px 0; }
+    .receipt-row { display:flex; justify-content:space-between; padding:5px 0; font-size:.82rem; }
+    .receipt-label { color:var(--smoke3); }
+    .receipt-value { color:var(--smoke); font-weight:500; }
+    .receipt-total-row { display:flex; justify-content:space-between; padding:8px 0; border-top:1px solid rgba(212,168,67,0.3); margin-top:4px; }
+    .receipt-total-label { color:var(--smoke); font-weight:600; font-size:.9rem; }
+    .receipt-total-val { color:var(--amber); font-weight:700; font-size:1rem; }
+    .receipt-ref { font-size:.62rem; color:var(--smoke3); margin-top:12px; word-break:break-all; }
+    .receipt-footer { margin-top:14px; font-size:.72rem; color:var(--amber); letter-spacing:.05em; }
 
   </style>
 </head>
@@ -973,7 +920,7 @@
         <div class="stripe-wrap" id="stripe-wrap"></div>
         <div id="card-err"></div>
 
-        <p class="fee-note" id="fee-note">Processing fee: 3.91% Thai card / 6.05% International card (incl. VAT)</p>
+        <p class="fee-note" id="fee-note">Stripe fee: 3.65%+฿10 (Thai) / 4.75%+฿10+2% (International)</p>
         <button class="submit-btn" id="sub-btn" onclick="submitPay()">
           Send Tip <span class="submit-arrow">→</span>
         </button>
@@ -989,37 +936,26 @@
 
     <!-- Success -->
     <div class="success-pg" id="success-pg">
-      <h2 class="success-h" style="margin-bottom:24px;">Thank you for<br>your generosity.</h2>
-
+      <h2 class="success-h" style="margin-bottom:20px;">Thank you for<br>your generosity.</h2>
       <div class="receipt-box">
         <p class="receipt-site">pattayasoipearl.com</p>
         <div class="receipt-icon">🌸</div>
         <p class="receipt-confirmed">✦ Drink Confirmed ✦</p>
-
-        <hr class="receipt-divider">
-
+        <hr class="receipt-line">
         <div class="receipt-row"><span class="receipt-label">Bar</span><span class="receipt-value" id="r-bar">—</span></div>
         <div class="receipt-row"><span class="receipt-label">Staff</span><span class="receipt-value" id="r-staff">—</span></div>
         <div class="receipt-row"><span class="receipt-label">From</span><span class="receipt-value" id="r-from">—</span></div>
         <div class="receipt-row" id="r-msg-row" style="display:none"><span class="receipt-label">Message</span><span class="receipt-value" id="r-msg">—</span></div>
-
-        <hr class="receipt-divider">
-
+        <hr class="receipt-line">
         <div class="receipt-row"><span class="receipt-label">Drink Amount</span><span class="receipt-value" id="r-tip">—</span></div>
         <div class="receipt-row"><span class="receipt-label">Processing Fee</span><span class="receipt-value" id="r-fee">—</span></div>
-        <div class="receipt-total-row">
-          <span class="receipt-total-label">Total Charged</span>
-          <span class="receipt-total-val" id="r-total">—</span>
-        </div>
-
-        <hr class="receipt-divider">
-
+        <div class="receipt-total-row"><span class="receipt-total-label">Total Charged</span><span class="receipt-total-val" id="r-total">—</span></div>
+        <hr class="receipt-line">
         <div class="receipt-row"><span class="receipt-label">Date</span><span class="receipt-value" id="r-date">—</span></div>
-        <p class="receipt-ref" id="r-charge-id"></p>
+        <p class="receipt-ref" id="r-ref"></p>
         <p class="receipt-footer">Please show this to your staff member</p>
       </div>
-
-      <div class="act-row" style="margin-top:8px;">
+      <div class="act-row">
         <button class="act-btn" onclick="resetAll()">↺ &nbsp;Send Another</button>
       </div>
     </div>
@@ -1146,172 +1082,260 @@
 </div>
 
 
+<script src="https://js.stripe.com/v3/"></script>
 <script>
-  var selectedBar = null;
-  var tipAmt = 630;
+// ── 변수 ──
+var selectedBar = null;
+var tipAmt = 630;
+var stripe = null;
+var cardElement = null;
 
-  function go(id) {
-    document.querySelectorAll('.pg').forEach(function(p) { p.classList.remove('on'); });
-    document.querySelectorAll('.nav-menu a').forEach(function(a) { a.classList.remove('on'); });
-    var pg = document.getElementById('pg-' + id);
-    var nav = document.getElementById('n-' + id);
-    if (!pg || !nav) return;
-    pg.style.animation = 'none';
-    pg.offsetHeight;
-    pg.style.animation = '';
-    pg.classList.add('on');
-    nav.classList.add('on');
-    document.getElementById('nav-menu').classList.remove('open');
-    window.scrollTo(0, 0);
+// ── 수수료 계산 ──
+function calcFee(amt) {
+  // 해외카드 기준: (3.65% + 2%) x 1.07 VAT = 6.05%
+  return Math.ceil(amt * 0.0605);
+}
+
+// ── Navigation ──
+function go(id) {
+  document.querySelectorAll('.pg').forEach(function(p) { p.classList.remove('on'); });
+  document.querySelectorAll('.nav-menu a').forEach(function(a) { a.classList.remove('on'); });
+  var pg = document.getElementById('pg-' + id);
+  var nav = document.getElementById('n-' + id);
+  if (!pg || !nav) return;
+  pg.style.animation = 'none';
+  pg.offsetHeight;
+  pg.style.animation = '';
+  pg.classList.add('on');
+  nav.classList.add('on');
+  var nm = document.getElementById('nav-menu');
+  if (nm) nm.classList.remove('open');
+  window.scrollTo(0, 0);
+}
+
+function toggleNav() {
+  var nm = document.getElementById('nav-menu');
+  if (nm) nm.classList.toggle('open');
+}
+
+// ── Bar / Amount ──
+function pickBar(el) {
+  document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
+  el.classList.add('on');
+  selectedBar = el.dataset.bar;
+  syncSubtitle();
+}
+
+function syncSubtitle() {
+  var snameEl = document.getElementById('sname');
+  var name = snameEl ? snameEl.value.trim() : '';
+  var desc = document.getElementById('form-desc');
+  if (!desc) return;
+  if (selectedBar && name)
+    desc.innerHTML = 'Sending a drink to <strong>' + name + '</strong> at ' + selectedBar + '.';
+  else if (selectedBar)
+    desc.textContent = 'Enter the staff name above.';
+  else
+    desc.textContent = 'Select a bar and enter a staff name above.';
+}
+
+function pickAmt(btn) {
+  document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.remove('on'); });
+  btn.classList.add('on');
+  var v = parseInt(btn.dataset.v);
+  var cr = document.getElementById('custom-row');
+  if (cr) cr.style.display = v === 0 ? 'flex' : 'none';
+  if (v > 0) tipAmt = v;
+}
+
+function resetAll() {
+  var sp = document.getElementById('success-pg');
+  var fa = document.getElementById('form-area');
+  if (sp) sp.style.display = 'none';
+  if (fa) fa.style.display = 'block';
+  document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
+  selectedBar = null;
+  tipAmt = 630;
+  ['sname','snum','uname','umsg'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var ce = document.getElementById('card-err');
+  if (ce) ce.textContent = '';
+  var fd = document.getElementById('form-desc');
+  if (fd) fd.textContent = 'Select a bar and enter a staff name above.';
+  var btn = document.getElementById('sub-btn');
+  if (btn) { btn.disabled = false; btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>'; }
+  document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.toggle('on', b.dataset.v === '630'); });
+  var cr = document.getElementById('custom-row');
+  if (cr) cr.style.display = 'none';
+  if (cardElement) cardElement.clear();
+}
+
+// ── Stripe ──
+function initStripe() {
+  if (typeof Stripe === 'undefined') {
+    setTimeout(initStripe, 200);
+    return;
   }
-
-  function toggleNav() {
-    document.getElementById('nav-menu').classList.toggle('open');
-  }
-
-  function pickBar(el) {
-    document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
-    el.classList.add('on');
-    selectedBar = el.dataset.bar;
-    syncSubtitle();
-  }
-
-  function syncSubtitle() {
-    var name = document.getElementById('sname').value.trim();
-    var desc = document.getElementById('form-desc');
-    if (selectedBar && name)
-      desc.innerHTML = 'Sending a drink to <strong>' + name + '</strong> at ' + selectedBar + '.';
-    else if (selectedBar)
-      desc.textContent = 'Enter the staff name above.';
-    else
-      desc.textContent = 'Select a bar and enter a staff name above.';
-  }
-
-  function pickAmt(btn) {
-    document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.remove('on'); });
-    btn.classList.add('on');
-    var v = parseInt(btn.dataset.v);
-    document.getElementById('custom-row').style.display = v === 0 ? 'flex' : 'none';
-    tipAmt = v;
-  }
-
-  function resetAll() {
-    document.getElementById('success-pg').style.display = 'none';
-    document.getElementById('form-area').style.display = 'block';
-    document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
-    selectedBar = null; tipAmt = 630;
-    ['sname','snum','uname','umsg'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    document.getElementById('card-err').textContent = '';
-    document.getElementById('form-desc').textContent = 'Select a bar and enter a staff name above.';
-    var btn = document.getElementById('sub-btn');
-    btn.disabled = false;
-    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-    document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.toggle('on', b.dataset.v === '630'); });
-    document.getElementById('custom-row').style.display = 'none';
-  }
-
-  // Stripe
-  var STRIPE_PK = "pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP";
-  var stripe, cardElement;
-
-  function initStripe() {
-    if (typeof Stripe === 'undefined') { setTimeout(initStripe, 100); return; }
-    stripe = Stripe(STRIPE_PK);
-    var elements = stripe.elements({
-      appearance: { theme: 'night', variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' } }
-    });
-    cardElement = elements.create('card', {
-      style: { base: { color: '#f0ebe3', fontSize: '15px', '::placeholder': { color: 'rgba(240,235,227,0.35)' } } },
-      hidePostalCode: true
-    });
+  stripe = Stripe('pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP');
+  var elements = stripe.elements({
+    appearance: {
+      theme: 'night',
+      variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' }
+    }
+  });
+  cardElement = elements.create('card', {
+    style: { base: { color: '#f0ebe3', fontSize: '15px', '::placeholder': { color: 'rgba(240,235,227,0.35)' } } },
+    hidePostalCode: true
+  });
+  var mountEl = document.getElementById('stripe-wrap');
+  if (mountEl) {
     cardElement.mount('#stripe-wrap');
     cardElement.on('change', function(e) {
-      document.getElementById('card-err').textContent = e.error ? e.error.message : '';
+      var err = document.getElementById('card-err');
+      if (err) err.textContent = e.error ? e.error.message : '';
     });
   }
+}
 
-  async function submitPay() {
-    if (!stripe || !cardElement) { alert('Payment system loading, please wait.'); return; }
-    if (!selectedBar) { alert('Please select a bar first.'); return; }
-    if (!tipAmt || tipAmt < 20) { alert('Minimum amount is 20 THB.'); return; }
-    var btn = document.getElementById('sub-btn');
-    btn.disabled = true;
-    btn.textContent = 'Processing...';
-    var nameVal = document.getElementById('uname').value || 'Anonymous';
-    var result = await stripe.createToken(cardElement, { name: nameVal });
-    if (result.error) {
-      document.getElementById('card-err').textContent = result.error.message;
+async function submitPay() {
+  if (!stripe || !cardElement) { alert('Payment system loading, please wait.'); return; }
+  if (!selectedBar) { alert('Please select a bar first.'); return; }
+  if (!tipAmt || tipAmt < 20) { alert('Minimum amount is 20 THB.'); return; }
+
+  var btn = document.getElementById('sub-btn');
+  btn.disabled = true;
+  btn.textContent = 'Processing...';
+
+  var uname = document.getElementById('uname');
+  var sname = document.getElementById('sname');
+  var snum = document.getElementById('snum');
+  var umsg = document.getElementById('umsg');
+
+  var nameVal = (uname && uname.value) ? uname.value : 'Anonymous';
+  var staffName = (sname && sname.value) ? sname.value : 'Staff Member';
+  var staffNo = (snum && snum.value) ? snum.value : '';
+  var msgVal = (umsg && umsg.value) ? umsg.value : '';
+  var fee = calcFee(tipAmt);
+  var total = tipAmt + fee;
+
+  try {
+    var tokenResult = await stripe.createToken(cardElement, { name: nameVal });
+    if (tokenResult.error) {
+      var ce = document.getElementById('card-err');
+      if (ce) ce.textContent = tokenResult.error.message;
       btn.disabled = false;
       btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
       return;
     }
-    try {
-      var payRes = await fetch('/.netlify/functions/pay', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: result.token.id,
-          amount: tipAmt,
-          bar: selectedBar,
-          staffName: document.getElementById('sname') ? document.getElementById('sname').value : '',
-          staffNo: document.getElementById('snum') ? document.getElementById('snum').value : '',
-          fromName: nameVal,
-          message: document.getElementById('umsg') ? document.getElementById('umsg').value : ''
-        })
-      });
-      var payData = await payRes.json();
-      if (!payData.success) {
-        document.getElementById('card-err').textContent = payData.error || 'Payment failed.';
-        btn.disabled = false;
-        btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-        return;
+
+    var payRes = await fetch('/.netlify/functions/pay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: tokenResult.token.id,
+        amount: tipAmt,
+        bar: selectedBar,
+        staffName: staffName,
+        staffNo: staffNo,
+        fromName: nameVal,
+        message: msgVal
+      })
+    });
+
+    var payData = await payRes.json();
+
+    if (!payData.success) {
+      var ce = document.getElementById('card-err');
+      if (ce) ce.textContent = payData.error || 'Payment failed. Please try again.';
+      btn.disabled = false;
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+      return;
+    }
+
+    // 성공!
+    var fa = document.getElementById('form-area');
+    var sp = document.getElementById('success-pg');
+    if (fa) fa.style.display = 'none';
+    if (sp) {
+      sp.style.display = 'block';
+      var rbar = document.getElementById('r-bar');
+      var rstaff = document.getElementById('r-staff');
+      var rfrom = document.getElementById('r-from');
+      var rtip = document.getElementById('r-tip');
+      var rfee = document.getElementById('r-fee');
+      var rtotal = document.getElementById('r-total');
+      var rdate = document.getElementById('r-date');
+      var rref = document.getElementById('r-ref');
+      var rmsgrow = document.getElementById('r-msg-row');
+      var rmsg = document.getElementById('r-msg');
+
+      if (rbar) rbar.textContent = selectedBar;
+      if (rstaff) rstaff.textContent = staffName + (staffNo ? ' (#' + staffNo + ')' : '');
+      if (rfrom) rfrom.textContent = nameVal;
+      if (rtip) rtip.textContent = '฿' + tipAmt.toLocaleString();
+      if (rfee) rfee.textContent = '฿' + fee.toLocaleString();
+      if (rtotal) rtotal.textContent = '฿' + total.toLocaleString();
+
+      if (msgVal && rmsgrow && rmsg) {
+        rmsgrow.style.display = 'flex';
+        rmsg.textContent = '"' + msgVal + '"';
       }
-    } catch(e) {
-      document.getElementById('card-err').textContent = 'Connection error. Please try again.';
-      btn.disabled = false;
-      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-      return;
+
+      var now = new Date();
+      var dateStr = now.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) + ', ' + now.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+      if (rdate) rdate.textContent = dateStr;
+      if (rref && payData.chargeId) rref.textContent = 'Ref: ' + payData.chargeId;
     }
-    document.getElementById('form-area').style.display = 'none';
-    var success = document.getElementById('success-pg');
-    if (success) success.style.display = 'block';
-    btn.disabled = false;
-    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+
+  } catch(e) {
+    var ce = document.getElementById('card-err');
+    if (ce) ce.textContent = 'Connection error. Please try again.';
   }
 
-  // Slideshow
-  var _si = 0, _total = 3, _timer = null, _touchX = null;
-  function goSlide(n) {
-    var slides = document.querySelectorAll('.slide-bg .slide');
-    if (!slides.length) return;
-    slides[_si].classList.remove('active');
-    _si = (n + _total) % _total;
-    slides[_si].classList.add('active');
-    clearInterval(_timer);
-    _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
+  btn.disabled = false;
+  btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+}
+
+// ── 슬라이드쇼 ──
+var _si = 0, _total = 3, _timer = null, _touchX = null;
+function goSlide(n) {
+  var slides = document.querySelectorAll('.slide-bg .slide');
+  if (!slides.length) return;
+  slides[_si].classList.remove('active');
+  _si = (n + _total) % _total;
+  slides[_si].classList.add('active');
+  clearInterval(_timer);
+  _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
+}
+
+// ── 초기화 ──
+window.addEventListener('load', function() {
+  initStripe();
+
+  var hero = document.querySelector('.voucher-hero');
+  if (hero) {
+    hero.addEventListener('touchstart', function(e) { _touchX = e.touches[0].clientX; }, { passive: true });
+    hero.addEventListener('touchend', function(e) {
+      if (_touchX === null) return;
+      var dx = e.changedTouches[0].clientX - _touchX;
+      if (Math.abs(dx) > 40) goSlide(_si + (dx < 0 ? 1 : -1));
+      _touchX = null;
+    }, { passive: true });
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
-    initStripe();
-    var hero = document.querySelector('.voucher-hero');
-    if (hero) {
-      hero.addEventListener('touchstart', function(e) { _touchX = e.touches[0].clientX; }, { passive: true });
-      hero.addEventListener('touchend', function(e) {
-        if (_touchX === null) return;
-        var dx = e.changedTouches[0].clientX - _touchX;
-        if (Math.abs(dx) > 40) goSlide(_si + (dx < 0 ? 1 : -1));
-        _touchX = null;
-      }, { passive: true });
-    }
-    var customAmt = document.getElementById('custom-amt');
-    if (customAmt) customAmt.addEventListener('input', function() { tipAmt = parseInt(this.value) || 0; });
-    var sname = document.getElementById('sname');
-    if (sname) sname.addEventListener('input', syncSubtitle);
-    _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
+  var ca = document.getElementById('custom-amt');
+  if (ca) ca.addEventListener('input', function() {
+    var v = parseInt(this.value);
+    if (v > 0) tipAmt = v;
   });
+
+  var sn = document.getElementById('sname');
+  if (sn) sn.addEventListener('input', syncSubtitle);
+
+  _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
+});
 </script>
 </body>
 </html>
