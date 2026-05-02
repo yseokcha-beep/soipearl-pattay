@@ -6,8 +6,7 @@
   <title>Soi 6 Pattaya — Staff Gratuity</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-  <script src="https://js.stripe.com/v3/" defer></script>
-  <script>
+    <script>
   // ══ 변수 ══
   var selectedBar = null;
   var tipAmt = 630;
@@ -73,7 +72,7 @@
     if (amt > 0) {
       var feeDom = calcFee(amt, false);
       var feeIntl = calcFee(amt, true);
-      note.innerHTML = 'Processing fee: <span>฿' + feeDom + '</span> Thai card &nbsp;/&nbsp; <span>฿' + feeIntl + '</span> International card';
+      note.innerHTML = 'Processing fee: 3.91% Thai card / 6.05% International card (incl. VAT)';
     } else {
       note.innerHTML = 'Stripe fee: 3.65%+฿10 (Thai) / 4.75%+฿10+2% (International)';
     }
@@ -109,7 +108,7 @@
     if (result.error) {
       document.getElementById('card-err').textContent = result.error.message;
       btn.disabled = false;
-      btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
       return;
     }
     var fee = calcFee(tipAmt, true);
@@ -135,7 +134,7 @@
       }
     }
     btn.disabled = false;
-    btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
+    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
   }
 
   function resetAll() {
@@ -151,7 +150,7 @@
     document.getElementById('form-desc').textContent = 'Select a bar and enter a staff name above.';
     var btn = document.getElementById('sub-btn');
     btn.disabled = false;
-    btn.innerHTML = 'Send Tip <span class="submit-arrow">→</span>';
+    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
     document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.toggle('on', b.dataset.v === '630'); });
     document.getElementById('custom-row').style.display = 'none';
     updateFeeNote();
@@ -920,9 +919,9 @@
         <div class="stripe-wrap" id="stripe-wrap"></div>
         <div id="card-err"></div>
 
-        <p class="fee-note" id="fee-note">Stripe fee: 3.65%+฿10 (Thai) / 4.75%+฿10+2% (International)</p>
+        <p class="fee-note" id="fee-note">Processing fee: 3.91% Thai card / 6.05% International card (incl. VAT)</p>
         <button class="submit-btn" id="sub-btn" onclick="submitPay()">
-          Send Tip <span class="submit-arrow">→</span>
+          Send a Drink <span class="submit-arrow">→</span>
         </button>
 
         <p class="form-note">All gratuities are non-refundable except for duplicate charges or processing errors.<br>Questions? <a href="mailto:thannalin22040@gmail.com">thannalin22040@gmail.com</a></p>
