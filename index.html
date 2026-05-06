@@ -1169,13 +1169,12 @@ function resetAll() {
   var cr = document.getElementById('custom-row');
   if (cr) cr.style.display = 'none';
   if (paymentElement) { paymentElement.destroy(); paymentElement = null; stripeElements = null; }
-  createIntentAndMount();
+  mountCardElement();
 }
 
 // ── Stripe ──
 var stripeElements = null;
 var paymentElement = null;
-var currentClientSecret = null;
 
 function initStripe() {
   if (typeof Stripe === 'undefined') {
@@ -1183,48 +1182,30 @@ function initStripe() {
     return;
   }
   stripe = Stripe('pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP');
-  // 페이지 로드 시 임시 PaymentIntent 생성해서 카드창 미리 표시
-  createIntentAndMount();
+  mountCardElement();
 }
 
-async function createIntentAndMount() {
-  try {
-    var res = await fetch('/.netlify/functions/pay', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: tipAmt || 630,
-        bar: selectedBar || 'Nikki Bar',
-        staffName: 'Staff',
-        staffNo: '',
-        fromName: 'Anonymous',
-        message: ''
-      })
-    });
-    var data = await res.json();
-    if (!data.clientSecret) return;
-    currentClientSecret = data.clientSecret;
+function mountCardElement() {
+  var mountEl = document.getElementById('stripe-wrap');
+  if (!mountEl) return;
+  mountEl.innerHTML = '';
 
-    var mountEl = document.getElementById('stripe-wrap');
-    if (!mountEl) return;
-    mountEl.innerHTML = '';
-
-    stripeElements = stripe.elements({
-      clientSecret: currentClientSecret,
-      appearance: {
-        theme: 'night',
-        variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' }
-      }
-    });
-    paymentElement = stripeElements.create('payment', { layout: 'tabs' });
-    paymentElement.mount('#stripe-wrap');
-    paymentElement.on('change', function(e) {
-      var err = document.getElementById('card-err');
-      if (err) err.textContent = e.error ? e.error.message : '';
-    });
-  } catch(e) {
-    console.error('Failed to init payment element:', e);
-  }
+  // 금액 없이 카드창만 먼저 표시 (appearance만 설정)
+  stripeElements = stripe.elements({
+    mode: 'payment',
+    amount: 63000, // 임시 기본값 (฿630), 실제 결제 시 새로 생성
+    currency: 'thb',
+    appearance: {
+      theme: 'night',
+      variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' }
+    }
+  });
+  paymentElement = stripeElements.create('payment', { layout: 'tabs' });
+  paymentElement.mount('#stripe-wrap');
+  paymentElement.on('change', function(e) {
+    var err = document.getElementById('card-err');
+    if (err) err.textContent = e.error ? e.error.message : '';
+  });
 }
 
 async function submitPay() {
@@ -1249,7 +1230,7 @@ async function submitPay() {
   var total = tipAmt + fee;
 
   try {
-    // 실제 금액/정보로 새 PaymentIntent 생성
+    // 버튼 클릭 시에만 PaymentIntent 생성
     var payRes = await fetch('/.netlify/functions/pay', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1263,6 +1244,7 @@ async function submitPay() {
       })
     });
     var payData = await payRes.json();
+
     if (!payData.clientSecret) {
       var ce = document.getElementById('card-err');
       if (ce) ce.textContent = payData.error || 'Payment failed. Please try again.';
@@ -1271,12 +1253,12 @@ async function submitPay() {
       return;
     }
 
-    // elements를 새 clientSecret으로 업데이트
-    stripeElements.fetchUpdates && await stripeElements.fetchUpdates();
-    await stripeElements.update({ clientSecret: payData.clientSecret });
+    // elements를 실제 금액으로 업데이트
+    await stripeElements.update({ amount: total * 100 });
 
     var result = await stripe.confirmPayment({
       elements: stripeElements,
+      clientSecret: payData.clientSecret,
       confirmParams: {
         payment_method_data: { billing_details: { name: nameVal } },
         return_url: window.location.href
