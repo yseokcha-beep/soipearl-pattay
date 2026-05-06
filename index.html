@@ -1168,38 +1168,42 @@ function resetAll() {
   document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.toggle('on', b.dataset.v === '630'); });
   var cr = document.getElementById('custom-row');
   if (cr) cr.style.display = 'none';
-  if (cardElement) cardElement.clear();
+  if (paymentElement) { paymentElement.destroy(); paymentElement = null; stripeElements = null; }
 }
 
 // ── Stripe ──
+var stripeElements = null;
+var paymentElement = null;
+
 function initStripe() {
   if (typeof Stripe === 'undefined') {
     setTimeout(initStripe, 200);
     return;
   }
   stripe = Stripe('pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP');
-  var elements = stripe.elements({
+}
+
+async function mountPaymentElement(clientSecret) {
+  var mountEl = document.getElementById('stripe-wrap');
+  if (!mountEl) return;
+  mountEl.innerHTML = '';
+  stripeElements = stripe.elements({
+    clientSecret: clientSecret,
     appearance: {
       theme: 'night',
       variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' }
     }
   });
-  cardElement = elements.create('card', {
-    style: { base: { color: '#f0ebe3', fontSize: '15px', '::placeholder': { color: 'rgba(240,235,227,0.35)' } } },
-    hidePostalCode: true
+  paymentElement = stripeElements.create('payment', { layout: 'tabs' });
+  paymentElement.mount('#stripe-wrap');
+  paymentElement.on('change', function(e) {
+    var err = document.getElementById('card-err');
+    if (err) err.textContent = e.error ? e.error.message : '';
   });
-  var mountEl = document.getElementById('stripe-wrap');
-  if (mountEl) {
-    cardElement.mount('#stripe-wrap');
-    cardElement.on('change', function(e) {
-      var err = document.getElementById('card-err');
-      if (err) err.textContent = e.error ? e.error.message : '';
-    });
-  }
 }
 
 async function submitPay() {
-  if (!stripe || !cardElement) { alert('Payment system loading, please wait.'); return; }
+  if (!stripe) { alert('Payment system loading, please wait.'); return; }
   if (!selectedBar) { alert('Please select a bar first.'); return; }
   if (!tipAmt || tipAmt < 20) { alert('Minimum amount is 20 THB.'); return; }
 
@@ -1220,20 +1224,11 @@ async function submitPay() {
   var total = tipAmt + fee;
 
   try {
-    var tokenResult = await stripe.createToken(cardElement, { name: nameVal });
-    if (tokenResult.error) {
-      var ce = document.getElementById('card-err');
-      if (ce) ce.textContent = tokenResult.error.message;
-      btn.disabled = false;
-      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-      return;
-    }
-
+    // Step 1: 서버에서 PaymentIntent 생성
     var payRes = await fetch('/.netlify/functions/pay', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        token: tokenResult.token.id,
         amount: tipAmt,
         bar: selectedBar,
         staffName: staffName,
@@ -1245,9 +1240,30 @@ async function submitPay() {
 
     var payData = await payRes.json();
 
-    if (!payData.success) {
+    if (!payData.clientSecret) {
       var ce = document.getElementById('card-err');
       if (ce) ce.textContent = payData.error || 'Payment failed. Please try again.';
+      btn.disabled = false;
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+      return;
+    }
+
+    // Step 2: Payment Element 마운트
+    await mountPaymentElement(payData.clientSecret);
+
+    // Step 3: 결제 확인
+    var result = await stripe.confirmPayment({
+      elements: stripeElements,
+      confirmParams: {
+        payment_method_data: { billing_details: { name: nameVal } },
+        return_url: window.location.href
+      },
+      redirect: 'if_required'
+    });
+
+    if (result.error) {
+      var ce = document.getElementById('card-err');
+      if (ce) ce.textContent = result.error.message;
       btn.disabled = false;
       btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
       return;
@@ -1285,7 +1301,7 @@ async function submitPay() {
       var now = new Date();
       var dateStr = now.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) + ', ' + now.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
       if (rdate) rdate.textContent = dateStr;
-      if (rref && payData.chargeId) rref.textContent = 'Ref: ' + payData.chargeId;
+      if (rref && result.paymentIntent) rref.textContent = 'Ref: ' + result.paymentIntent.id;
     }
 
   } catch(e) {
