@@ -919,7 +919,7 @@
         <div class="stripe-wrap" id="stripe-wrap"></div>
         <div id="card-err"></div>
 
-        <p class="fee-note" id="fee-note">Processing fee: 3.91% Thai card / 6.05% International card (incl. VAT)</p>
+        <p class="fee-note" id="fee-note">Processing fee: 6.75% + ฿10 (incl. VAT)</p>
         <button class="submit-btn" id="sub-btn" onclick="submitPay()">
           Send a Drink <span class="submit-arrow">→</span>
         </button>
@@ -1087,12 +1087,11 @@
 var selectedBar = null;
 var tipAmt = 630;
 var stripe = null;
-var cardElement = null;
+
 
 // ── 수수료 계산 ──
 function calcFee(amt) {
-  // 해외카드 기준: (3.65% + 2%) x 1.07 VAT = 6.05%
-  return Math.ceil(amt * 0.0605);
+  return Math.ceil(amt * 0.0675 + 10);
 }
 
 // ── Navigation ──
@@ -1253,8 +1252,18 @@ async function submitPay() {
       return;
     }
 
-    // elements를 실제 금액으로 업데이트
+    // elements 금액을 실제값으로 업데이트
     await stripeElements.update({ amount: total * 100 });
+
+    // 카드 정보 먼저 검증
+    var submitResult = await stripeElements.submit();
+    if (submitResult.error) {
+      var ce = document.getElementById('card-err');
+      if (ce) ce.textContent = submitResult.error.message;
+      btn.disabled = false;
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+      return;
+    }
 
     var result = await stripe.confirmPayment({
       elements: stripeElements,
