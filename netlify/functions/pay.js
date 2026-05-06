@@ -4,11 +4,10 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
-
   try {
-    const { token, amount, bar, staffName, staffNo, fromName, message } = JSON.parse(event.body);
+    const { amount, bar, staffName, staffNo, fromName, message } = JSON.parse(event.body);
 
-    if (!token || !amount || amount < 20) {
+    if (!amount || amount < 20) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Invalid payment details' })
@@ -18,10 +17,10 @@ exports.handler = async (event) => {
     const fee = Math.ceil(amount * 0.0675 + 10);
     const total = amount + fee;
 
-    const charge = await stripe.charges.create({
+    const paymentIntent = await stripe.paymentIntents.create({
       amount: total * 100,
       currency: 'thb',
-      source: token,
+      automatic_payment_methods: { enabled: true },
       description: `Drink purchase at ${bar} for ${staffName}`,
       metadata: {
         bar: bar || '',
@@ -36,9 +35,11 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, chargeId: charge.id })
+      body: JSON.stringify({ 
+        success: true, 
+        clientSecret: paymentIntent.client_secret 
+      })
     };
-
   } catch (err) {
     return {
       statusCode: 400,
