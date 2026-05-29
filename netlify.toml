@@ -10,5 +10,12 @@
   for = "/netlify/functions/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Access-Control-Allow-Methods = "GET, POST, PATCH, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type"
+
+# Stripe 웹훅 raw body 유지
+[functions]
+  node_bundler = "esbuild"
+
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
