@@ -304,51 +304,34 @@
     renderFeed();
   }
 
-  // ── SSE ──
+  // ── POLLING ──
   function setConnected(ok) {
     ['live-dot','conn-dot'].forEach(function(id){ document.getElementById(id).classList.toggle('off',!ok); });
     document.getElementById('live-label').textContent = ok ? 'Live' : 'Reconnecting...';
-    document.getElementById('conn-label').textContent = ok ? 'Connected — receiving live orders' : 'Connection lost — retrying...';
+    document.getElementById('conn-label').textContent = ok ? 'Connected — checking every 5 seconds' : 'Connection lost — retrying...';
+  }
+
+  function poll() {
+    fetch('/.netlify/functions/webhook')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        setConnected(true);
+        var newOrders = data.orders || [];
+        // done 상태 로컬 반영
+        newOrders.forEach(function(o) {
+          var local = orders.find(function(l){ return l.id === o.id; });
+          if (local && local.done) o.done = true;
+        });
+        orders = newOrders;
+        updateStats();
+        renderFeed();
+      })
+      .catch(function() { setConnected(false); });
   }
 
   function startDashboard() {
-    evtSource = new EventSource('/.netlify/functions/webhook');
-    evtSource.onopen = function(){ setConnected(true); };
-
-    // load today's existing orders on connect
-    evtSource.addEventListener('init', function(e) {
-      try {
-        var data = JSON.parse(e.data);
-        orders = data.orders || [];
-        updateStats();
-        renderFeed();
-      } catch(err){}
-    });
-
-    // new payment
-    evtSource.addEventListener('payment', function(e) {
-      try {
-        var o = JSON.parse(e.data);
-        orders.unshift(o);
-        updateStats();
-        renderFeed();
-      } catch(err){}
-    });
-
-    // mark done from another device
-    evtSource.addEventListener('done', function(e) {
-      try {
-        var data = JSON.parse(e.data);
-        var order = orders.find(function(o){ return o.id === data.id; });
-        if (order) { order.done = true; updateStats(); renderFeed(); }
-      } catch(err){}
-    });
-
-    evtSource.onerror = function(){
-      setConnected(false);
-      evtSource.close();
-      setTimeout(startDashboard, 3000);
-    };
+    poll();
+    setInterval(poll, 5000);
   }
 
   setInterval(function(){

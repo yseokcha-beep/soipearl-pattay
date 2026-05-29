@@ -226,12 +226,35 @@
     });
   }
 
+  var lastSeenId = null;
+
+  function poll() {
+    fetch('/.netlify/functions/webhook')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var orders = data.orders || [];
+        if (orders.length === 0) return;
+        var newest = orders[0];
+        if (newest.id !== lastSeenId) {
+          // 새 주문들만 팝업
+          var newOnes = [];
+          for (var i = 0; i < orders.length; i++) {
+            if (orders[i].id === lastSeenId) break;
+            newOnes.push(orders[i]);
+          }
+          newOnes.reverse().forEach(function(o) {
+            showPopup(o);
+            addRecent(o);
+          });
+          lastSeenId = newest.id;
+        }
+      })
+      .catch(function(){});
+  }
+
   function connect() {
-    evtSource = new EventSource('/.netlify/functions/events');
-    evtSource.addEventListener('payment', function(e) {
-      try { var d = JSON.parse(e.data); showPopup(d); addRecent(d); } catch(err){}
-    });
-    evtSource.onerror = function() { evtSource.close(); setTimeout(connect, 3000); };
+    poll();
+    setInterval(poll, 5000);
   }
 
   // TEST: overlay.html?test=N (N개 팝업)
