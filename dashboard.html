@@ -286,7 +286,7 @@
             '<div class="receipt-amt-label">Drink</div>' +
             '<div class="receipt-amount">฿' + (o.tip_amount||0).toLocaleString() + '</div>' +
           '</div>' +
-          '<button class="done-btn' + (isDone?' completed':'') + '" id="btn-'+o.id+'" onclick="markDone(''+o.id+'')">' +
+          '<button class="done-btn' + (isDone?' completed':'') + '" id="btn-'+o.id+'" onclick="markDone(\'' + o.id + '\')">' +
             (isDone ? '✓' : 'Done') +
           '</button>' +
         '</div>';
