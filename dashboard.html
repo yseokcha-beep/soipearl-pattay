@@ -65,44 +65,53 @@
     .tab.on{border-color:var(--amber);color:var(--amber);background:var(--amber-dim);}
 
     /* FEED */
-    .feed-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .feed-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
     .feed-label{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--smoke3);}
-    .feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+    .feed{display:flex;flex-direction:column;gap:8px;}
 
-    /* ORDER CARD */
-    .order-card{animation:slideIn .4s ease both;position:relative;}
-    @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
-    .order-card.done-card{opacity:.4;}
-    .order-card.done-card .receipt-box{border-color:rgba(240,235,227,.12);}
+    /* ORDER ROW — compact list */
+    .order-card{animation:slideIn .3s ease both;position:relative;}
+    @keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+    .order-card.done-card{opacity:.35;}
 
-    .new-badge{position:absolute;top:-7px;right:12px;z-index:2;background:var(--green);color:#fff;font-size:.48rem;letter-spacing:.15em;text-transform:uppercase;padding:2px 8px;font-weight:500;}
-    .pending-badge{position:absolute;top:-7px;left:12px;z-index:2;background:var(--red);color:#fff;font-size:.48rem;letter-spacing:.15em;text-transform:uppercase;padding:2px 8px;font-weight:500;}
+    .receipt-box{
+      background:var(--ink2);
+      border:1px solid var(--border2);
+      border-left:3px solid var(--amber);
+      padding:12px 14px;
+      position:relative;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .order-card.done-card .receipt-box{border-left-color:rgba(240,235,227,.2);}
 
-    .receipt-box{background:#111;border:1.5px solid var(--amber);padding:16px 16px;position:relative;}
-    .receipt-site{font-size:.55rem;letter-spacing:.12em;color:var(--smoke3);margin-bottom:4px;text-align:center;}
-    .receipt-icon{font-size:1.3rem;margin-bottom:4px;text-align:center;}
-    .receipt-confirmed{font-size:.5rem;letter-spacing:.2em;color:var(--amber);text-transform:uppercase;margin-bottom:10px;text-align:center;}
-    .receipt-line{border:none;border-top:1px solid rgba(212,168,67,0.15);margin:8px 0;}
-    .receipt-row{display:flex;justify-content:space-between;padding:3px 0;font-size:.75rem;}
-    .receipt-label{color:var(--smoke3);}
-    .receipt-value{color:var(--smoke);font-weight:500;text-align:right;max-width:160px;}
-    .receipt-total-row{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid rgba(212,168,67,0.25);margin-top:3px;}
-    .receipt-total-label{color:var(--smoke);font-weight:600;font-size:.8rem;}
-    .receipt-total-val{color:var(--amber);font-weight:700;font-size:.9rem;}
-    .receipt-ref{font-size:.55rem;color:var(--smoke3);margin-top:8px;word-break:break-all;text-align:center;}
-    .receipt-time{font-size:.6rem;color:var(--smoke3);text-align:center;margin-top:4px;}
+    .receipt-left{flex:1;min-width:0;}
+    .receipt-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+    .receipt-bar{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);}
+    .receipt-time-badge{font-size:.58rem;color:var(--smoke3);}
+    .receipt-main{font-size:.82rem;color:var(--smoke);font-weight:500;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .receipt-main span{color:var(--amber);}
+    .receipt-sub{font-size:.7rem;color:var(--smoke3);}
+
+    .receipt-right{flex-shrink:0;text-align:right;}
+    .receipt-amount{font-family:var(--serif);font-size:1.1rem;color:var(--amber);font-weight:700;}
+    .receipt-amt-label{font-size:.55rem;color:var(--smoke3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}
 
     /* DONE BUTTON */
     .done-btn{
-      margin-top:10px;width:100%;
+      flex-shrink:0;
       background:none;border:1px solid var(--green);
       color:var(--green);font-family:var(--body);
-      font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;
-      padding:8px;cursor:pointer;transition:all .2s;
+      font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;
+      padding:6px 10px;cursor:pointer;transition:all .2s;
+      white-space:nowrap;
     }
     .done-btn:hover{background:var(--green);color:#0d0d0d;}
-    .done-btn.completed{background:rgba(76,175,130,.08);border-color:rgba(76,175,130,.25);color:rgba(76,175,130,.45);cursor:default;pointer-events:none;}
-    .done-check{display:inline-block;margin-right:6px;}
+    .done-btn.completed{background:rgba(76,175,130,.08);border-color:rgba(76,175,130,.25);color:rgba(76,175,130,.4);cursor:default;pointer-events:none;}
+
+    .pending-dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;box-shadow:0 0 6px var(--red);}
+    .pending-dot.done{background:var(--green);box-shadow:0 0 6px var(--green);}
 
     .empty-state{text-align:center;padding:60px 20px;color:var(--smoke3);border:1px dashed var(--border);}
     .empty-icon{font-size:2rem;margin-bottom:12px;opacity:.4;}
@@ -263,24 +272,22 @@
       wrap.className = 'order-card' + (isDone ? ' done-card' : '');
       wrap.id = 'card-' + o.id;
       wrap.innerHTML =
-        (!isDone ? '<div class="pending-badge">⚠ Pending</div>' : '') +
         '<div class="receipt-box">' +
-          '<p class="receipt-site">pattayasoipearl.com</p>' +
-          '<div class="receipt-icon">🌸</div>' +
-          '<p class="receipt-confirmed">✦ Drink Confirmed ✦</p>' +
-          '<hr class="receipt-line">' +
-          '<div class="receipt-row"><span class="receipt-label">Bar</span><span class="receipt-value">'+(o.bar||'—')+'</span></div>' +
-          '<div class="receipt-row"><span class="receipt-label">Staff</span><span class="receipt-value">'+staffDisplay+'</span></div>' +
-          '<div class="receipt-row"><span class="receipt-label">From</span><span class="receipt-value">'+(o.from||'Anonymous')+'</span></div>' +
-          (o.message ? '<div class="receipt-row"><span class="receipt-label">Message</span><span class="receipt-value">"'+o.message+'"</span></div>' : '') +
-          '<hr class="receipt-line">' +
-          '<div class="receipt-row"><span class="receipt-label">Drink Amount</span><span class="receipt-value">฿'+(o.tip_amount||0).toLocaleString()+'</span></div>' +
-          '<div class="receipt-row"><span class="receipt-label">Processing Fee</span><span class="receipt-value">฿'+fee.toLocaleString()+'</span></div>' +
-          '<div class="receipt-total-row"><span class="receipt-total-label">Total Charged</span><span class="receipt-total-val">฿'+total.toLocaleString()+'</span></div>' +
-          (o.payment_intent ? '<p class="receipt-ref">Ref: '+o.payment_intent+'</p>' : '') +
-          '<p class="receipt-time">'+formatTime(o.time)+'</p>' +
-          '<button class="done-btn'+(isDone?' completed':'')+'" id="btn-'+o.id+'" onclick="markDone(\''+o.id+'\')">' +
-            '<span class="done-check">'+(isDone?'✓':'')+'</span>'+(isDone?'Delivered':'Mark as Delivered') +
+          '<div class="' + (isDone ? 'pending-dot done' : 'pending-dot') + '"></div>' +
+          '<div class="receipt-left">' +
+            '<div class="receipt-top">' +
+              '<span class="receipt-bar">' + (o.bar||'—') + '</span>' +
+              '<span class="receipt-time-badge">' + formatTime(o.time) + '</span>' +
+            '</div>' +
+            '<div class="receipt-main"><span>' + (o.from||'Anon') + '</span> → ' + staffDisplay + '</div>' +
+            (o.message ? '<div class="receipt-sub">"' + o.message + '"</div>' : '') +
+          '</div>' +
+          '<div class="receipt-right">' +
+            '<div class="receipt-amt-label">Drink</div>' +
+            '<div class="receipt-amount">฿' + (o.tip_amount||0).toLocaleString() + '</div>' +
+          '</div>' +
+          '<button class="done-btn' + (isDone?' completed':'') + '" id="btn-'+o.id+'" onclick="markDone(''+o.id+'')">' +
+            (isDone ? '✓' : 'Done') +
           '</button>' +
         '</div>';
 
