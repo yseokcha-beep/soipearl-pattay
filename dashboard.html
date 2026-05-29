@@ -292,19 +292,21 @@
   function markDone(id) {
     var order = orders.find(function(o){ return o.id === id; });
     if (!order || order.done) return;
-
-    fetch('/.netlify/functions/webhook', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id })
-    });
-
+    saveDoneId(id);
     order.done = true;
     updateStats();
     renderFeed();
   }
 
   // ── POLLING ──
+  function getDoneIds() {
+    try { return JSON.parse(localStorage.getItem('doneIds') || '[]'); } catch(e) { return []; }
+  }
+  function saveDoneId(id) {
+    var ids = getDoneIds();
+    if (!ids.includes(id)) { ids.push(id); localStorage.setItem('doneIds', JSON.stringify(ids)); }
+  }
+
   function setConnected(ok) {
     ['live-dot','conn-dot'].forEach(function(id){ document.getElementById(id).classList.toggle('off',!ok); });
     document.getElementById('live-label').textContent = ok ? 'Live' : 'Reconnecting...';
@@ -316,11 +318,10 @@
       .then(function(r){ return r.json(); })
       .then(function(data) {
         setConnected(true);
+        var doneIds = getDoneIds();
         var newOrders = data.orders || [];
-        // done 상태 로컬 반영
         newOrders.forEach(function(o) {
-          var local = orders.find(function(l){ return l.id === o.id; });
-          if (local && local.done) o.done = true;
+          if (doneIds.includes(o.id)) o.done = true;
         });
         orders = newOrders;
         updateStats();
