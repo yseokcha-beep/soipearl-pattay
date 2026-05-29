@@ -1,47 +1,63 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { getStore } = require('@netlify/blobs');
 
-// In-memory store for SSE clients and today's orders
-let clients = [];
-let todayOrders = [];
-let lastDate = new Date().toDateString();
+function getTodayKey() {
+  const d = new Date();
+  return `orders-${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
 
-function resetIfNewDay() {
-  const today = new Date().toDateString();
-  if (today !== lastDate) {
-    todayOrders = [];
-    lastDate = today;
+async function getOrders(store) {
+  try {
+    const raw = await store.get(getTodayKey());
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch(e) { return []; }
+}
+
+async function saveOrders(store, orders) {
+  await store.set(getTodayKey(), JSON.stringify(orders));
+}
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
   }
-}
 
-function broadcast(event, data) {
-  const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-  clients = clients.filter(client => {
-    try { client.res.write(msg); return true; }
-    catch(e) { return false; }
-  });
-}
+  const store = getStore({ name: 'orders', consistency: 'strong' });
 
-// SSE endpoint — dashboard & overlay connect here
-exports.handler = async (event, context) => {
-  context.callbackWaitsForEmptyEventLoop = false;
-
-  // GET /events → SSE stream
-  if (event.httpMethod === 'GET' && event.path.includes('events')) {
-    resetIfNewDay();
+  // GET → 오늘 주문 목록 반환
+  if (event.httpMethod === 'GET') {
+    const orders = await getOrders(store);
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: `event: init\ndata: ${JSON.stringify({ orders: todayOrders })}\n\n`,
-      isBase64Encoded: false,
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orders }),
     };
   }
 
-  // POST /webhook → Stripe webhook
+  // PATCH → 주문 done 처리
+  if (event.httpMethod === 'PATCH') {
+    const { id } = JSON.parse(event.body || '{}');
+    const orders = await getOrders(store);
+    const order = orders.find(o => o.id === id);
+    if (order) {
+      order.done = true;
+      await saveOrders(store, orders);
+    }
+    return {
+      statusCode: 200,
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ok: true }),
+    };
+  }
+
+  // POST → Stripe 웹훅
   if (event.httpMethod === 'POST') {
     const sig = event.headers['stripe-signature'];
     let stripeEvent;
@@ -53,11 +69,11 @@ exports.handler = async (event, context) => {
         process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err) {
+      console.error('Webhook signature error:', err.message);
       return { statusCode: 400, body: `Webhook Error: ${err.message}` };
     }
 
     if (stripeEvent.type === 'payment_intent.succeeded') {
-      resetIfNewDay();
       const pi = stripeEvent.data.object;
       const m = pi.metadata || {};
 
@@ -75,37 +91,17 @@ exports.handler = async (event, context) => {
         done: false,
       };
 
-      todayOrders.unshift(order);
-      broadcast('payment', order);
+      const orders = await getOrders(store);
+      orders.unshift(order);
+      await saveOrders(store, orders);
+
+      console.log('Order saved:', order.id, order.from, '→', order.staff_name);
     }
 
-    return { statusCode: 200, body: JSON.stringify({ received: true }) };
-  }
-
-  // PATCH /webhook → mark order as done
-  if (event.httpMethod === 'PATCH') {
-    const { id } = JSON.parse(event.body || '{}');
-    const order = todayOrders.find(o => o.id === id);
-    if (order) {
-      order.done = true;
-      broadcast('done', { id });
-    }
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ ok: true }),
-    };
-  }
-
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-      body: '',
+      headers,
+      body: JSON.stringify({ received: true }),
     };
   }
 
