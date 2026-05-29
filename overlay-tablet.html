@@ -2,62 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="viewport" content="width=1280, initial-scale=1.0"/>
   <title>Overlay Tablet</title>
-
   <style>
     :root {
       --amber: #d4a843;
       --smoke: #f0ebe3;
-      --smoke3: rgba(240,235,227,.3);
-      --serif: Georgia, 'Times New Roman', serif;
-      --body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      --smoke3: rgba(240,235,227,.35);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       background: transparent;
-      font-family: var(--body);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
       width: 100vw; height: 100vh;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: geometricPrecision;
-      image-rendering: -webkit-optimize-contrast;
     }
-
-    /* 모든 텍스트 선명도 강화 */
-    * {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: geometricPrecision;
-    }
+    * { -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; }
 
     /* ── TICKER BAR ── */
     .ticker-bar {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      height: 72px;
+      height: 60px;
       background: rgba(4,4,4,1);
-      border-top: 3px solid rgba(212,168,67,.9);
+      border-top: 2px solid rgba(212,168,67,.8);
       display: flex;
       align-items: center;
       overflow: hidden;
     }
     .ticker-pill {
       flex-shrink: 0;
-      display: flex; align-items: center; gap: 10px;
-      padding: 0 24px 0 20px;
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 20px 0 16px;
       height: 100%;
-      background: rgba(212,168,67,.18);
-      border-right: 1.5px solid rgba(212,168,67,.4);
-      font-size: .78rem; letter-spacing: .24em; text-transform: uppercase;
-      color: var(--amber); font-weight: 600;
+      background: rgba(212,168,67,.2);
+      border-right: 1.5px solid rgba(212,168,67,.5);
+      font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--amber); font-weight: 700;
       white-space: nowrap;
     }
     .ticker-pill .dot {
-      width: 7px; height: 7px; border-radius: 50%;
+      width: 6px; height: 6px; border-radius: 50%;
       background: var(--amber);
-      box-shadow: 0 0 8px var(--amber);
+      box-shadow: 0 0 6px var(--amber);
       animation: blink 2s infinite;
       flex-shrink: 0;
     }
@@ -71,100 +61,103 @@
     .ticker-track {
       display: flex; align-items: center;
       white-space: nowrap;
-      animation: scroll 22s linear infinite;
+      animation: scroll 20s linear infinite;
     }
     @keyframes scroll {
       from { transform: translateX(0); }
       to   { transform: translateX(-50%); }
     }
     .ticker-item {
-      display: inline-flex; align-items: center; gap: 12px;
-      padding: 0 50px;
-      font-size: 1.05rem;
-      color: rgba(240,235,227,.92);
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 0 40px;
+      font-size: .88rem;
+      color: rgba(240,235,227,.95);
       letter-spacing: .02em;
       font-weight: 500;
     }
     .ticker-item .site {
-      font-family: var(--serif); font-style: italic;
-      color: var(--amber); font-size: 1.15rem;
+      font-style: italic;
+      color: var(--amber); font-size: .95rem;
       font-weight: 700;
     }
     .ticker-item .price {
-      color: #fff; font-weight: 600; font-size: 1.05rem;
+      color: #fff; font-weight: 700;
     }
-    .ticker-sep { color: rgba(212,168,67,.4); }
+    .ticker-sep { color: rgba(212,168,67,.5); }
 
     /* ── POPUP — bottom left ── */
     #popup-wrap {
       position: fixed;
-      bottom: 85px; left: 24px;
-      display: flex; flex-direction: column; gap: 10px;
+      bottom: 72px; left: 20px;
+      display: flex; flex-direction: column; gap: 8px;
       z-index: 100;
     }
-    .popup { animation: popIn .5s cubic-bezier(.175,.885,.32,1.275) both; }
+    .popup { animation: popIn .45s cubic-bezier(.175,.885,.32,1.275) both; }
     @keyframes popIn {
-      from { opacity:0; transform: translateX(-18px) scale(.94); }
+      from { opacity:0; transform: translateX(-16px) scale(.95); }
       to   { opacity:1; transform: translateX(0) scale(1); }
     }
-    .popup.hide { animation: popOut .4s ease forwards; }
+    .popup.hide { animation: popOut .35s ease forwards; }
     @keyframes popOut {
       from { opacity:1; transform: translateX(0); }
       to   { opacity:0; transform: translateX(-12px); }
     }
 
     .receipt-box {
-      background: rgba(8,6,4,.99);
+      background: rgba(8,6,4,.98);
       border: 2px solid var(--amber);
-      padding: 12px 14px;
-      width: 170px;
-      backdrop-filter: blur(16px);
-      box-shadow: 0 8px 28px rgba(0,0,0,.8);
+      padding: 10px 12px;
+      width: 155px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.85);
     }
-    .receipt-site  { font-size:.48rem; letter-spacing:.12em; color:var(--smoke3); margin-bottom:3px; text-align:center; }
-    .receipt-icon  { font-size:1.1rem; margin-bottom:3px; text-align:center; }
-    .receipt-confirmed { font-size:.38rem; letter-spacing:.2em; color:var(--amber); text-transform:uppercase; margin-bottom:8px; text-align:center; font-weight:600; }
-    .receipt-line  { border:none; border-top:1px solid rgba(212,168,67,.15); margin:6px 0; }
-    .receipt-row   { display:flex; justify-content:space-between; padding:2px 0; font-size:.58rem; }
+    .receipt-site  { font-size:.42rem; letter-spacing:.1em; color:var(--smoke3); margin-bottom:3px; text-align:center; text-transform:uppercase; }
+    .receipt-icon  { font-size:.95rem; margin-bottom:3px; text-align:center; }
+    .receipt-confirmed { font-size:.35rem; letter-spacing:.18em; color:var(--amber); text-transform:uppercase; margin-bottom:7px; text-align:center; font-weight:700; }
+    .receipt-line  { border:none; border-top:1px solid rgba(212,168,67,.2); margin:5px 0; }
+    .receipt-row   { display:flex; justify-content:space-between; padding:2px 0; font-size:.52rem; }
     .receipt-label { color:var(--smoke3); }
-    .receipt-value { color:var(--smoke); font-weight:500; max-width:100px; text-align:right; word-break:break-word; }
-    .receipt-total-row { display:flex; justify-content:space-between; padding:4px 0; border-top:1px solid rgba(212,168,67,.22); margin-top:2px; }
-    .receipt-total-label { color:var(--smoke); font-weight:600; font-size:.6rem; }
-    .receipt-total-val   { color:var(--amber); font-weight:700; font-size:.68rem; }
+    .receipt-value { color:var(--smoke); font-weight:600; max-width:90px; text-align:right; word-break:break-word; }
+    .receipt-total-row { display:flex; justify-content:space-between; padding:4px 0; border-top:1px solid rgba(212,168,67,.25); margin-top:2px; }
+    .receipt-total-label { color:var(--smoke); font-weight:700; font-size:.55rem; }
+    .receipt-total-val   { color:var(--amber); font-weight:700; font-size:.62rem; }
 
-    /* ── RECENT — top right ── */
+    /* ── MESSAGE NOTIFICATION — top right ── */
     #recent-wrap {
       position: fixed;
-      top: 28px; right: 28px;
-      width: 240px;
-      display: flex; flex-direction: column; gap: 5px;
-    }
-    .recent-label {
-      font-size:.58rem; letter-spacing:.2em; text-transform:uppercase;
-      color:rgba(212,168,67,.55); margin-bottom:4px; text-align:right;
-      font-weight: 500;
+      top: 20px; right: 20px;
+      width: 220px;
+      display: flex; flex-direction: column; gap: 7px;
     }
     .recent-item {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:7px 11px;
-      background:rgba(8,8,8,.88);
-      border:1px solid rgba(212,168,67,.18);
-      backdrop-filter:blur(10px);
-      animation: fadeIn .35s ease both;
+      display:flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      background:rgba(6,6,6,.94);
+      border:1px solid rgba(212,168,67,.3);
+      border-left: 3px solid var(--amber);
+      animation: slideInRight .4s cubic-bezier(.175,.885,.32,1.275) both;
     }
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-    .recent-name { font-size:.72rem; color:rgba(240,235,227,.72); }
-    .recent-name span { color:var(--amber); font-weight:500; }
-    .recent-amt { font-size:.72rem; color:rgba(212,168,67,.85); font-weight:600; }
+    .recent-item.hide {
+      animation: slideOutRight .35s ease forwards;
+    }
+    @keyframes slideInRight {
+      from { opacity:0; transform: translateX(16px); }
+      to   { opacity:1; transform: translateX(0); }
+    }
+    @keyframes slideOutRight {
+      from { opacity:1; transform: translateX(0); }
+      to   { opacity:0; transform: translateX(16px); }
+    }
+    .recent-icon { font-size:.95rem; flex-shrink:0; }
+    .recent-body { flex:1; min-width:0; }
+    .recent-name { font-size:.65rem; color:rgba(240,235,227,.88); line-height:1.4; font-weight:500; }
+    .recent-name strong { color:var(--amber); font-weight:700; }
+    .recent-amt { font-size:.68rem; color:var(--amber); font-weight:700; margin-top:2px; }
   </style>
 </head>
 <body>
 
 <div id="popup-wrap"></div>
-
-<div id="recent-wrap">
-  <div class="recent-label" id="recent-label" style="display:none">Recent</div>
-</div>
+<div id="recent-wrap"></div>
 
 <div class="ticker-bar">
   <div class="ticker-pill">
@@ -187,17 +180,15 @@
   }
 
   var track = document.getElementById('ticker-track');
-  var msg = getMsg();
   var html = '';
   for (var i = 0; i < 6; i++) {
-    html += '<span class="ticker-item">' + msg + '</span>';
+    html += '<span class="ticker-item">' + getMsg() + '</span>';
   }
   track.innerHTML = html;
 
-  var recentOrders = [];
   var lastSeenId = null;
-  var evtSource = null;
   var POPUP_DURATION = 30 * 1000;
+  var MSG_DURATION = 3 * 60 * 1000;
 
   function showPopup(data) {
     var staffDisplay = (data.staff_name || '—') + (data.staff_no ? ' #' + data.staff_no : '');
@@ -212,32 +203,33 @@
         '<div class="receipt-row"><span class="receipt-label">Bar</span><span class="receipt-value">' + (data.bar||'—') + '</span></div>' +
         '<div class="receipt-row"><span class="receipt-label">Staff</span><span class="receipt-value">' + staffDisplay + '</span></div>' +
         '<div class="receipt-row"><span class="receipt-label">From</span><span class="receipt-value">' + (data.from||'Anonymous') + '</span></div>' +
-        (data.message ? '<div class="receipt-row"><span class="receipt-label">Message</span><span class="receipt-value">"' + data.message + '"</span></div>' : '') +
+        (data.message ? '<div class="receipt-row"><span class="receipt-label">Msg</span><span class="receipt-value">"' + data.message + '"</span></div>' : '') +
         '<hr class="receipt-line">' +
         '<div class="receipt-total-row"><span class="receipt-total-label">Drink Amount</span><span class="receipt-total-val">฿' + (data.tip_amount||0).toLocaleString() + '</span></div>' +
       '</div>';
     document.getElementById('popup-wrap').appendChild(popup);
     setTimeout(function() {
       popup.classList.add('hide');
-      setTimeout(function() { popup.remove(); }, 500);
+      setTimeout(function() { popup.remove(); }, 400);
     }, POPUP_DURATION);
   }
 
   function addRecent(data) {
-    recentOrders.unshift(data);
-    if (recentOrders.length > 5) recentOrders.pop();
-    document.getElementById('recent-label').style.display = 'block';
+    var staff = (data.staff_name||'Staff') + (data.staff_no ? ' #'+data.staff_no : '');
     var wrap = document.getElementById('recent-wrap');
-    wrap.querySelectorAll('.recent-item').forEach(function(i){ i.remove(); });
-    recentOrders.forEach(function(o) {
-      var staff = (o.staff_name||'Staff') + (o.staff_no ? ' #'+o.staff_no : '');
-      var item = document.createElement('div');
-      item.className = 'recent-item';
-      item.innerHTML =
-        '<span class="recent-name"><span>' + (o.from||'Anon') + '</span> → ' + staff + '</span>' +
-        '<span class="recent-amt">฿' + (o.tip_amount||0).toLocaleString() + '</span>';
-      wrap.appendChild(item);
-    });
+    var item = document.createElement('div');
+    item.className = 'recent-item';
+    item.innerHTML =
+      '<div class="recent-icon">🍹</div>' +
+      '<div class="recent-body">' +
+        '<div class="recent-name"><strong>' + (data.from||'Anonymous') + '</strong> sent a drink to <strong>' + staff + '</strong></div>' +
+        '<div class="recent-amt">฿' + (data.tip_amount||0).toLocaleString() + ' · ' + (data.bar||'') + '</div>' +
+      '</div>';
+    wrap.appendChild(item);
+    setTimeout(function() {
+      item.classList.add('hide');
+      setTimeout(function() { item.remove(); }, 400);
+    }, MSG_DURATION);
   }
 
   function poll() {

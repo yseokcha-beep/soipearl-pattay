@@ -143,9 +143,7 @@
 <body>
 
 <div id="popup-wrap"></div>
-<div id="recent-wrap">
-  <div class="recent-label" id="recent-label" style="display:none">Recent</div>
-</div>
+<div id="recent-wrap"></div>
 
 <div class="ticker-bar">
   <div class="ticker-pill">
@@ -209,21 +207,24 @@
     }, POPUP_DURATION);
   }
 
+  var MSG_DURATION = 3 * 60 * 1000; // 3분
+
   function addRecent(data) {
-    recentOrders.unshift(data);
-    if (recentOrders.length > 5) recentOrders.pop();
-    document.getElementById('recent-label').style.display = 'block';
+    var staff = (data.staff_name||'Staff') + (data.staff_no ? ' #'+data.staff_no : '');
     var wrap = document.getElementById('recent-wrap');
-    wrap.querySelectorAll('.recent-item').forEach(function(i){ i.remove(); });
-    recentOrders.forEach(function(o) {
-      var staff = (o.staff_name||'Staff') + (o.staff_no ? ' #'+o.staff_no : '');
-      var item = document.createElement('div');
-      item.className = 'recent-item';
-      item.innerHTML =
-        '<span class="recent-name"><span>' + (o.from||'Anon') + '</span> → ' + staff + '</span>' +
-        '<span class="recent-amt">฿' + (o.tip_amount||0).toLocaleString() + '</span>';
-      wrap.appendChild(item);
-    });
+    var item = document.createElement('div');
+    item.className = 'recent-item';
+    item.innerHTML =
+      '<div class="recent-icon">🍹</div>' +
+      '<div class="recent-body">' +
+        '<div class="recent-name"><strong>' + (data.from||'Anonymous') + '</strong> sent a drink to <strong>' + staff + '</strong></div>' +
+        '<div class="recent-amt">฿' + (data.tip_amount||0).toLocaleString() + ' · ' + (data.bar||'') + '</div>' +
+      '</div>';
+    wrap.appendChild(item);
+    setTimeout(function() {
+      item.classList.add('hide');
+      setTimeout(function() { item.remove(); }, 400);
+    }, MSG_DURATION);
   }
 
   var lastSeenId = null;
