@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=1280, initial-scale=1.0"/>
+  <meta name="viewport" content="width=1920, initial-scale=1.0"/>
   <title>Overlay Tablet</title>
   <style>
     :root {
@@ -125,12 +125,12 @@
     #recent-wrap {
       position: fixed;
       top: 20px; right: 20px;
-      width: 220px;
+      width: 320px;
       display: flex; flex-direction: column; gap: 7px;
     }
     .recent-item {
       display:flex; align-items:center; gap:8px;
-      padding:10px 12px;
+      padding:14px 16px;
       background:rgba(6,6,6,.94);
       border:1px solid rgba(212,168,67,.3);
       border-left: 3px solid var(--amber);
@@ -147,11 +147,11 @@
       from { opacity:1; transform: translateX(0); }
       to   { opacity:0; transform: translateX(16px); }
     }
-    .recent-icon { font-size:.95rem; flex-shrink:0; }
+    .recent-icon { font-size:1.4rem; flex-shrink:0; }
     .recent-body { flex:1; min-width:0; }
-    .recent-name { font-size:.65rem; color:rgba(240,235,227,.88); line-height:1.4; font-weight:500; }
+    .recent-name { font-size:.92rem; color:rgba(240,235,227,.92); line-height:1.5; font-weight:500; }
     .recent-name strong { color:var(--amber); font-weight:700; }
-    .recent-amt { font-size:.68rem; color:var(--amber); font-weight:700; margin-top:2px; }
+    .recent-amt { font-size:.95rem; color:var(--amber); font-weight:700; margin-top:4px; }
   </style>
 </head>
 <body>
