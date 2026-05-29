@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=1440, initial-scale=1.0"/>
+  <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0"/>
   <title>Overlay Tablet</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
@@ -22,7 +22,15 @@
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
+      text-rendering: geometricPrecision;
+      image-rendering: -webkit-optimize-contrast;
+    }
+
+    /* 모든 텍스트 선명도 강화 */
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: geometricPrecision;
     }
 
     /* ── TICKER BAR ── */
@@ -30,8 +38,8 @@
       position: fixed;
       bottom: 0; left: 0; right: 0;
       height: 72px;
-      background: linear-gradient(90deg, rgba(8,8,8,.98) 0%, rgba(16,12,4,.99) 50%, rgba(8,8,8,.98) 100%);
-      border-top: 2.5px solid rgba(212,168,67,.7);
+      background: rgba(4,4,4,1);
+      border-top: 3px solid rgba(212,168,67,.9);
       display: flex;
       align-items: center;
       overflow: hidden;
@@ -76,7 +84,7 @@
       font-size: 1.05rem;
       color: rgba(240,235,227,.92);
       letter-spacing: .02em;
-      font-weight: 400;
+      font-weight: 500;
     }
     .ticker-item .site {
       font-family: var(--serif); font-style: italic;
@@ -107,8 +115,8 @@
     }
 
     .receipt-box {
-      background: rgba(12,10,8,.97);
-      border: 1.5px solid var(--amber);
+      background: rgba(8,6,4,.99);
+      border: 2px solid var(--amber);
       padding: 12px 14px;
       width: 170px;
       backdrop-filter: blur(16px);
