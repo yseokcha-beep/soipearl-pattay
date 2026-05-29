@@ -25,10 +25,10 @@
     /* ── TICKER BAR ── */
     .ticker-bar {
       position: fixed;
-      bottom: 0; left: 0; right: 0;
+      top: 0; left: 0; right: 0;
       height: 60px;
       background: rgba(4,4,4,1);
-      border-top: 2px solid rgba(212,168,67,.8);
+      border-bottom: 2px solid rgba(212,168,67,.8);
       display: flex;
       align-items: center;
       overflow: hidden;
@@ -88,7 +88,7 @@
     /* ── POPUP — bottom left ── */
     #popup-wrap {
       position: fixed;
-      bottom: 72px; left: 20px;
+      bottom: 20px; left: 20px;
       display: flex; flex-direction: column; gap: 8px;
       z-index: 100;
     }
@@ -124,7 +124,7 @@
     /* ── MESSAGE NOTIFICATION — top right ── */
     #recent-wrap {
       position: fixed;
-      top: 20px; right: 20px;
+      top: 80px; right: 20px;
       width: 320px;
       display: flex; flex-direction: column; gap: 7px;
     }
