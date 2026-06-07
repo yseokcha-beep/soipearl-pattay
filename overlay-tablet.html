@@ -27,7 +27,7 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 60px;
-      background: rgba(4,4,4,1);
+      background: rgba(4,4,4,0.2);
       border-bottom: 2px solid rgba(212,168,67,.8);
       display: flex;
       align-items: center;
@@ -41,7 +41,7 @@
       background: rgba(212,168,67,.2);
       border-right: 1.5px solid rgba(212,168,67,.5);
       font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
-      color: var(--amber); font-weight: 700;
+      color: var(--amber); font-weight: 800; text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
       white-space: nowrap;
     }
     .ticker-pill .dot {
@@ -61,7 +61,7 @@
     .ticker-track {
       display: flex; align-items: center;
       white-space: nowrap;
-      animation: scroll 20s linear infinite;
+      animation: scroll 30s linear infinite;
     }
     @keyframes scroll {
       from { transform: translateX(0); }
@@ -71,17 +71,17 @@
       display: inline-flex; align-items: center; gap: 10px;
       padding: 0 40px;
       font-size: .88rem;
-      color: rgba(240,235,227,.95);
+      color: rgba(255,255,255,1); font-weight: 700; text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
       letter-spacing: .02em;
       font-weight: 500;
     }
     .ticker-item .site {
       font-style: italic;
-      color: var(--amber); font-size: .95rem;
+      color: var(--amber); font-size: .95rem; font-weight: 800; text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
       font-weight: 700;
     }
     .ticker-item .price {
-      color: #fff; font-weight: 700;
+      color: #fff; font-weight: 800; text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
     }
     .ticker-sep { color: rgba(212,168,67,.5); }
 
@@ -188,7 +188,7 @@
 
   var lastSeenId = null;
   var POPUP_DURATION = 30 * 1000;
-  var MSG_DURATION = 3 * 60 * 1000;
+  var MSG_DURATION = 90 * 1000; // 1분30초
 
   function showPopup(data) {
     var staffDisplay = (data.staff_name || '—') + (data.staff_no ? ' #' + data.staff_no : '');
@@ -232,11 +232,19 @@
     }, MSG_DURATION);
   }
 
+  var initialized = false;
+
   function poll() {
     fetch('/.netlify/functions/webhook')
       .then(function(r){ return r.json(); })
       .then(function(data) {
         var orders = data.orders || [];
+        // 처음 켤 때는 기존 주문 무시하고 최신 ID만 저장
+        if (!initialized) {
+          initialized = true;
+          if (orders.length > 0) lastSeenId = orders[0].id;
+          return;
+        }
         if (orders.length === 0) return;
         var newest = orders[0];
         if (newest.id !== lastSeenId) {

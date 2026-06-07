@@ -26,9 +26,9 @@
     /* ── TICKER BAR ── */
     .ticker-bar {
       position: fixed;
-      bottom: 0; left: 0; right: 0;
+      top: 0; left: 0; right: 0;
       height: 90px;
-      background: linear-gradient(90deg, rgba(10,10,10,.97) 0%, rgba(20,16,8,.99) 50%, rgba(10,10,10,.97) 100%);
+      background: rgba(4,4,4,0.2);
       border-top: 2px solid rgba(212,168,67,.6);
       display: flex;
       align-items: center;
@@ -61,7 +61,7 @@
     .ticker-track {
       display: flex; align-items: center;
       white-space: nowrap;
-      animation: scroll 24s linear infinite;
+      animation: scroll 30s linear infinite;
     }
     @keyframes scroll {
       from { transform: translateX(0); }
@@ -70,7 +70,7 @@
     .ticker-item {
       display: inline-flex; align-items: center; gap: 14px;
       padding: 0 56px;
-      font-size: 1.3rem; color: rgba(240,235,227,.92);
+      font-size: 1.3rem; color: rgba(255,255,255,1); font-weight: 700; text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
       letter-spacing: .03em;
     }
     .ticker-item .site {
@@ -85,7 +85,7 @@
     /* ── POPUP ── */
     #popup-wrap {
       position: fixed;
-      bottom: 110px; left: 40px;
+      bottom: 20px; left: 40px;
       display: flex; flex-direction: column; gap: 14px;
       z-index: 100;
     }
@@ -207,7 +207,7 @@
     }, POPUP_DURATION);
   }
 
-  var MSG_DURATION = 3 * 60 * 1000; // 3분
+  var MSG_DURATION = 90 * 1000; // 1분30초 // 3분
 
   function addRecent(data) {
     var staff = (data.staff_name||'Staff') + (data.staff_no ? ' #'+data.staff_no : '');
@@ -228,16 +228,22 @@
   }
 
   var lastSeenId = null;
+  var initialized = false;
 
   function poll() {
     fetch('/.netlify/functions/webhook')
       .then(function(r){ return r.json(); })
       .then(function(data) {
         var orders = data.orders || [];
+        // 처음 켤 때는 기존 주문 무시하고 최신 ID만 저장
+        if (!initialized) {
+          initialized = true;
+          if (orders.length > 0) lastSeenId = orders[0].id;
+          return;
+        }
         if (orders.length === 0) return;
         var newest = orders[0];
         if (newest.id !== lastSeenId) {
-          // 새 주문들만 팝업
           var newOnes = [];
           for (var i = 0; i < orders.length; i++) {
             if (orders[i].id === lastSeenId) break;
