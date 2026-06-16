@@ -347,7 +347,7 @@
       .then(function(r){ return r.json(); })
       .then(function(data) {
         var orders = data.orders || [];
-        if (orders.length > 0) fetchAndShowTop7();
+        if (orders.length > 0) showTop7(orders);
       })
       .catch(function(){});
   }
