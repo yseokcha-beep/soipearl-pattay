@@ -63,6 +63,16 @@
     .filter-tabs{display:flex;gap:8px;margin-bottom:16px;}
     .tab{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;padding:6px 14px;border:1px solid var(--border);background:none;color:var(--smoke3);cursor:pointer;transition:all .2s;}
     .tab.on{border-color:var(--amber);color:var(--amber);background:var(--amber-dim);}
+    .bar-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+    .bar-tab{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px;border:1.5px solid var(--border);background:none;color:var(--smoke3);cursor:pointer;transition:all .2s;border-radius:2px;}
+    .bar-tab.on{color:#fff;font-weight:700;}
+    .bar-tab.on.all-tab{border-color:#888;background:rgba(255,255,255,.1);}
+    .bar-tab.on.nikki-tab{border-color:#a78bfa;background:rgba(167,139,250,.15);color:#a78bfa;}
+    .bar-tab.on.lollipop-tab{border-color:#7c3aed;background:rgba(124,58,237,.15);color:#c4b5fd;}
+    .bar-tab.on.pg-tab{border-color:#db2777;background:rgba(219,39,119,.15);color:#f472b6;}
+    .bar-stats{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+    .bar-stat-pill{padding:5px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);font-size:.65rem;color:var(--smoke3);}
+    .bar-stat-pill span{color:var(--amber);font-weight:700;margin-left:4px;}
 
     /* FEED */
     .feed-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
@@ -171,6 +181,17 @@
     </div>
   </div>
 
+  <!-- BAR FILTER TABS -->
+  <div class="bar-tabs">
+    <button class="bar-tab all-tab on" onclick="setBar('all', this)">🏮 All Bars</button>
+    <button class="bar-tab nikki-tab" onclick="setBar('Nikki Bar', this)">Nikki Bar</button>
+    <button class="bar-tab lollipop-tab" onclick="setBar('Lollipop', this)">Lollipop</button>
+    <button class="bar-tab pg-tab" onclick="setBar('PG Bar', this)">PG Bar</button>
+  </div>
+
+  <!-- BAR STATS -->
+  <div class="bar-stats" id="bar-stats"></div>
+
   <!-- FILTER TABS -->
   <div class="filter-tabs">
     <button class="tab on" onclick="setFilter('all', this)">All</button>
@@ -202,6 +223,7 @@
   var PASS = '7777777';
   var orders = [];
   var currentFilter = 'all';
+  var currentBar = 'all';
   var evtSource = null;
 
   // ── LOGIN ──
@@ -229,15 +251,47 @@
     renderFeed();
   }
 
+  // ── BAR FILTER ──
+  function setBar(bar, btn) {
+    currentBar = bar;
+    document.querySelectorAll('.bar-tab').forEach(function(t){ t.classList.remove('on'); });
+    btn.classList.add('on');
+    updateStats();
+    renderFeed();
+  }
+
   // ── STATS ──
+  var BARS = ['Nikki Bar', 'Lollipop', 'PG Bar'];
+
   function updateStats() {
-    var pending = orders.filter(function(o){ return !o.done; }).length;
-    var done = orders.filter(function(o){ return o.done; }).length;
-    var total = orders.reduce(function(s,o){ return s + (o.tip_amount||0); }, 0);
-    document.getElementById('stat-count').textContent = orders.length;
+    // 전체 stats (현재 바 필터 기준)
+    var barOrders = currentBar === 'all' ? orders : orders.filter(function(o){ return (o.bar||'') === currentBar; });
+    var pending = barOrders.filter(function(o){ return !o.done; }).length;
+    var done = barOrders.filter(function(o){ return o.done; }).length;
+    var total = barOrders.reduce(function(s,o){ return s + (o.tip_amount||0); }, 0);
+    document.getElementById('stat-count').textContent = barOrders.length;
     document.getElementById('stat-pending').textContent = pending;
     document.getElementById('stat-done').textContent = done;
     document.getElementById('stat-total').textContent = '฿' + total.toLocaleString();
+
+    // 바별 합계 pills
+    var barStatsEl = document.getElementById('bar-stats');
+    if (currentBar === 'all') {
+      var html = '';
+      BARS.forEach(function(bar) {
+        var bOrders = orders.filter(function(o){ return (o.bar||'') === bar; });
+        var bTotal = bOrders.reduce(function(s,o){ return s + (o.tip_amount||0); }, 0);
+        var bPending = bOrders.filter(function(o){ return !o.done; }).length;
+        html += '<div class="bar-stat-pill">' + bar +
+          ' · <span>฿' + bTotal.toLocaleString() + '</span>' +
+          (bPending > 0 ? ' · <span style="color:#f87171">' + bPending + ' pending</span>' : '') +
+          '</div>';
+      });
+      barStatsEl.innerHTML = html;
+      barStatsEl.style.display = 'flex';
+    } else {
+      barStatsEl.style.display = 'none';
+    }
   }
 
   // ── RENDER ──
@@ -249,6 +303,7 @@
   function renderFeed() {
     var feed = document.getElementById('feed');
     var filtered = orders.filter(function(o){
+      if (currentBar !== 'all' && (o.bar||'') !== currentBar) return false;
       if (currentFilter === 'pending') return !o.done;
       if (currentFilter === 'done') return o.done;
       return true;
