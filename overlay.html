@@ -124,7 +124,7 @@
       position: fixed;
       top: 90px; left: 50%;
       transform: translateX(-50%);
-      width: 520px;
+      width: 420px;
       z-index: 200;
       pointer-events: none;
       display: none;
@@ -146,7 +146,7 @@
       to   { opacity:0; transform: translateY(-10px) scale(.95); }
     }
     .t7-scene {
-      position: relative; height: 170px; overflow: hidden;
+      position: relative; height: 130px; overflow: hidden;
     }
     .t7-bg {
       position: absolute; inset: 0;
@@ -360,7 +360,7 @@
             showPopup(o);
             addRecent(o);
           });
-          showTop7(orders);
+          fetchAndShowTop7();
           lastSeenId = newest.id;
         }
       })
@@ -370,6 +370,16 @@
 
   var top7Timer = null;
   var TOP7_DURATION = 15 * 1000;
+  function fetchAndShowTop7() {
+    fetch('/.netlify/functions/webhook?month=1')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var orders = data.orders || [];
+        if (orders.length > 0) fetchAndShowTop7();
+      })
+      .catch(function(){});
+  }
+
   function showTop7(orders) {
     var counts = {};
     orders.forEach(function(o) {
