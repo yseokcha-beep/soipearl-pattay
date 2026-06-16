@@ -15,8 +15,8 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'GET') {
     try {
       const now = new Date();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const created = Math.floor(startOfDay.getTime() / 1000);
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); // 이번 달 1일
+      const created = Math.floor(startOfMonth.getTime() / 1000);
 
       const paymentIntents = await stripe.paymentIntents.list({
         created: { gte: created },
