@@ -11,12 +11,15 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers, body: '' };
   }
 
-  // GET → 오늘 결제 목록 Stripe에서 직접 조회
+  // GET → 결제 목록 조회 (?month=1 이면 이번달, 기본은 오늘)
   if (event.httpMethod === 'GET') {
     try {
       const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); // 이번 달 1일
-      const created = Math.floor(startOfMonth.getTime() / 1000);
+      const isMonth = (event.queryStringParameters || {}).month === '1';
+      const startDate = isMonth
+        ? new Date(now.getFullYear(), now.getMonth(), 1)
+        : new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const created = Math.floor(startDate.getTime() / 1000);
 
       const paymentIntents = await stripe.paymentIntents.list({
         created: { gte: created },
