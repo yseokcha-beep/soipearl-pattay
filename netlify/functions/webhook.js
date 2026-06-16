@@ -11,27 +11,35 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers, body: '' };
   }
 
-  // GET → 오늘 결제 목록 Stripe에서 직접 조회
   if (event.httpMethod === 'GET') {
     try {
       const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); // 이번 달 1일
-      const created = Math.floor(startOfMonth.getTime() / 1000);
+      const isMonth = (event.queryStringParameters || {}).month === '1';
 
-      // 페이지네이션으로 전체 데이터 가져오기
+      // 대시보드 → 오늘 하루 / 젤다 → 이번 달 1일
+      const startDate = isMonth
+        ? new Date(now.getFullYear(), now.getMonth(), 1)
+        : new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const created = Math.floor(startDate.getTime() / 1000);
+
+      // 페이지네이션 (month=1 일때만, 오늘은 그냥 100건으로 충분)
       let allData = [];
-      let lastId = undefined;
-      while (true) {
-        const params = { created: { gte: created }, limit: 100 };
-        if (lastId) params.starting_after = lastId;
-        const page = await stripe.paymentIntents.list(params);
-        allData = allData.concat(page.data);
-        if (!page.has_more) break;
-        lastId = page.data[page.data.length - 1].id;
+      if (isMonth) {
+        let lastId = undefined;
+        while (true) {
+          const params = { created: { gte: created }, limit: 100 };
+          if (lastId) params.starting_after = lastId;
+          const page = await stripe.paymentIntents.list(params);
+          allData = allData.concat(page.data);
+          if (!page.has_more) break;
+          lastId = page.data[page.data.length - 1].id;
+        }
+      } else {
+        const page = await stripe.paymentIntents.list({ created: { gte: created }, limit: 100 });
+        allData = page.data;
       }
-      const paymentIntents = { data: allData };
 
-      const orders = paymentIntents.data
+      const orders = allData
         .filter(pi => pi.status === 'succeeded')
         .map(pi => {
           const m = pi.metadata || {};
@@ -64,11 +72,9 @@ exports.handler = async (event) => {
     }
   }
 
-  // POST → Stripe 웹훅 (확인용)
   if (event.httpMethod === 'POST') {
     const sig = event.headers['stripe-signature'];
     let stripeEvent;
-
     try {
       stripeEvent = stripe.webhooks.constructEvent(
         event.body,
@@ -78,16 +84,10 @@ exports.handler = async (event) => {
     } catch (err) {
       return { statusCode: 400, body: `Webhook Error: ${err.message}` };
     }
-
     if (stripeEvent.type === 'payment_intent.succeeded') {
       console.log('Payment succeeded:', stripeEvent.data.object.id);
     }
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ received: true }),
-    };
+    return { statusCode: 200, headers, body: JSON.stringify({ received: true }) };
   }
 
   return { statusCode: 405, body: 'Method Not Allowed' };
