@@ -137,15 +137,15 @@
       overflow: hidden;
       box-shadow: 0 0 0 1.5px rgba(212,168,67,.55), 0 24px 70px rgba(0,0,0,.85);
       animation: t7In .6s cubic-bezier(.175,.885,.32,1.275) both;
-      opacity: .68;
+      opacity: .95;
     }
     #top7-box.hide { animation: t7Out .4s ease forwards; }
     @keyframes t7In {
       from { opacity:0; transform: translateY(-20px) scale(.9); }
-      to   { opacity:.68; transform: translateY(0) scale(1); }
+      to   { opacity:.95; transform: translateY(0) scale(1); }
     }
     @keyframes t7Out {
-      from { opacity:.68; }
+      from { opacity:.95; }
       to   { opacity:0; transform: translateY(-10px) scale(.95); }
     }
     .t7-scene {
@@ -341,7 +341,7 @@
 
 
   var top7Timer = null;
-  var TOP7_DURATION = 10 * 1000;
+  var TOP7_DURATION = 15 * 1000;
   function showTop7(orders) {
     var counts = {};
     orders.forEach(function(o) {
