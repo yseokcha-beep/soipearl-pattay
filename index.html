@@ -153,7 +153,7 @@
     var btn = document.getElementById('sub-btn');
     btn.disabled = false;
     btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-    document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.toggle('on', b.dataset.v === '630'); });
+    document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.remove('on'); });
     document.getElementById('custom-row').style.display = 'none';
     updateFeeNote();
   }
@@ -513,6 +513,7 @@
       transition: border-color .2s;
     }
     .f-input:focus { border-color:var(--amber); }
+    .f-input:disabled { opacity:.4; cursor:not-allowed; background:rgba(255,255,255,.02); }
     .f-input::placeholder { color:var(--smoke4); }
 
     /* Amount grid */
@@ -530,7 +531,7 @@
     }
     .horn-tile {
       width:100%; margin-bottom:10px; padding:9px 6px; line-height:1.35;
-      border-color:var(--amber); color:var(--amber); background:var(--amber-lo);
+      background:transparent; border:1px solid var(--border); color:var(--smoke2);
     }
     .horn-tile:hover, .horn-tile.on {
       border-color:var(--amber); background:var(--amber);
@@ -967,7 +968,7 @@
         <div class="amt-grid">
           <button class="amt-tile" data-v="210"  onclick="pickAmt(this)">฿210</button>
           <button class="amt-tile" data-v="420"  onclick="pickAmt(this)">฿420</button>
-          <button class="amt-tile on" data-v="630"  onclick="pickAmt(this)">฿630</button>
+          <button class="amt-tile" data-v="630"  onclick="pickAmt(this)">฿630</button>
           <button class="amt-tile" data-v="840"  onclick="pickAmt(this)">฿840</button>
           <button class="amt-tile" data-v="1050" onclick="pickAmt(this)">฿1,050</button>
           <button class="amt-tile" data-v="0"    onclick="pickAmt(this)">Custom</button>
@@ -1213,7 +1214,11 @@ function syncSubtitle() {
   var name = snameEl ? snameEl.value.trim() : '';
   var desc = document.getElementById('form-desc');
   if (!desc) return;
-  if (selectedBar && name)
+  if (isHornPull && selectedBar)
+    desc.innerHTML = 'Horn Pull for <strong>every staff</strong> at ' + selectedBar + '.';
+  else if (isHornPull)
+    desc.textContent = 'Select a bar for the Horn Pull.';
+  else if (selectedBar && name)
     desc.innerHTML = 'Sending a drink to <strong>' + name + '</strong> at ' + selectedBar + '.';
   else if (selectedBar)
     desc.textContent = 'Enter the staff name above.';
@@ -1231,6 +1236,17 @@ function pickAmt(btn) {
   if (hint) hint.style.display = v === 0 ? 'block' : 'none';
   if (v > 0) tipAmt = v;
   isHornPull = btn.classList.contains('horn-tile');
+
+  var sn = document.getElementById('sname');
+  var sno = document.getElementById('snum');
+  if (isHornPull) {
+    if (sn) { sn.value = ''; sn.disabled = true; sn.placeholder = 'Not needed for Horn Pull'; }
+    if (sno) { sno.value = ''; sno.disabled = true; sno.placeholder = '—'; }
+  } else {
+    if (sn) { sn.disabled = false; sn.placeholder = 'e.g. Ning'; }
+    if (sno) { sno.disabled = false; sno.placeholder = '07'; }
+  }
+  syncSubtitle();
 }
 
 function resetAll() {
@@ -1248,13 +1264,17 @@ function resetAll() {
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
+  var snameReset = document.getElementById('sname');
+  var snumReset = document.getElementById('snum');
+  if (snameReset) { snameReset.disabled = false; snameReset.placeholder = 'e.g. Ning'; }
+  if (snumReset) { snumReset.disabled = false; snumReset.placeholder = '07'; }
   var ce = document.getElementById('card-err');
   if (ce) ce.textContent = '';
   var fd = document.getElementById('form-desc');
   if (fd) fd.textContent = 'Select a bar and enter a staff name above.';
   var btn = document.getElementById('sub-btn');
   if (btn) { btn.disabled = false; btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>'; }
-  document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.toggle('on', b.dataset.v === '630'); });
+  document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.remove('on'); });
   var cr = document.getElementById('custom-row');
   if (cr) cr.style.display = 'none';
   if (paymentElement) { paymentElement.destroy(); paymentElement = null; stripeElements = null; }
@@ -1313,6 +1333,7 @@ async function submitPay() {
 
   var nameVal = (uname && uname.value) ? uname.value : 'Anonymous';
   var staffName = (sname && sname.value) ? sname.value : 'Staff Member';
+  var staffNameForSend = isHornPull ? 'Horn Pull' : staffName;
   var staffNo = (snum && snum.value) ? snum.value : '';
   var msgVal = (umsg && umsg.value) ? umsg.value : '';
   var fee = calcFee(tipAmt);
@@ -1326,7 +1347,7 @@ async function submitPay() {
       body: JSON.stringify({
         amount: tipAmt,
         bar: selectedBar,
-        staffName: staffName,
+        staffName: staffNameForSend,
         staffNo: staffNo,
         fromName: nameVal,
         message: msgVal
@@ -1413,7 +1434,7 @@ async function submitPay() {
       }
 
       if (rbar) rbar.textContent = selectedBar;
-      if (rstaff) rstaff.textContent = staffName + (staffNo ? ' (#' + staffNo + ')' : '');
+      if (rstaff) rstaff.textContent = isHornPull ? 'All staff on shift' : (staffName + (staffNo ? ' (#' + staffNo + ')' : ''));
       if (rfrom) rfrom.textContent = nameVal;
       if (rtip) rtip.textContent = '฿' + tipAmt.toLocaleString();
       if (rfee) rfee.textContent = '฿' + fee.toLocaleString();
