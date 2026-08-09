@@ -47,6 +47,15 @@
       width: 155px;
       box-shadow: 0 6px 24px rgba(0,0,0,.85);
     }
+    .receipt-box.horn-led-box {
+      border: 2px solid transparent;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(139,92,246,.24), rgba(8,6,4,.98) 70%) padding-box,
+        conic-gradient(from var(--led-angle,0deg),
+          #ff003c, #ff9500, #fff200, #00ff6a, #00e5ff, #7a5cff, #ff00c8, #ff003c) border-box;
+      animation: ledSpinRecent 2.5s linear infinite;
+    }
+    .receipt-confirmed.horn-confirmed-pop { color:var(--amber) !important; font-size:.42rem !important; }
     .receipt-site  { font-size:.42rem; letter-spacing:.1em; color:var(--smoke3); margin-bottom:3px; text-align:center; text-transform:uppercase; }
     .receipt-icon  { font-size:.95rem; margin-bottom:3px; text-align:center; }
     .receipt-confirmed { font-size:.35rem; letter-spacing:.18em; color:var(--amber); text-transform:uppercase; margin-bottom:7px; text-align:center; font-weight:700; }
@@ -156,12 +165,21 @@
       display:flex; align-items:center; gap:8px;
       padding:14px 16px;
       background:rgba(6,6,6,.94);
-      border:1px solid rgba(212,168,67,.3);
-      border-left: 3px solid var(--amber);
+      border: 2px solid var(--amber);
       animation: slideInRight .4s cubic-bezier(.175,.885,.32,1.275) both;
     }
     .recent-item.hide {
       animation: slideOutRight .35s ease forwards;
+    }
+    @property --led-angle { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
+    @keyframes ledSpinRecent { to { --led-angle: 360deg; } }
+    .recent-item.horn-led {
+      border: 2px solid transparent;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(139,92,246,.24), rgba(6,6,6,.94) 70%) padding-box,
+        conic-gradient(from var(--led-angle,0deg),
+          #ff003c, #ff9500, #fff200, #00ff6a, #00e5ff, #7a5cff, #ff00c8, #ff003c) border-box;
+      animation: slideInRight .4s cubic-bezier(.175,.885,.32,1.275) both, ledSpinRecent 2.5s linear infinite;
     }
     @keyframes slideInRight {
       from { opacity:0; transform: translateX(16px); }
@@ -180,7 +198,7 @@
     /* ── OVERLAY ON ── */
     @keyframes onblink{0%,100%{box-shadow:0 0 6px #22c55e,0 0 14px rgba(34,197,94,.6);}50%{box-shadow:0 0 10px #22c55e,0 0 24px rgba(34,197,94,.8);}}
 
-    /* ── VIP 5000+ ── */
+    /* ── VIP 6000+ ── */
     .popup.vip .receipt-box {
       background: rgba(4,2,14,.97);
       position: relative;
@@ -324,9 +342,34 @@
   var lastSeenId = null;
   var POPUP_DURATION = 30 * 1000;
   var MSG_DURATION = 90 * 1000; // 1분30초
-  var VIP_POPUP_DURATION = 3 * 60 * 1000; // VIP 3분
-  var VIP_MSG_DURATION = 3 * 60 * 1000;   // VIP 3분
+  var VIP_POPUP_DURATION = 2.5 * 60 * 1000; // VIP·Horn 2분30초
+  var VIP_MSG_DURATION = 2.5 * 60 * 1000;   // VIP·Horn 2분30초
 
+  // ── Horn Pull 종 아이콘: 은색↔금색 LED 반짝임 ──
+  function startHornBellIcon(canvas, duration) {
+    var ctx=canvas.getContext('2d'), w=canvas.width, h=canvas.height;
+    var start=Date.now(), raf4;
+    var SILVER=[224,224,228], GOLD=[212,168,67];
+    function lerp(a,b,x){return Math.round(a+(b-a)*x);}
+    function draw(){
+      var elapsed=Date.now()-start;
+      var phase=(Math.sin(elapsed/650)*0.5+0.5);
+      var col='rgb('+lerp(SILVER[0],GOLD[0],phase)+','+lerp(SILVER[1],GOLD[1],phase)+','+lerp(SILVER[2],GOLD[2],phase)+')';
+      ctx.clearRect(0,0,w,h);
+      ctx.font=Math.floor(h*0.78)+'px sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.shadowColor=col; ctx.shadowBlur=8;
+      ctx.fillText('🔔', w/2, h/2+1);
+      ctx.globalCompositeOperation='source-atop';
+      ctx.shadowBlur=0;
+      ctx.fillStyle=col;
+      ctx.fillRect(0,0,w,h);
+      ctx.globalCompositeOperation='source-over';
+      if(duration==null || elapsed<duration){ raf4=requestAnimationFrame(draw); }
+    }
+    draw();
+    if(duration!=null) setTimeout(function(){cancelAnimationFrame(raf4);},duration+200);
+  }
 
   // ── VIP 오로라 텍스트 canvas ──
   var VIP_PAL = [[124,58,237],[59,130,246],[6,182,212],[16,185,129],[132,204,22],[234,179,8],[249,115,22],[239,68,68],[236,72,153],[167,139,250]];
@@ -395,7 +438,9 @@
 
   // ── VIP 오로라 border canvas ──
   var AURORA_COLORS = ['#7c3aed','#06b6d4','#10b981','#fde68a','#f472b6','#a78bfa'];
-  function startAuroraBorder(el, duration) {
+  var HORN_AURORA_COLORS = ['#ff003c','#ff9500','#fff200','#00ff6a','#00e5ff','#7a5cff','#ff00c8'];
+  function startAuroraBorder(el, duration, palette) {
+    var COLORS = palette || AURORA_COLORS;
     var canvas=document.createElement('canvas');
     canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;';
     el.style.position='relative'; el.appendChild(canvas);
@@ -407,8 +452,8 @@
       if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
       var ctx=canvas.getContext('2d');
       ctx.clearRect(0,0,w,h); t+=0.012;
-      if(t>=1){t=0;ci=(ci+1)%AURORA_COLORS.length;}
-      var c1=hexRgb(AURORA_COLORS[ci]),c2=hexRgb(AURORA_COLORS[(ci+1)%AURORA_COLORS.length]);
+      if(t>=1){t=0;ci=(ci+1)%COLORS.length;}
+      var c1=hexRgb(COLORS[ci]),c2=hexRgb(COLORS[(ci+1)%COLORS.length]);
       var col='rgb('+lerp(c1[0],c2[0],t)+','+lerp(c1[1],c2[1],t)+','+lerp(c1[2],c2[2],t)+')';
       ctx.shadowColor=col; ctx.shadowBlur=20; ctx.strokeStyle=col; ctx.lineWidth=3;
       ctx.strokeRect(1.5,1.5,w-3,h-3);
@@ -417,6 +462,47 @@
     }
     draw();
     setTimeout(function(){cancelAnimationFrame(raf2);canvas.remove();},duration+500);
+  }
+
+  // ── Horn Pull 축포 ──
+  var CONFETTI_COLORS = ['#d4a843','#ff003c','#ff9500','#fff200','#00ff6a','#00e5ff','#7a5cff','#ff00c8'];
+  function fireHornPullConfetti() {
+    var canvas=document.createElement('canvas');
+    canvas.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;';
+    canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+    document.body.appendChild(canvas);
+    var ctx=canvas.getContext('2d');
+    var pieces=[];
+    for(var i=0;i<160;i++){
+      pieces.push({
+        x: Math.random()*canvas.width,
+        y: -20-Math.random()*canvas.height*0.5,
+        w: 6+Math.random()*6,
+        h: 8+Math.random()*8,
+        color: CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)],
+        vy: 2+Math.random()*3,
+        vx: -1.5+Math.random()*3,
+        rot: Math.random()*Math.PI*2,
+        vr: -0.15+Math.random()*0.3
+      });
+    }
+    var start=Date.now(), duration=4000, raf3;
+    function draw(){
+      var elapsed=Date.now()-start;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      pieces.forEach(function(p){
+        p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+        ctx.save();
+        ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.fillStyle=p.color;
+        ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+        ctx.restore();
+      });
+      if(elapsed<duration){ raf3=requestAnimationFrame(draw); }
+      else { canvas.remove(); }
+    }
+    draw();
+    setTimeout(function(){cancelAnimationFrame(raf3);canvas.remove();},duration+200);
   }
 
   // ── TOP7 ──
@@ -461,15 +547,16 @@
   setInterval(fetchAndShowTyk, 10*60*1000);
 
   function showPopup(data) {
-    var staff=(data.staff_name||'—')+(data.staff_no?' #'+data.staff_no:'');
-    var isVip=(data.tip_amount||0)>=5000;
+    var isHornPullPopup=(data.staff_name==='Horn Pull');
+    var staff=isHornPullPopup?'All Staff':(data.staff_name||'—')+(data.staff_no?' #'+data.staff_no:'');
+    var isVip=(data.tip_amount||0)>=6000;
     var popup=document.createElement('div');
     popup.className=isVip?'popup vip':'popup';
     popup.innerHTML=
-      '<div class="receipt-box" style="position:relative;">'+
-        (isVip?'<canvas class="vip-text-canvas" width="110" height="52" style="display:block;margin:2px auto 4px;"></canvas>':'<div class="receipt-icon">🌸</div>')+
+      '<div class="receipt-box'+(isHornPullPopup?' horn-led-box':'')+'" style="position:relative;">'+
+        (isVip?'<canvas class="vip-text-canvas" width="110" height="52" style="display:block;margin:2px auto 4px;"></canvas>':(isHornPullPopup?'<canvas class="horn-bell-canvas-pop" width="110" height="52" style="display:block;margin:2px auto 4px;"></canvas>':'<div class="receipt-icon">🌸</div>'))+
         '<p class="receipt-site">pattayasoipearl.com</p>'+
-        (isVip?'':'<p class="receipt-confirmed">✦ Drink Confirmed ✦</p>')+
+        (isVip?'':'<p class="receipt-confirmed'+(isHornPullPopup?' horn-confirmed-pop':'')+'">'+(isHornPullPopup?'✦ Horn Pulled ✦':'✦ Drink Confirmed ✦')+'</p>')+
         '<hr class="receipt-line">'+
         '<div class="receipt-row"><span class="receipt-label">Bar</span><span class="receipt-value">'+(data.bar||'—')+'</span></div>'+
         '<div class="receipt-row"><span class="receipt-label">Staff</span><span class="receipt-value">'+staff+'</span></div>'+
@@ -479,7 +566,7 @@
         '<div class="receipt-total-row"><span class="receipt-total-label">Drink Amount</span><span class="receipt-total-val">฿'+(data.tip_amount||0).toLocaleString()+'</span></div>'+
       '</div>';
     document.getElementById('popup-wrap').appendChild(popup);
-    var popDur = isVip ? VIP_POPUP_DURATION : POPUP_DURATION;
+    var popDur = (isVip || isHornPullPopup) ? VIP_POPUP_DURATION : POPUP_DURATION;
     if(isVip){
       setTimeout(function(){
         startAuroraBorder(popup.querySelector('.receipt-box'), popDur);
@@ -487,16 +574,24 @@
         if(vc) startVIPText(vc,32,22,popDur);
       },60);
     }
+    if(isHornPullPopup){
+      setTimeout(function(){
+        var hcp=popup.querySelector('.horn-bell-canvas-pop');
+        if(hcp) startHornBellIcon(hcp,popDur);
+      },60);
+    }
     setTimeout(function(){popup.classList.add('hide');setTimeout(function(){popup.remove();},400);},popDur);
   }
 
   function addRecent(data) {
     var staff=(data.staff_name||'Staff')+(data.staff_no?' #'+data.staff_no:'');
-    var isVip=(data.tip_amount||0)>=5000;
+    var isVip=(data.tip_amount||0)>=6000;
+    var isHornPull=(data.staff_name==='Horn Pull');
     var wrap=document.getElementById('recent-wrap');
     var item=document.createElement('div');
     var msgDur = isVip ? VIP_MSG_DURATION : MSG_DURATION;
     item.className='recent-item';
+    if(isHornPull) item.classList.add('horn-led');
     if(isVip){
       item.style.background='rgba(4,2,14,.97)';
       item.style.borderLeft='3px solid #a78bfa';
@@ -504,10 +599,14 @@
       item.style.borderRight='1px solid rgba(167,139,250,.3)';
       item.style.borderBottom='1px solid rgba(167,139,250,.3)';
     }
+    var drinkCount = Math.round((data.tip_amount||0)/210);
+    var nameLine = isHornPull
+      ? '<div class="recent-name"><strong style="'+(isVip?'color:#a78bfa;':'')+'">'+(data.from||'Anonymous')+'</strong> <strong style="color:#d4a843;">pulled the Horn</strong></div>'
+      : '<div class="recent-name"><strong style="'+(isVip?'color:#a78bfa;':'')+'">'+(data.from||'Anonymous')+'</strong> sent <strong style="'+(isVip?'color:#06b6d4;':'')+'">'+drinkCount+'</strong> drink'+(drinkCount===1?'':'s')+' to <strong style="'+(isVip?'color:#06b6d4;':'')+'">'+staff+'</strong></div>';
     item.innerHTML=
-      '<div class="recent-icon">'+(isVip?'<canvas class="vip-notif-canvas" width="36" height="36" style="display:block;"></canvas>':'🍹')+'</div>'+
+      '<div class="recent-icon">'+(isVip?'<canvas class="vip-notif-canvas" width="36" height="36" style="display:block;"></canvas>':(isHornPull?'<canvas class="horn-bell-canvas" width="36" height="36" style="display:block;"></canvas>':'🍹'))+'</div>'+
       '<div class="recent-body">'+
-        '<div class="recent-name"><strong style="'+(isVip?'color:#a78bfa;':'')+'">'+( data.from||'Anonymous')+'</strong> sent a drink to <strong style="'+(isVip?'color:#06b6d4;':'')+'">'+staff+'</strong></div>'+
+        nameLine+
         '<div class="recent-amt" style="'+(isVip?'color:#a78bfa;':'')+'">฿'+(data.tip_amount||0).toLocaleString()+' · '+(data.bar||'')+'</div>'+
       '</div>';
     wrap.insertBefore(item,wrap.firstChild);
@@ -518,7 +617,13 @@
         if(nc) startVIPText(nc,14,10,msgDur);
       },60);
     }
-    setTimeout(function(){item.classList.add('hide');setTimeout(function(){item.remove();},400);},msgDur);
+    if(isHornPull){
+      setTimeout(function(){
+        var hc=item.querySelector('.horn-bell-canvas');
+        if(hc) startHornBellIcon(hc,msgDur);
+      },60);
+    }
+    setTimeout(function(){item.classList.remove('horn-led');item.classList.add('hide');setTimeout(function(){item.remove();},400);},msgDur);
   }
 
   var initialized = false;
@@ -544,6 +649,7 @@
           }
           newOnes.reverse().forEach(function(o) {
             showPopup(o); addRecent(o);
+            if (o.staff_name === 'Horn Pull') fireHornPullConfetti();
           });
           fetchAndShowTop7();
           lastSeenId = newest.id;
@@ -555,7 +661,8 @@
   if (window.location.search.includes('test=')) {
     var testCount = parseInt(new URLSearchParams(window.location.search).get('test')) || 1;
         var fakeOrders = [
-      { from:'Julien', staff_name:'Fah',  staff_no:'60', bar:'Nikki Bar', tip_amount:5250, message:'You are amazing!' },
+      { from:'Sarah',  staff_name:'Ploy', staff_no:'21', bar:'Nikki Bar', tip_amount:6300, message:'You deserve the world!' },
+      { from:'Julien', staff_name:'Horn Pull', staff_no:'', bar:'Nikki Bar', tip_amount:5250, message:'You are amazing!' },
       { from:'John',   staff_name:'Jai',  staff_no:'12', bar:'Nikki Bar', tip_amount:3150, message:'See you tonight!' },
       { from:'Mike',   staff_name:'Su',   staff_no:'7',  bar:'Nikki Bar', tip_amount:2100, message:'' },
       { from:'David',  staff_name:'Nook', staff_no:'33', bar:'Nikki Bar', tip_amount:1680, message:'Miss you!' },
@@ -565,7 +672,7 @@
     ];
     for (var i = 0; i < Math.min(testCount, fakeOrders.length); i++) {
       (function(order, delay) {
-        setTimeout(function() { showPopup(order); addRecent(order); showTop7(fakeOrders); }, 800 + delay * 600);
+        setTimeout(function() { showPopup(order); addRecent(order); showTop7(fakeOrders); if (order.staff_name === 'Horn Pull') fireHornPullConfetti(); }, 800 + delay * 600);
       })(fakeOrders[i], i);
     }
   }
