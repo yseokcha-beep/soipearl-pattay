@@ -546,6 +546,13 @@
   }
   setInterval(fetchAndShowTyk, 10*60*1000);
 
+  function fetchAndShowTop7(){
+    fetch('/.netlify/functions/webhook?month=1')
+      .then(function(r){return r.json();})
+      .then(function(d){showTop7(d.orders||[]);})
+      .catch(function(){});
+  }
+
   function showPopup(data) {
     var isHornPullPopup=(data.staff_name==='Horn Pull');
     var staff=isHornPullPopup?'All Staff':(data.staff_name||'—')+(data.staff_no?' #'+data.staff_no:'');
@@ -691,7 +698,7 @@
             showPopup(o); addRecent(o);
             if (o.staff_name === 'Horn Pull') fireHornPullConfetti();
           });
-          showTop7(orders);
+          fetchAndShowTop7();
           lastSeenId = newest.id;
         }
       })
