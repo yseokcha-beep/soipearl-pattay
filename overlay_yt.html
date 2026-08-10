@@ -627,6 +627,18 @@
   }
 
   var initialized = false;
+  var shownOrderIds = {};
+  var shownOrderIdList = [];
+
+  function markShown(id) {
+    if (shownOrderIds[id]) return;
+    shownOrderIds[id] = true;
+    shownOrderIdList.push(id);
+    if (shownOrderIdList.length > 300) {
+      var old = shownOrderIdList.shift();
+      delete shownOrderIds[old];
+    }
+  }
 
   function poll() {
     fetch('/.netlify/functions/webhook')
@@ -636,7 +648,10 @@
         // 처음 켤 때는 기존 주문 무시하고 최신 ID만 저장
         if (!initialized) {
           initialized = true;
-          if (orders.length > 0) lastSeenId = orders[0].id;
+          if (orders.length > 0) {
+            lastSeenId = orders[0].id;
+            orders.forEach(function(o){ markShown(o.id); });
+          }
           return;
         }
         if (orders.length === 0) return;
@@ -647,11 +662,14 @@
             if (orders[i].id === lastSeenId) break;
             newOnes.push(orders[i]);
           }
+          // ID 비교가 실패해도(중복/불안정 ID) 같은 주문이 두 번 뜨지 않도록 최종 방어
+          newOnes = newOnes.filter(function(o){ return !shownOrderIds[o.id]; });
           newOnes.reverse().forEach(function(o) {
+            markShown(o.id);
             showPopup(o); addRecent(o);
             if (o.staff_name === 'Horn Pull') fireHornPullConfetti();
           });
-          fetchAndShowTop7();
+          showTop7(orders);
           lastSeenId = newest.id;
         }
       })
