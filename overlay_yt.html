@@ -640,6 +640,27 @@
     }
   }
 
+  // ID값이 매 호출마다 안정적이지 않을 경우를 대비한 2차 방어: 주문 내용 기반 지문
+  var shownFingerprints = {};
+  var shownFingerprintList = [];
+  var FP_DEDUP_WINDOW = 20000; // 같은 내용의 주문이 20초 내 다시 오면 중복으로 간주
+  function fingerprint(o) {
+    return (o.from||'')+'|'+(o.staff_name||'')+'|'+(o.staff_no||'')+'|'+(o.tip_amount||0)+'|'+(o.bar||'')+'|'+(o.message||'');
+  }
+  function isDuplicateContent(o) {
+    var fp = fingerprint(o);
+    var last = shownFingerprints[fp];
+    return last && (Date.now() - last) < FP_DEDUP_WINDOW;
+  }
+  function markShownFp(o) {
+    var fp = fingerprint(o);
+    shownFingerprints[fp] = Date.now();
+    shownFingerprintList.push(fp);
+    if (shownFingerprintList.length > 300) {
+      delete shownFingerprints[shownFingerprintList.shift()];
+    }
+  }
+
   function poll() {
     fetch('/.netlify/functions/webhook')
       .then(function(r){ return r.json(); })
@@ -650,7 +671,7 @@
           initialized = true;
           if (orders.length > 0) {
             lastSeenId = orders[0].id;
-            orders.forEach(function(o){ markShown(o.id); });
+            orders.forEach(function(o){ markShown(o.id); markShownFp(o); });
           }
           return;
         }
@@ -663,9 +684,10 @@
             newOnes.push(orders[i]);
           }
           // ID 비교가 실패해도(중복/불안정 ID) 같은 주문이 두 번 뜨지 않도록 최종 방어
-          newOnes = newOnes.filter(function(o){ return !shownOrderIds[o.id]; });
+          newOnes = newOnes.filter(function(o){ return !shownOrderIds[o.id] && !isDuplicateContent(o); });
           newOnes.reverse().forEach(function(o) {
             markShown(o.id);
+            markShownFp(o);
             showPopup(o); addRecent(o);
             if (o.staff_name === 'Horn Pull') fireHornPullConfetti();
           });
