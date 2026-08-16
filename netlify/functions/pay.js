@@ -33,7 +33,7 @@ exports.handler = async (event) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: total * 100,
       currency: 'thb',
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ['card', 'promptpay'],
       description: `Drink purchase at ${bar} for ${staffName}`,
       metadata: {
         bar: bar || '',
