@@ -1302,8 +1302,9 @@ function mountCardElement() {
   // 금액 없이 카드창만 먼저 표시 (appearance만 설정)
   stripeElements = stripe.elements({
     mode: 'payment',
-    amount: 63000, // 임시 기본값 (฿630), 실제 결제 시 새로 생성
+    amount: 21000, // 임시 기본값 (฿210), 실제 결제 시 새로 생성
     currency: 'thb',
+    paymentMethodTypes: ['card', 'promptpay'],
     appearance: {
       theme: 'night',
       variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' }
