@@ -80,6 +80,65 @@
     }
   }
 
+  // ══ Stripe ══
+  var stripe, cardElement;
+  function initStripe() {
+    if (typeof Stripe === 'undefined') { setTimeout(initStripe, 100); return; }
+    stripe = Stripe('pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP');
+    var elements = stripe.elements({
+      appearance: { theme:'night', variables:{ colorPrimary:'#d4a843', colorBackground:'#1a1a1a', colorText:'#f0ebe3', colorDanger:'#e05c5c', borderRadius:'2px' } }
+    });
+    cardElement = elements.create('card', {
+      style: { base: { color:'#f0ebe3', fontSize:'15px', '::placeholder':{ color:'rgba(240,235,227,0.35)' } } },
+      hidePostalCode: true
+    });
+    cardElement.mount('#stripe-wrap');
+    cardElement.on('change', function(e) {
+      document.getElementById('card-err').textContent = e.error ? e.error.message : '';
+    });
+  }
+
+  async function submitPay() {
+    if (!stripe || !cardElement) { alert('Payment system loading, please wait.'); return; }
+    if (!selectedBar) { alert('Please select a bar first.'); return; }
+    if (!tipAmt || tipAmt < 20) { alert('Minimum tip is ฿20.'); return; }
+    var btn = document.getElementById('sub-btn');
+    btn.disabled = true;
+    btn.textContent = 'Processing…';
+    var nameVal = document.getElementById('uname').value || 'Anonymous';
+    var result = await stripe.createToken(cardElement, { name: nameVal });
+    if (result.error) {
+      document.getElementById('card-err').textContent = result.error.message;
+      btn.disabled = false;
+      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+      return;
+    }
+    var fee = calcFee(tipAmt, true);
+    var total = tipAmt + fee;
+    var staffName = document.getElementById('sname').value || 'Staff Member';
+    var staffNo = document.getElementById('snum') ? document.getElementById('snum').value : '';
+    var msgVal = document.getElementById('umsg') ? document.getElementById('umsg').value : '';
+    document.getElementById('form-area').style.display = 'none';
+    var success = document.getElementById('success-pg');
+    if (success) {
+      success.style.display = 'block';
+      document.getElementById('r-bar').textContent = selectedBar || '—';
+      document.getElementById('r-staff').textContent = staffName + (staffNo ? ' (#' + staffNo + ')' : '');
+      document.getElementById('r-from').textContent = nameVal;
+      document.getElementById('r-tip').textContent = '฿' + tipAmt.toLocaleString();
+      document.getElementById('r-fee').textContent = '฿' + fee.toLocaleString() + ' (Stripe fee)';
+      document.getElementById('r-total').textContent = '฿' + total.toLocaleString();
+      document.getElementById('s-staff2').textContent = staffName;
+      var msgRow = document.getElementById('r-msg-row');
+      if (msgVal && msgRow) {
+        msgRow.style.display = 'flex';
+        document.getElementById('r-msg').textContent = '"' + msgVal + '"';
+      }
+    }
+    btn.disabled = false;
+    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+  }
+
   function resetAll() {
     document.getElementById('success-pg').style.display = 'none';
     document.getElementById('form-area').style.display = 'block';
@@ -1219,7 +1278,9 @@ function resetAll() {
   var cr = document.getElementById('custom-row');
   if (cr) cr.style.display = 'none';
   if (paymentElement) { paymentElement.destroy(); paymentElement = null; stripeElements = null; }
-  mountCardElement();
+  // 카드창 초기화 (버튼 클릭 시 다시 마운트됨)
+  var mountEl = document.getElementById('stripe-wrap');
+  if (mountEl) mountEl.innerHTML = '';
 }
 
 // ── Stripe ──
@@ -1232,20 +1293,16 @@ function initStripe() {
     return;
   }
   stripe = Stripe('pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP');
-  mountCardElement();
+  // 카드창은 버튼 클릭 시에만 표시
 }
 
-function mountCardElement() {
+async function mountCardElement(clientSecret) {
   var mountEl = document.getElementById('stripe-wrap');
   if (!mountEl) return;
   mountEl.innerHTML = '';
 
-  // 금액 없이 카드창만 먼저 표시 (appearance만 설정)
   stripeElements = stripe.elements({
-    mode: 'payment',
-    amount: 21000, // 임시 기본값 (฿210), 실제 결제 시 새로 생성
-    currency: 'thb',
-    paymentMethodTypes: ['card', 'promptpay'],
+    clientSecret: clientSecret,
     appearance: {
       theme: 'night',
       variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' }
@@ -1257,10 +1314,12 @@ function mountCardElement() {
     var err = document.getElementById('card-err');
     if (err) err.textContent = e.error ? e.error.message : '';
   });
+  // 카드창이 마운트된 후 보이게
+  mountEl.style.display = 'block';
 }
 
 async function submitPay() {
-  if (!stripe || !stripeElements) { alert('Payment system loading, please wait.'); return; }
+  if (!stripe) { alert('Payment system loading, please wait.'); return; }
   if (!selectedBar) { alert('Please select a bar first.'); return; }
   if (!tipAmt || tipAmt < 20) { alert('Minimum amount is 20 THB.'); return; }
 
@@ -1305,8 +1364,8 @@ async function submitPay() {
       return;
     }
 
-    // elements 금액을 실제값으로 업데이트
-    await stripeElements.update({ amount: total * 100 });
+    // 실제 금액으로 카드창 마운트
+    await mountCardElement(payData.clientSecret);
 
     // 카드 정보 먼저 검증
     var submitResult = await stripeElements.submit();
@@ -1322,6 +1381,7 @@ async function submitPay() {
       elements: stripeElements,
       clientSecret: payData.clientSecret,
       confirmParams: {
+        payment_method_data: { billing_details: { name: nameVal } },
         return_url: window.location.href
       },
       redirect: 'if_required'
