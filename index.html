@@ -187,6 +187,12 @@
 
     document.getElementById('custom-amt').addEventListener('input', function() {
       tipAmt = parseInt(this.value) || 0;
+      // Google Pay 금액 실시간 업데이트
+      if (stripeElements && tipAmt > 0) {
+        var fee = calcFee(tipAmt);
+        var total = tipAmt + fee;
+        stripeElements.update({ amount: total * 100 }).catch(function(){});
+      }
       updateFeeNote();
     });
 
