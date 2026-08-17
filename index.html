@@ -74,7 +74,7 @@
     if (amt > 0) {
       var feeDom = calcFee(amt, false);
       var feeIntl = calcFee(amt, true);
-      note.innerHTML = 'Processing fee: 6.75% + ฿10 (incl. VAT)';
+      note.innerHTML = '<span>Processing fee: 6.75% + ฿10 (incl. VAT)</span><div style="border-top: 0.5px solid rgba(212,168,67,0.2); margin-top: 8px; padding-top: 8px; display: flex; flex-direction: column; gap: 4px;"><p style="margin:0; font-size:0.74rem; color:#aaa;">⚠ UnionPay cards are not supported — please use Visa or Mastercard.</p><p style="margin:0; font-size:0.74rem; color:#aaa;">🌐 If payment fails, try opening this page in Chrome or Safari.</p></div>';
     } else {
       note.innerHTML = 'Stripe fee: 3.65%+฿10 (Thai) / 4.75%+฿10+2% (International)';
     }
@@ -996,7 +996,13 @@
         <div class="stripe-wrap" id="stripe-wrap"></div>
         <div id="card-err"></div>
 
-        <p class="fee-note" id="fee-note">Processing fee: 6.75% + ฿10 (incl. VAT)</p>
+        <div class="fee-note" id="fee-note">
+          <span>Processing fee: 6.75% + ฿10 (incl. VAT)</span>
+          <div style="border-top: 0.5px solid rgba(212,168,67,0.2); margin-top: 8px; padding-top: 8px; display: flex; flex-direction: column; gap: 4px;">
+            <p style="margin:0; font-size:0.74rem; color:#aaa;">⚠ UnionPay cards are not supported — please use Visa or Mastercard.</p>
+            <p style="margin:0; font-size:0.74rem; color:#aaa;">🌐 If payment fails, try opening this page in Chrome or Safari.</p>
+          </div>
+        </div>
         <button class="submit-btn" id="sub-btn" onclick="submitPay()">
           Send a Drink <span class="submit-arrow">→</span>
         </button>
