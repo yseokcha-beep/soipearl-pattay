@@ -14,15 +14,17 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'GET') {
     try {
       const now = new Date();
-      const isMonth = (event.queryStringParameters || {}).month === '1';
+      const monthParam = parseInt((event.queryStringParameters || {}).month, 10);
+      const isMonth = Number.isInteger(monthParam) && monthParam >= 1;
 
-      // 대시보드 → 오늘 하루 / 젤다 → 이번 달 1일
+      // 대시보드 (파라미터 없음) → 오늘 하루
+      // month=N → N개월 누적 (N=1이면 이번 달 1일부터 = 기존 동작 그대로 유지)
       const startDate = isMonth
-        ? new Date(now.getFullYear(), now.getMonth(), 1)
+        ? new Date(now.getFullYear(), now.getMonth() - (monthParam - 1), 1)
         : new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const created = Math.floor(startDate.getTime() / 1000);
 
-      // 페이지네이션 (month=1 일때만, 오늘은 그냥 100건으로 충분)
+      // 페이지네이션 (month=N 일때만, 오늘은 그냥 100건으로 충분)
       let allData = [];
       if (isMonth) {
         let lastId = undefined;
