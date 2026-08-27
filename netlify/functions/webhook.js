@@ -1,4 +1,26 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { getStore } = require('@netlify/blobs');
+
+function mapOrders(data) {
+  return data
+    .filter(pi => pi.status === 'succeeded')
+    .map(pi => {
+      const m = pi.metadata || {};
+      return {
+        id: pi.id,
+        bar: m.bar || '—',
+        staff_name: m.staff_name || '—',
+        staff_no: m.staff_no || '',
+        from: m.from || 'Anonymous',
+        message: m.message || '',
+        tip_amount: parseInt(m.tip_amount) || 0,
+        fee_amount: parseInt(m.fee_amount) || 0,
+        payment_intent: pi.id,
+        time: new Date(pi.created * 1000).toISOString(),
+        done: false,
+      };
+    });
+}
 
 exports.handler = async (event) => {
   const headers = {
@@ -13,21 +35,32 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'GET') {
     try {
-      const now = new Date();
       const monthParam = parseInt((event.queryStringParameters || {}).month, 10);
       const isMonth = Number.isInteger(monthParam) && monthParam >= 1;
 
-      // 대시보드 (파라미터 없음) → 오늘 하루
-      // month=N → N개월 누적 (N=1이면 이번 달 1일부터 = 기존 동작 그대로 유지)
+      if (isMonth && monthParam >= 2) {
+        // 2개월 이상 누적은 데이터가 많아서 매번 Stripe를 라이브로 페이지네이션하면
+        // 타임아웃(502) 남 → refresh-vip-cache 함수가 주기적으로 미리 계산해서
+        // 저장해둔 캐시를 그대로 서빙 (즉시 응답, 타임아웃 없음)
+        const store = getStore('vip-cache');
+        const cached = await store.get(`month-${monthParam}`, { type: 'json' });
+        return {
+          statusCode: 200,
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify(cached || { orders: [] }),
+        };
+      }
+
+      // month=1(이번달) 또는 대시보드(오늘 하루) — 데이터量 적어서 기존처럼 실시간 조회
+      const now = new Date();
       const startDate = isMonth
-        ? new Date(now.getFullYear(), now.getMonth() - (monthParam - 1), 1)
+        ? new Date(now.getFullYear(), now.getMonth(), 1)
         : new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const created = Math.floor(startDate.getTime() / 1000);
 
-      // 페이지네이션 (month=N 일때만, 오늘은 그냥 100건으로 충분)
       let allData = [];
       if (isMonth) {
-        let lastId = undefined;
+        let lastId;
         while (true) {
           const params = { created: { gte: created }, limit: 100 };
           if (lastId) params.starting_after = lastId;
@@ -41,24 +74,7 @@ exports.handler = async (event) => {
         allData = page.data;
       }
 
-      const orders = allData
-        .filter(pi => pi.status === 'succeeded')
-        .map(pi => {
-          const m = pi.metadata || {};
-          return {
-            id: pi.id,
-            bar: m.bar || '—',
-            staff_name: m.staff_name || '—',
-            staff_no: m.staff_no || '',
-            from: m.from || 'Anonymous',
-            message: m.message || '',
-            tip_amount: parseInt(m.tip_amount) || 0,
-            fee_amount: parseInt(m.fee_amount) || 0,
-            payment_intent: pi.id,
-            time: new Date(pi.created * 1000).toISOString(),
-            done: false,
-          };
-        });
+      const orders = mapOrders(allData);
 
       return {
         statusCode: 200,
