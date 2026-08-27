@@ -41,7 +41,11 @@ async function fetchMonthOrders(monthParam) {
 const MONTHS_TO_CACHE = [3];
 
 exports.handler = async () => {
-  const store = getStore('vip-cache');
+  const store = getStore({
+    name: 'vip-cache',
+    siteID: process.env.BLOBS_SITE_ID,
+    token: process.env.BLOBS_TOKEN,
+  });
   const results = {};
 
   for (const monthParam of MONTHS_TO_CACHE) {

@@ -42,7 +42,11 @@ exports.handler = async (event) => {
         // 2개월 이상 누적은 데이터가 많아서 매번 Stripe를 라이브로 페이지네이션하면
         // 타임아웃(502) 남 → refresh-vip-cache 함수가 주기적으로 미리 계산해서
         // 저장해둔 캐시를 그대로 서빙 (즉시 응답, 타임아웃 없음)
-        const store = getStore('vip-cache');
+        const store = getStore({
+          name: 'vip-cache',
+          siteID: process.env.BLOBS_SITE_ID,
+          token: process.env.BLOBS_TOKEN,
+        });
         const cached = await store.get(`month-${monthParam}`, { type: 'json' });
         return {
           statusCode: 200,
