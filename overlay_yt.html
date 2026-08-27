@@ -803,10 +803,16 @@
   // ── THANK YOU KA (tyk-box: month top5, unchanged) ──
   var VIP_MIN_DRINKS = 300; // nickname 누적 300잔 이상 결제해야 OFFICIAL VIP 타이틀
   function topByDrinks(orders, n, minDrinks, excludeAnonymous){
-    var counts={};
-    (orders||[]).forEach(function(o){var name=o.from||'Anonymous';var d=Math.round((o.tip_amount||0)/210);counts[name]=(counts[name]||0)+d;});
-    var arr=Object.keys(counts).map(function(nm){return{name:nm,drinks:counts[nm]};});
-    if(excludeAnonymous) arr=arr.filter(function(p){return p.name.trim().toLowerCase()!=='anonymous';});
+    var counts={}, display={};
+    (orders||[]).forEach(function(o){
+      var raw=(o.from||'Anonymous').trim();
+      var key=raw.toLowerCase();
+      var d=Math.round((o.tip_amount||0)/210);
+      counts[key]=(counts[key]||0)+d;
+      if(!display[key]) display[key]=raw;
+    });
+    var arr=Object.keys(counts).map(function(key){return{name:display[key],drinks:counts[key]};});
+    if(excludeAnonymous) arr=arr.filter(function(p){return p.name.toLowerCase()!=='anonymous';});
     if(minDrinks!=null) arr=arr.filter(function(p){return p.drinks>=minDrinks;});
     return arr.sort(function(a,b){return b.drinks-a.drinks;}).slice(0,n);
   }
@@ -893,7 +899,7 @@ var VIP_BADGE_IMAGES = [
         renderTykContent(top5,'month');
         showTykBox();
         setTimeout(function(){
-          fetch('/.netlify/functions/webhook?month=6')
+          fetch('/.netlify/functions/webhook?month=3')
             .then(function(r){return r.json();})
             .then(function(d2){
               var vipList=topByDrinks(d2.orders||[], 10, VIP_MIN_DRINKS, true);
