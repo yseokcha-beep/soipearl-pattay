@@ -828,6 +828,775 @@
 #tyk-box.vip-mode .vipcard-badge[data-rank="9"]{--orig-float-delay:-2.56s;}
 #tyk-box.vip-mode .vipcard-badge[data-rank="10"]{--orig-float-delay:-3.91s;}
 
+
+
+/* =========================================================
+   OFFICIAL VIP — COMPACT + LIGHT TRANSPARENCY + DUAL AURORA
+   Scope: OFFICIAL VIP card only.
+   Horn/VIP payment alerts are untouched.
+   ========================================================= */
+
+/* ~10% narrower card; icon sizes remain unchanged */
+#tyk-box.vip-mode{
+  width:263px !important;
+  padding:10px 9px 10px !important;
+
+  /* Only the black panel becomes more transparent.
+     Text/icons/aurora keep full opacity. */
+  background:
+    radial-gradient(120% 85% at 14% 0%,rgba(255,231,175,.10),transparent 43%),
+    radial-gradient(80% 100% at 100% 100%,rgba(96,73,33,.13),transparent 48%),
+    linear-gradient(145deg,rgba(25,25,24,.88),rgba(5,6,7,.92) 48%,rgba(16,14,12,.90)) !important;
+
+  border:1px solid rgba(220,184,107,.32) !important;
+  box-shadow:
+    0 16px 42px rgba(0,0,0,.54),
+    inset 0 1px 0 rgba(255,255,255,.09),
+    inset 0 -1px 0 rgba(205,168,91,.10) !important;
+}
+
+/* Slightly tighter internal spacing so 10 tiers fit naturally */
+#tyk-box.vip-mode .tyk-header{
+  padding:0 5px 7px !important;
+}
+#tyk-box.vip-mode .tyk-list{
+  gap:6px !important;
+  padding:0 1px 1px !important;
+}
+#tyk-box.vip-mode .vipcard-row{
+  gap:5px !important;
+}
+
+/* Keep existing outer GOLD aurora canvas.
+   Add a second inset PLATINUM/SILVER aurora moving independently. */
+@property --vip-silver-angle{
+  syntax:'<angle>';
+  inherits:false;
+  initial-value:0deg;
+}
+#tyk-box.vip-mode .vip-inner-aurora{
+  position:absolute;
+  inset:4px;
+  border-radius:12px;
+  padding:1px;
+  pointer-events:none;
+  z-index:9;
+  opacity:.82;
+
+  background:
+    conic-gradient(
+      from var(--vip-silver-angle),
+      rgba(255,255,255,.12) 0deg,
+      rgba(224,230,238,.95) 34deg,
+      rgba(255,255,255,.46) 62deg,
+      rgba(151,163,177,.80) 102deg,
+      rgba(255,255,255,.10) 145deg,
+      rgba(238,242,247,.92) 202deg,
+      rgba(168,180,194,.72) 250deg,
+      rgba(255,255,255,.16) 300deg,
+      rgba(224,230,238,.95) 360deg
+    );
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+
+  filter:
+    drop-shadow(0 0 1px rgba(235,241,248,.42))
+    drop-shadow(0 0 3px rgba(190,201,214,.16));
+
+  animation:vipSilverAuroraReverse 7.8s linear infinite;
+}
+
+@keyframes vipSilverAuroraReverse{
+  to{ --vip-silver-angle:-360deg; }
+}
+
+/* Fine inner metallic line under the moving silver aurora */
+#tyk-box.vip-mode .vip-inner-aurora::after{
+  content:"";
+  position:absolute;
+  inset:2px;
+  border-radius:10px;
+  border:1px solid rgba(229,233,238,.16);
+  box-shadow:
+    inset 0 0 4px rgba(255,255,255,.04),
+    0 0 2px rgba(230,235,241,.08);
+}
+
+/* Tone down the old panel sweep so dual aurora becomes the premium frame */
+#tyk-box.vip-mode:after{
+  opacity:.18 !important;
+  animation-duration:8.5s !important;
+}
+
+
+
+/* =========================================================
+   LUXE DUAL AURORA BOOST — OFFICIAL VIP FRAME ONLY
+   Brighter gold + platinum, layered moving highlights.
+   Effects stay close to the frame rather than flooding outside.
+   ========================================================= */
+
+@property --vip-gold-angle2{
+  syntax:'<angle>';
+  inherits:false;
+  initial-value:0deg;
+}
+@property --vip-platinum-angle2{
+  syntax:'<angle>';
+  inherits:false;
+  initial-value:0deg;
+}
+
+/* Outer gold luminous rail */
+#tyk-box.vip-mode .vip-luxe-gold{
+  position:absolute;
+  inset:-1px;
+  border-radius:15px;
+  padding:2px;
+  pointer-events:none;
+  z-index:11;
+  background:
+    conic-gradient(
+      from var(--vip-gold-angle2),
+      #8b5a12 0deg,
+      #ffd86b 24deg,
+      #fff4bd 43deg,
+      #d69720 68deg,
+      #fff8d7 92deg,
+      #a96c10 124deg,
+      #f7bd39 158deg,
+      #fff9df 190deg,
+      #c77d13 228deg,
+      #ffe47c 266deg,
+      #fff7c9 302deg,
+      #b97613 334deg,
+      #8b5a12 360deg
+    );
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  filter:
+    drop-shadow(0 0 2px rgba(255,220,117,.95))
+    drop-shadow(0 0 5px rgba(242,178,50,.58));
+  animation:vipGoldLuxeSpin 4.9s linear infinite;
+}
+@keyframes vipGoldLuxeSpin{to{--vip-gold-angle2:360deg;}}
+
+/* Inner platinum luminous rail */
+#tyk-box.vip-mode .vip-inner-aurora{
+  inset:4px !important;
+  padding:1.6px !important;
+  opacity:1 !important;
+  background:
+    conic-gradient(
+      from var(--vip-platinum-angle2),
+      #7e8996 0deg,
+      #f8fbff 22deg,
+      #b9c7d5 46deg,
+      #ffffff 66deg,
+      #8794a2 98deg,
+      #eaf2fa 132deg,
+      #ffffff 164deg,
+      #9ba9b7 202deg,
+      #f6fbff 238deg,
+      #becbd7 270deg,
+      #ffffff 304deg,
+      #8b98a6 336deg,
+      #7e8996 360deg
+    ) !important;
+  filter:
+    drop-shadow(0 0 2px rgba(246,251,255,.95))
+    drop-shadow(0 0 5px rgba(194,214,232,.48)) !important;
+  animation:vipPlatinumLuxeSpin 6.4s linear infinite !important;
+}
+@keyframes vipPlatinumLuxeSpin{to{--vip-platinum-angle2:-360deg;}}
+
+/* Bright moving "jewel catches" that orbit with each rail */
+#tyk-box.vip-mode .vip-luxe-gold::before,
+#tyk-box.vip-mode .vip-inner-aurora::before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  pointer-events:none;
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0 12%,
+      rgba(255,255,255,0) 13%,
+      rgba(255,255,255,.98) 14%,
+      transparent 15% 48%,
+      rgba(255,255,255,0) 49%,
+      rgba(255,255,255,.82) 50%,
+      transparent 51% 100%
+    );
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  padding:2px;
+  mix-blend-mode:screen;
+  filter:blur(.25px);
+  animation:vipJewelCatch 3.7s linear infinite;
+}
+#tyk-box.vip-mode .vip-inner-aurora::before{
+  animation-direction:reverse;
+  animation-duration:4.8s;
+  opacity:.82;
+}
+@keyframes vipJewelCatch{
+  to{transform:rotate(360deg);}
+}
+
+/* restrained inner reflection gives a premium lit-frame depth */
+#tyk-box.vip-mode{
+  box-shadow:
+    0 16px 42px rgba(0,0,0,.54),
+    inset 0 0 0 1px rgba(255,238,188,.10),
+    inset 0 0 10px rgba(255,213,107,.055),
+    inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+
+
+
+/* =========================================================
+   ULTRA LUXE FRAME BOOST — OFFICIAL VIP ONLY
+   More luminous Gold + Platinum rails, without changing card size.
+   ========================================================= */
+
+@property --vip-gold-angle3{
+  syntax:'<angle>';
+  inherits:false;
+  initial-value:0deg;
+}
+@property --vip-plat-angle3{
+  syntax:'<angle>';
+  inherits:false;
+  initial-value:0deg;
+}
+
+/* stronger outer gold rail */
+#tyk-box.vip-mode .vip-luxe-gold{
+  inset:-2px !important;
+  padding:2.4px !important;
+  background:
+    conic-gradient(
+      from var(--vip-gold-angle3),
+      #6f4208 0deg,
+      #e8a51e 14deg,
+      #fff1a8 28deg,
+      #ffffff 38deg,
+      #ffc933 49deg,
+      #a96308 70deg,
+      #ffe46f 92deg,
+      #fffce8 105deg,
+      #d48a11 127deg,
+      #ffcb3a 150deg,
+      #ffffff 165deg,
+      #f2b52a 182deg,
+      #8a5108 209deg,
+      #ffe77f 230deg,
+      #fffdf3 245deg,
+      #c87b0b 267deg,
+      #ffd24d 292deg,
+      #ffffff 305deg,
+      #e5a41c 327deg,
+      #6f4208 360deg
+    ) !important;
+  filter:
+    drop-shadow(0 0 2px rgba(255,246,198,1))
+    drop-shadow(0 0 5px rgba(255,204,76,.82))
+    drop-shadow(0 0 8px rgba(218,146,25,.34)) !important;
+  animation:vipGoldUltraSpin 3.8s linear infinite !important;
+}
+@keyframes vipGoldUltraSpin{
+  to{--vip-gold-angle3:360deg;}
+}
+
+/* vivid platinum inner rail */
+#tyk-box.vip-mode .vip-inner-aurora{
+  inset:4px !important;
+  padding:1.9px !important;
+  background:
+    conic-gradient(
+      from var(--vip-plat-angle3),
+      #687683 0deg,
+      #dbe9f5 14deg,
+      #ffffff 28deg,
+      #aebfce 42deg,
+      #f7fcff 62deg,
+      #768594 84deg,
+      #d7e7f5 106deg,
+      #ffffff 120deg,
+      #9cacba 143deg,
+      #f4faff 166deg,
+      #758392 188deg,
+      #e8f4fc 214deg,
+      #ffffff 232deg,
+      #a8b8c6 252deg,
+      #f5fbff 278deg,
+      #778694 306deg,
+      #ffffff 334deg,
+      #687683 360deg
+    ) !important;
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,1))
+    drop-shadow(0 0 5px rgba(210,231,247,.78))
+    drop-shadow(0 0 7px rgba(140,167,191,.28)) !important;
+  animation:vipPlatUltraSpin 4.9s linear infinite !important;
+}
+@keyframes vipPlatUltraSpin{
+  to{--vip-plat-angle3:-360deg;}
+}
+
+/* additional alternating glints on the full card frame */
+#tyk-box.vip-mode .vip-luxe-gold::after{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  padding:2px;
+  pointer-events:none;
+  background:
+    conic-gradient(
+      from 30deg,
+      transparent 0 8%,
+      rgba(255,255,255,0) 9%,
+      rgba(255,255,255,1) 10%,
+      transparent 11% 31%,
+      rgba(255,255,255,.88) 32%,
+      transparent 33% 58%,
+      rgba(255,251,225,.98) 59%,
+      transparent 60% 82%,
+      rgba(255,255,255,.9) 83%,
+      transparent 84% 100%
+    );
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  mix-blend-mode:screen;
+  filter:blur(.15px);
+  animation:vipFrameGlint 2.65s linear infinite;
+}
+@keyframes vipFrameGlint{
+  to{transform:rotate(360deg);}
+}
+
+/* =========================================================
+   RANK 1 — DIAMOND JEWEL SETTING
+   Small diamonds around the badge + one larger top jewel.
+   ========================================================= */
+
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"]{
+  overflow:visible !important;
+}
+
+/* Main diamond at top center */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond-main{
+  position:absolute;
+  left:50%;
+  top:-9px;
+  width:11px;
+  height:11px;
+  transform:translateX(-50%) rotate(45deg);
+  z-index:20;
+  pointer-events:none;
+  border:1px solid rgba(255,255,255,.95);
+  background:
+    linear-gradient(135deg,
+      #ffffff 0 18%,
+      #dff4ff 19% 34%,
+      #ffffff 35% 48%,
+      #a7cce5 49% 62%,
+      #f7fdff 63% 78%,
+      #ffffff 79% 100%);
+  box-shadow:
+    0 0 2px #fff,
+    0 0 6px rgba(210,236,255,.95),
+    0 0 10px rgba(255,221,122,.38);
+  animation:vipMainDiamondLive 1.85s ease-in-out infinite;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond-main::before{
+  content:"";
+  position:absolute;
+  inset:2px;
+  border-top:1px solid rgba(130,174,205,.7);
+  border-left:1px solid rgba(255,255,255,.85);
+}
+@keyframes vipMainDiamondLive{
+  0%,100%{
+    filter:brightness(.95) saturate(1.05);
+    box-shadow:0 0 2px #fff,0 0 5px rgba(210,236,255,.8),0 0 9px rgba(255,221,122,.28);
+  }
+  48%{
+    filter:brightness(1.5) saturate(1.15);
+    box-shadow:0 0 4px #fff,0 0 9px rgba(225,245,255,1),0 0 14px rgba(255,224,118,.54);
+  }
+}
+
+/* Four smaller diamond studs */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond{
+  position:absolute;
+  width:5px;
+  height:5px;
+  transform:rotate(45deg);
+  z-index:19;
+  pointer-events:none;
+  background:linear-gradient(135deg,#ffffff,#b8d8ed 46%,#ffffff 52%,#8fb8d5);
+  border:1px solid rgba(255,255,255,.82);
+  box-shadow:0 0 3px rgba(235,248,255,.9),0 0 6px rgba(221,184,90,.2);
+  animation:vipDiamondStud 2.4s ease-in-out infinite;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond.d1{left:-3px;top:9px;animation-delay:-.2s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond.d2{right:-3px;top:9px;animation-delay:-1.1s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond.d3{left:4px;bottom:-2px;animation-delay:-1.65s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond.d4{right:4px;bottom:-2px;animation-delay:-.7s;}
+
+@keyframes vipDiamondStud{
+  0%,100%{opacity:.65;filter:brightness(.95);}
+  43%{opacity:1;filter:brightness(1.65);}
+  61%{opacity:.78;filter:brightness(1.12);}
+}
+
+/* Premium diamond halo around rank 1 only */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-medal{
+  filter:
+    drop-shadow(0 5px 6px rgba(0,0,0,.55))
+    drop-shadow(0 0 5px rgba(255,228,145,.44))
+    drop-shadow(0 0 8px rgba(214,236,255,.28)) !important;
+}
+
+
+
+/* =========================================================
+   FINAL SCALE DOWN + MORE TRANSPARENT PANEL
+   Fixed height/structure preserved. No auto-height behavior.
+   ========================================================= */
+
+#tyk-box.vip-mode{
+  /* Smaller fixed card: roughly 15% down from the last version */
+  width:224px !important;
+  padding:8px 7px 8px !important;
+
+  /* Slightly more transparent black panel */
+  background:
+    radial-gradient(120% 85% at 14% 0%,rgba(255,231,175,.08),transparent 43%),
+    radial-gradient(80% 100% at 100% 100%,rgba(96,73,33,.10),transparent 48%),
+    linear-gradient(145deg,rgba(24,24,23,.79),rgba(5,6,7,.84) 48%,rgba(15,13,12,.82)) !important;
+
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.48),
+    inset 0 0 0 1px rgba(255,238,188,.08),
+    inset 0 0 9px rgba(255,213,107,.045),
+    inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+
+/* Proportionally tighten typography/layout, while keeping icon readability */
+#tyk-box.vip-mode .tyk-header{
+  padding:0 4px 6px !important;
+}
+#tyk-box.vip-mode .tyk-list{
+  gap:5px !important;
+  padding:0 1px 1px !important;
+}
+#tyk-box.vip-mode .vipcard-row{
+  gap:4px !important;
+}
+#tyk-box.vip-mode .vipcard-item{
+  width:46px !important;
+  gap:2px !important;
+}
+#tyk-box.vip-mode .vipcard-badge{
+  width:42px !important;
+  height:42px !important;
+}
+#tyk-box.vip-mode .vipcard-name{
+  font-size:.60rem !important;
+}
+
+/* Keep rank 1 diamond proportionate after overall shrink */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond-main{
+  width:9px !important;
+  height:9px !important;
+  top:-8px !important;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond{
+  width:4px !important;
+  height:4px !important;
+}
+
+/* Preserve bright aurora despite smaller footprint */
+#tyk-box.vip-mode .vip-luxe-gold{
+  inset:-2px !important;
+  padding:2.2px !important;
+}
+#tyk-box.vip-mode .vip-inner-aurora{
+  inset:4px !important;
+  padding:1.7px !important;
+}
+
+
+
+/* OFFICIAL VIP TITLE — Gold × Platinum living aurora */
+#tyk-box.vip-mode .vip-shine{
+  position:relative;
+  display:inline-block;
+  color:transparent !important;
+  background:
+    linear-gradient(
+      105deg,
+      #a66b0b 0%,
+      #ffd95a 12%,
+      #fff8d4 22%,
+      #c3cfdb 34%,
+      #ffffff 43%,
+      #8f9dac 52%,
+      #fff7c7 63%,
+      #f1b82e 76%,
+      #ffffff 87%,
+      #b9c8d6 94%,
+      #d39416 100%
+    );
+  background-size:260% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:vipTitleAuroraFlow 3.3s linear infinite !important;
+  filter:
+    drop-shadow(0 0 2px rgba(255,238,177,.52))
+    drop-shadow(0 0 4px rgba(211,227,241,.25));
+}
+
+/* second moving platinum/gold reflection on the letters */
+#tyk-box.vip-mode .vip-shine::after{
+  content:"OFFICIAL VIP";
+  position:absolute;
+  inset:0;
+  color:transparent;
+  background:
+    linear-gradient(
+      100deg,
+      transparent 0 34%,
+      rgba(255,255,255,0) 39%,
+      rgba(255,255,255,.98) 47%,
+      rgba(221,235,247,.90) 50%,
+      rgba(255,222,118,.95) 53%,
+      rgba(255,255,255,0) 61%,
+      transparent 66% 100%
+    );
+  background-size:230% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  pointer-events:none;
+  mix-blend-mode:screen;
+  animation:vipTitleJewelSweep 2.55s ease-in-out infinite;
+}
+
+@keyframes vipTitleAuroraFlow{
+  0%{background-position:100% 50%;}
+  100%{background-position:-160% 50%;}
+}
+@keyframes vipTitleJewelSweep{
+  0%,16%{background-position:145% 50%;opacity:.18;}
+  46%{opacity:1;}
+  72%,100%{background-position:-115% 50%;opacity:.26;}
+}
+
+/* subtle breathing luminance so the title never feels static */
+#tyk-box.vip-mode #tyk-label{
+  animation:vipTitleBreath 2.8s ease-in-out infinite;
+}
+@keyframes vipTitleBreath{
+  0%,100%{filter:brightness(.94);}
+  50%{filter:brightness(1.18);}
+}
+
+
+
+/* CLEAN TITLE: remove duplicate pseudo-text layer */
+#tyk-box.vip-mode .vip-shine::after{
+  content:none !important;
+  display:none !important;
+}
+
+
+
+/* =========================================================
+   OFFICIAL VIP TITLE — CLEAN GOLD/PLATINUM LIGHT ONLY
+   Remove dark/black title appearance and decorative side marks.
+   ========================================================= */
+
+/* Hide any decorative label pseudo-elements / ornaments */
+#tyk-box.vip-mode #tyk-label::before,
+#tyk-box.vip-mode #tyk-label::after,
+#tyk-box.vip-mode .vip-shine::before,
+#tyk-box.vip-mode .vip-shine::after{
+  content:none !important;
+  display:none !important;
+}
+
+/* One title only: luminous gold/platinum lettering */
+#tyk-box.vip-mode .vip-shine{
+  position:relative !important;
+  display:inline-block !important;
+  color:#ffe8a0 !important;
+  -webkit-text-fill-color:transparent !important;
+  background:
+    linear-gradient(
+      100deg,
+      #d18b12 0%,
+      #ffd75a 13%,
+      #fff6c9 25%,
+      #ffffff 34%,
+      #c7d5e2 43%,
+      #ffffff 51%,
+      #ffe17a 63%,
+      #e9a922 75%,
+      #fff7cf 87%,
+      #d7e3ed 94%,
+      #f0b62e 100%
+    ) !important;
+  background-size:240% 100% !important;
+  -webkit-background-clip:text !important;
+  background-clip:text !important;
+  text-shadow:none !important;
+  filter:
+    drop-shadow(0 0 2px rgba(255,232,151,.92))
+    drop-shadow(0 0 5px rgba(242,187,55,.50))
+    drop-shadow(0 0 7px rgba(220,235,247,.24)) !important;
+  animation:vipCleanGoldTitle 3.15s linear infinite !important;
+}
+
+@keyframes vipCleanGoldTitle{
+  0%{
+    background-position:115% 50%;
+    filter:
+      drop-shadow(0 0 2px rgba(255,232,151,.82))
+      drop-shadow(0 0 4px rgba(242,187,55,.40))
+      drop-shadow(0 0 6px rgba(220,235,247,.18));
+  }
+  48%{
+    filter:
+      drop-shadow(0 0 3px rgba(255,244,196,1))
+      drop-shadow(0 0 7px rgba(247,194,62,.72))
+      drop-shadow(0 0 8px rgba(226,240,250,.34));
+  }
+  100%{
+    background-position:-125% 50%;
+    filter:
+      drop-shadow(0 0 2px rgba(255,232,151,.82))
+      drop-shadow(0 0 4px rgba(242,187,55,.40))
+      drop-shadow(0 0 6px rgba(220,235,247,.18));
+  }
+}
+
+/* prevent inherited label color/shadow from creating a dark duplicate */
+#tyk-box.vip-mode #tyk-label{
+  color:transparent !important;
+  text-shadow:none !important;
+}
+
+
+
+/* =========================================================
+   RANK 1 — REFINED INLAID DIAMONDS
+   Remove floating diamond ornaments; four tiny stones are
+   visually set into the gold frame corners.
+   ========================================================= */
+
+/* Hide previous floating/main diamond treatment */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond-main{
+  display:none !important;
+}
+
+/* Four small, inset-cut stones */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond{
+  width:4.5px !important;
+  height:4.5px !important;
+  z-index:21 !important;
+  border-radius:1px !important;
+  border:1px solid rgba(255,255,255,.78) !important;
+  background:
+    conic-gradient(
+      from 45deg,
+      #ffffff,
+      #9fc7e0,
+      #f8fdff,
+      #c9e4f4,
+      #ffffff,
+      #8fb8d3,
+      #ffffff
+    ) !important;
+  box-shadow:
+    inset 0 0 1px rgba(255,255,255,.95),
+    0 0 2px rgba(237,249,255,.82),
+    0 0 4px rgba(255,222,121,.20) !important;
+  transform:rotate(45deg) !important;
+  opacity:.88;
+  animation:vipInlaidDiamondFlash var(--diamond-dur,3.8s) ease-in-out infinite !important;
+}
+
+/* seat each stone directly into a corner of the 1st-place frame */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond.d1{
+  left:1px !important; top:1px !important;
+  animation-delay:-.3s !important;
+  --diamond-dur:3.35s;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond.d2{
+  right:1px !important; top:1px !important;
+  animation-delay:-1.55s !important;
+  --diamond-dur:4.05s;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond.d3{
+  left:1px !important; bottom:1px !important;
+  animation-delay:-2.4s !important;
+  --diamond-dur:3.7s;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-rank1-diamond.d4{
+  right:1px !important; bottom:1px !important;
+  animation-delay:-.95s !important;
+  --diamond-dur:4.3s;
+}
+
+/* Random-looking individual refraction: never all four flashing together */
+@keyframes vipInlaidDiamondFlash{
+  0%,62%,100%{
+    opacity:.68;
+    filter:brightness(.95) saturate(.92);
+    box-shadow:
+      inset 0 0 1px rgba(255,255,255,.8),
+      0 0 1px rgba(237,249,255,.55),
+      0 0 3px rgba(255,222,121,.12);
+  }
+  69%{
+    opacity:1;
+    filter:brightness(1.75) saturate(1.06);
+    box-shadow:
+      inset 0 0 2px rgba(255,255,255,1),
+      0 0 3px rgba(255,255,255,1),
+      0 0 6px rgba(211,238,255,.88),
+      0 0 7px rgba(255,221,112,.30);
+  }
+  76%{
+    opacity:.82;
+    filter:brightness(1.15);
+  }
+}
+
+/* Slight gold bezel around rank 1 makes the stones look mounted, not floating */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-medal-shell{
+  box-shadow:
+    inset 0 0 0 1px rgba(255,244,198,.48),
+    inset 0 0 0 3px rgba(5,4,2,.72),
+    inset 0 1px 2px rgba(255,255,255,.40),
+    0 0 0 1px rgba(220,167,57,.34),
+    0 0 6px rgba(255,210,94,.18) !important;
+}
+
 </style>
 </head>
 <body>
@@ -1257,6 +2026,16 @@ var VIP_BADGE_IMAGES = [
     var box=document.getElementById('tyk-box'), listEl=document.getElementById('tyk-list');
     if(mode==='vip'){
       box.classList.add('vip-mode');
+      if(!box.querySelector('.vip-luxe-gold')){
+        var goldAurora=document.createElement('div');
+        goldAurora.className='vip-luxe-gold';
+        box.appendChild(goldAurora);
+      }
+      if(!box.querySelector('.vip-inner-aurora')){
+        var innerAurora=document.createElement('div');
+        innerAurora.className='vip-inner-aurora';
+        box.appendChild(innerAurora);
+      }
       document.getElementById('tyk-label').innerHTML='<span class="vip-shine">OFFICIAL VIP</span>';
       startAuroraBorder(box, vipDurationMs||20000, GOLD_AURORA_COLORS);
       var rowDefs=[[0],[1,2],[3,4,5],[6,7,8,9]]; // rank1 alone at top, then 2~3, 4~6, 7~10
@@ -1612,6 +2391,30 @@ var VIP_BADGE_IMAGES = [
   var obs=new MutationObserver(function(){ applyVipRandomTiming(); });
   obs.observe(document.body,{childList:true,subtree:true});
   setTimeout(applyVipRandomTiming,200);
+})();
+</script>
+
+
+<script>
+(function(){
+  function addRank1Diamonds(){
+    var badge=document.querySelector('#tyk-box.vip-mode .vipcard-badge[data-rank="1"]');
+    if(!badge || badge.dataset.diamondSet==='1') return;
+    badge.dataset.diamondSet='1';
+
+    var main=document.createElement('i');
+    main.className='vip-rank1-diamond-main';
+    badge.appendChild(main);
+
+    for(var j=1;j<=4;j++){
+      var d=document.createElement('i');
+      d.className='vip-rank1-diamond d'+j;
+      badge.appendChild(d);
+    }
+  }
+
+  new MutationObserver(addRank1Diamonds).observe(document.body,{childList:true,subtree:true});
+  setTimeout(addRank1Diamonds,250);
 })();
 </script>
 
