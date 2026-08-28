@@ -787,6 +787,47 @@
   text-shadow:0 1px 1px rgba(0,0,0,.8),0 0 8px rgba(212,168,67,.18);
 }
 
+
+
+/* =========================================================
+   RESTORE ORIGINAL VIP BADGE FLOAT EXACTLY
+   Original motion:
+   4.8s ease-in-out infinite
+   translateY(0 -> -1.4px -> 0) + rotateX(0 -> 2deg -> 0)
+   No scale pulse.
+   ========================================================= */
+#tyk-box.vip-mode .vipcard-badge{
+  transform:translateZ(0);
+  animation-name:vipBadgeFloatOriginal !important;
+  animation-duration:4.8s !important;
+  animation-timing-function:ease-in-out !important;
+  animation-iteration-count:infinite !important;
+  /* retain independent phase offsets without changing the motion itself */
+  animation-delay:var(--orig-float-delay,0s) !important;
+}
+
+@keyframes vipBadgeFloatOriginal{
+  0%,100%{
+    transform:translateY(0) rotateX(0deg);
+  }
+  50%{
+    transform:translateY(-1.4px) rotateX(2deg);
+  }
+}
+
+/* Keep movement phases independent so rows don't bob in sync.
+   Motion shape itself remains exactly the original. */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"]{--orig-float-delay:-.15s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="2"]{--orig-float-delay:-1.03s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="3"]{--orig-float-delay:-2.21s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="4"]{--orig-float-delay:-.62s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="5"]{--orig-float-delay:-2.87s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="6"]{--orig-float-delay:-1.48s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="7"]{--orig-float-delay:-3.34s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="8"]{--orig-float-delay:-.91s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="9"]{--orig-float-delay:-2.56s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="10"]{--orig-float-delay:-3.91s;}
+
 </style>
 </head>
 <body>
