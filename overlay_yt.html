@@ -490,7 +490,304 @@
 .vipcard-row:nth-child(2) .vipcard-badge:after{animation-delay:-1s}.vipcard-row:nth-child(3) .vipcard-badge:after{animation-delay:-2s}.vipcard-row:nth-child(4) .vipcard-badge:after{animation-delay:-3s}
 @keyframes badgeSweep{0%,62%{background-position:180% 0;opacity:0}69%{opacity:.7}78%{background-position:-70% 0;opacity:0}100%{opacity:0}}
 
-  </style>
+  
+/* ── OFFICIAL VIP — MAGIC ICON INTERNAL FX ONLY ──
+   Keeps existing card/layout/medal styling intact.
+   Effects are confined to each tier gem: inner aura, energy core,
+   drifting motes and crystal refraction. */
+#tyk-box.vip-mode .vip-gem{
+  overflow:hidden;
+  isolation:isolate;
+}
+
+/* slow living light inside the gem */
+#tyk-box.vip-mode .vip-gem .vip-aura-core{
+  position:absolute;
+  left:50%; top:52%;
+  width:72%; height:72%;
+  transform:translate(-50%,-50%) rotate(-45deg) scale(.72);
+  border-radius:50%;
+  pointer-events:none;
+  mix-blend-mode:screen;
+  background:
+    radial-gradient(circle,
+      rgba(255,255,255,.90) 0 5%,
+      var(--gem-hi) 12%,
+      var(--gem) 34%,
+      transparent 72%);
+  filter:blur(1.6px);
+  opacity:.22;
+  animation:vipAuraBreathe var(--aura-dur,3.8s) ease-in-out infinite;
+  animation-delay:var(--aura-delay,0s);
+  z-index:1;
+}
+@keyframes vipAuraBreathe{
+  0%,100%{opacity:.18;transform:translate(-50%,-50%) rotate(-45deg) scale(.66);}
+  48%{opacity:.54;transform:translate(-50%,-50%) rotate(-45deg) scale(1.02);}
+  68%{opacity:.34;transform:translate(-50%,-50%) rotate(-45deg) scale(.86);}
+}
+
+/* tiny magical motes remain inside gem — no star/cross flare */
+#tyk-box.vip-mode .vip-gem .vip-aura-mote{
+  position:absolute;
+  width:2.2px;height:2.2px;
+  border-radius:50%;
+  pointer-events:none;
+  background:var(--gem-hi);
+  box-shadow:0 0 4px var(--gem),0 0 7px var(--gem-glow);
+  mix-blend-mode:screen;
+  opacity:0;
+  z-index:2;
+  animation:vipMoteRise var(--mote-dur,2.8s) ease-in-out infinite;
+  animation-delay:var(--mote-delay,0s);
+}
+#tyk-box.vip-mode .vip-gem .vip-aura-mote.m1{left:27%;top:70%;}
+#tyk-box.vip-mode .vip-gem .vip-aura-mote.m2{left:56%;top:76%;}
+#tyk-box.vip-mode .vip-gem .vip-aura-mote.m3{left:70%;top:60%;}
+@keyframes vipMoteRise{
+  0%,18%{opacity:0;transform:translateY(2px) scale(.55);}
+  38%{opacity:.75;}
+  72%{opacity:.34;transform:translateY(-10px) scale(1);}
+  100%{opacity:0;transform:translateY(-15px) scale(.65);}
+}
+
+/* thin internal energy ring, subtle on lower tiers and strongest on #1 */
+#tyk-box.vip-mode .vip-gem .vip-aura-ring{
+  position:absolute;
+  left:50%;top:50%;
+  width:68%;height:68%;
+  transform:translate(-50%,-50%) rotate(-45deg);
+  border-radius:50%;
+  border:1px solid color-mix(in srgb, var(--gem-hi) 72%, transparent);
+  box-shadow:inset 0 0 5px var(--gem-glow),0 0 5px var(--gem-glow);
+  opacity:.12;
+  pointer-events:none;
+  z-index:2;
+  animation:vipAuraRing 4.6s ease-in-out infinite;
+  animation-delay:var(--aura-delay,0s);
+}
+@keyframes vipAuraRing{
+  0%,100%{opacity:.08;transform:translate(-50%,-50%) rotate(-45deg) scale(.78);}
+  52%{opacity:.35;transform:translate(-50%,-50%) rotate(135deg) scale(1.04);}
+}
+
+/* narrow crystal refraction across the face, not the whole card */
+#tyk-box.vip-mode .vip-gem .vip-refraction{
+  position:absolute;
+  left:-35%;top:-20%;
+  width:28%;height:145%;
+  transform:rotate(-18deg);
+  pointer-events:none;
+  z-index:3;
+  opacity:0;
+  mix-blend-mode:screen;
+  background:linear-gradient(90deg,
+    transparent,
+    rgba(255,255,255,.20) 28%,
+    rgba(255,255,255,.92) 48%,
+    var(--gem-hi) 58%,
+    transparent);
+  filter:blur(.3px);
+  animation:vipCrystalRefraction var(--refract-dur,4.4s) cubic-bezier(.4,0,.2,1) infinite;
+  animation-delay:var(--refract-delay,0s);
+}
+@keyframes vipCrystalRefraction{
+  0%,62%{left:-35%;opacity:0;}
+  69%{opacity:.7;}
+  80%{left:112%;opacity:.18;}
+  100%{left:112%;opacity:0;}
+}
+
+/* tier 1 gets a deeper, slower magical core without changing its geometry */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-aura-core{
+  opacity:.36;
+  filter:blur(1.2px);
+  animation-duration:3.2s;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-aura-ring{
+  opacity:.32;
+  border-width:1.2px;
+  animation-duration:4.0s;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-aura-mote{
+  width:2.6px;height:2.6px;
+}
+
+/* preserve the existing outer badge sweep but soften it so the icon feels richer */
+#tyk-box.vip-mode .vipcard-badge:after{opacity:.72;}
+
+
+
+/* =========================================================
+   OFFICIAL VIP ONLY — TOP 3 ALWAYS ALIVE + RANDOM TIER FX
+   Does not target popup/recent notification components.
+   ========================================================= */
+
+/* Remove row-synchronized badge timing */
+#tyk-box.vip-mode .vipcard-row:nth-child(2) .vipcard-badge,
+#tyk-box.vip-mode .vipcard-row:nth-child(3) .vipcard-badge,
+#tyk-box.vip-mode .vipcard-row:nth-child(4) .vipcard-badge{
+  animation-delay:var(--badge-float-delay,0s) !important;
+}
+#tyk-box.vip-mode .vipcard-row:nth-child(2) .vipcard-badge:after,
+#tyk-box.vip-mode .vipcard-row:nth-child(3) .vipcard-badge:after,
+#tyk-box.vip-mode .vipcard-row:nth-child(4) .vipcard-badge:after{
+  animation-delay:var(--badge-sweep-delay,0s) !important;
+}
+
+#tyk-box.vip-mode .vipcard-badge{
+  animation-duration:var(--badge-float-dur,4.8s) !important;
+  animation-delay:var(--badge-float-delay,0s) !important;
+}
+#tyk-box.vip-mode .vipcard-badge:after{
+  animation-duration:var(--badge-sweep-dur,5.4s) !important;
+  animation-delay:var(--badge-sweep-delay,0s) !important;
+}
+
+/* TOP 3 always-on internal gem activity */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-gem,
+#tyk-box.vip-mode .vipcard-badge[data-rank="2"] .vip-gem,
+#tyk-box.vip-mode .vipcard-badge[data-rank="3"] .vip-gem{
+  animation:vipTop3Alive var(--alive-dur,2.2s) ease-in-out infinite !important;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-gem{--alive-dur:1.75s;--alive-min:.94;--alive-max:1.28;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="2"] .vip-gem{--alive-dur:2.05s;--alive-min:.88;--alive-max:1.18;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="3"] .vip-gem{--alive-dur:2.35s;--alive-min:.84;--alive-max:1.12;}
+
+@keyframes vipTop3Alive{
+  0%,100%{filter:saturate(1.15) brightness(var(--alive-min,.9));}
+  46%{filter:saturate(1.42) brightness(var(--alive-max,1.2));}
+  72%{filter:saturate(1.24) brightness(1.02);}
+}
+
+/* Existing magic core: TOP 3 never turns off */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-aura-core,
+#tyk-box.vip-mode .vipcard-badge[data-rank="2"] .vip-aura-core,
+#tyk-box.vip-mode .vipcard-badge[data-rank="3"] .vip-aura-core{
+  animation:vipTop3CoreAlways var(--core-dur,2s) ease-in-out infinite !important;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-aura-core{--core-min:.62;--core-max:1;--core-dur:1.65s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="2"] .vip-aura-core{--core-min:.50;--core-max:.88;--core-dur:1.95s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="3"] .vip-aura-core{--core-min:.43;--core-max:.80;--core-dur:2.25s;}
+
+@keyframes vipTop3CoreAlways{
+  0%,100%{
+    opacity:var(--core-min,.5);
+    transform:translate(-50%,-50%) rotate(-45deg) scale(.76);
+  }
+  45%{
+    opacity:var(--core-max,.9);
+    transform:translate(-50%,-50%) rotate(-36deg) scale(1.12);
+  }
+  75%{
+    opacity:calc(var(--core-min,.5) + .13);
+    transform:translate(-50%,-50%) rotate(-53deg) scale(.91);
+  }
+}
+
+/* TOP 3 internal ring always rotating */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-aura-ring,
+#tyk-box.vip-mode .vipcard-badge[data-rank="2"] .vip-aura-ring,
+#tyk-box.vip-mode .vipcard-badge[data-rank="3"] .vip-aura-ring{
+  animation:vipTop3RingAlways var(--ring-dur,4s) linear infinite !important;
+}
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"] .vip-aura-ring{opacity:.58 !important;--ring-dur:3.0s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="2"] .vip-aura-ring{opacity:.42 !important;--ring-dur:3.6s;}
+#tyk-box.vip-mode .vipcard-badge[data-rank="3"] .vip-aura-ring{opacity:.34 !important;--ring-dur:4.15s;}
+@keyframes vipTop3RingAlways{
+  0%{transform:translate(-50%,-50%) rotate(-45deg) scale(.87);}
+  50%{transform:translate(-50%,-50%) rotate(135deg) scale(1.04);}
+  100%{transform:translate(-50%,-50%) rotate(315deg) scale(.87);}
+}
+
+/* Individual accent flashes — no row synchronization */
+#tyk-box.vip-mode .vipcard-badge[data-rank="1"]:after,
+#tyk-box.vip-mode .vipcard-badge[data-rank="2"]:after,
+#tyk-box.vip-mode .vipcard-badge[data-rank="3"]:after{
+  animation-name:vipTop3AccentIndependent !important;
+}
+@keyframes vipTop3AccentIndependent{
+  0%,48%,100%{background-position:180% 0;opacity:.08;}
+  59%{opacity:.82;}
+  71%{background-position:-70% 0;opacity:.10;}
+}
+#tyk-box.vip-mode .vipcard-badge:not([data-rank="1"]):not([data-rank="2"]):not([data-rank="3"]):after{
+  animation-name:vipLowerAccentIndependent !important;
+}
+@keyframes vipLowerAccentIndependent{
+  0%,74%,100%{background-position:180% 0;opacity:0;}
+  81%{opacity:.56;}
+  90%{background-position:-70% 0;opacity:0;}
+}
+
+/* Per-badge internal FX cadence */
+#tyk-box.vip-mode .vip-gem .vip-refraction{
+  animation-duration:var(--rand-refract-dur,var(--refract-dur,4.4s)) !important;
+  animation-delay:var(--rand-refract-delay,var(--refract-delay,0s)) !important;
+}
+#tyk-box.vip-mode .vip-gem .vip-aura-mote{
+  animation-delay:var(--rand-mote-delay,var(--mote-delay,0s)) !important;
+}
+
+
+/* =========================================================
+   ORDINARY DRINK NOTIFICATION ONLY
+   Horn Pull + VIP notifications retain original CSS/JS/effects untouched.
+   ========================================================= */
+.recent-item.drink-premium{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  /* Original footprint preserved */
+  padding:14px 16px;
+  border-radius:7px;
+  border:1px solid rgba(212,168,67,.72);
+  background:
+    radial-gradient(125% 110% at 10% 0%,rgba(255,220,145,.075),transparent 38%),
+    linear-gradient(145deg,rgba(20,19,18,.975) 0%,rgba(6,6,7,.975) 48%,rgba(13,11,8,.98) 100%);
+  box-shadow:
+    0 13px 28px rgba(0,0,0,.58),
+    0 4px 9px rgba(0,0,0,.48),
+    inset 0 1px 0 rgba(255,255,255,.11),
+    inset 0 -1px 0 rgba(212,168,67,.10),
+    0 0 0 1px rgba(0,0,0,.58);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:geometricPrecision;
+}
+.recent-item.drink-premium::before{
+  content:"";
+  position:absolute;
+  inset:1px;
+  border-radius:5px;
+  pointer-events:none;
+  border:1px solid rgba(255,255,255,.035);
+  background:linear-gradient(115deg,rgba(255,255,255,.045),transparent 24% 74%,rgba(212,168,67,.025));
+}
+.recent-item.drink-premium::after{
+  content:"";
+  position:absolute;
+  left:12px;right:12px;top:1px;height:1px;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,231,179,.55),rgba(255,255,255,.35),transparent);
+  opacity:.55;
+}
+.recent-item.drink-premium .recent-icon{
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.72)) drop-shadow(0 0 5px rgba(212,168,67,.13));
+}
+.recent-item.drink-premium .recent-name{
+  color:rgba(244,241,234,.94);
+  text-shadow:0 1px 1px rgba(0,0,0,.75);
+}
+.recent-item.drink-premium .recent-name strong{
+  color:#dfbd72;
+  text-shadow:0 0 7px rgba(212,168,67,.16);
+}
+.recent-item.drink-premium .recent-amt{
+  color:#e1bb65;
+  text-shadow:0 1px 1px rgba(0,0,0,.8),0 0 8px rgba(212,168,67,.18);
+}
+
+</style>
 </head>
 <body>
 
@@ -966,7 +1263,21 @@ var VIP_BADGE_IMAGES = [
             ['#8c969c','#eff5f7','#34393d','rgba(174,190,198,.22)']
           ];
           var gs=GEM_SETS[i];
-          var medal='<div class="vip-medal" style="--gem:'+gs[0]+';--gem-hi:'+gs[1]+';--gem-lo:'+gs[2]+';--gem-glow:'+gs[3]+';"><div class="vip-medal-shell"></div><div class="vip-gem"></div><span class="vip-rank">'+(i+1)+'</span><i class="vip-metal-pin p1"></i><i class="vip-metal-pin p2"></i><i class="vip-metal-pin p3"></i><i class="vip-metal-pin p4"></i></div>';
+          var auraDelay=(-Math.random()*2.6).toFixed(2), mote1=(-Math.random()*2.2).toFixed(2), mote2=(-Math.random()*2.5).toFixed(2), mote3=(-Math.random()*2.8).toFixed(2), refract=(-Math.random()*3.8).toFixed(2);
+          var auraDur=(3.35+i*0.08).toFixed(2), refractDur=(4.0+i*0.10).toFixed(2);
+          var medal='<div class="vip-medal" style="--gem:'+gs[0]+';--gem-hi:'+gs[1]+';--gem-lo:'+gs[2]+';--gem-glow:'+gs[3]+';--aura-delay:'+auraDelay+'s;--aura-dur:'+auraDur+'s;--refract-delay:'+refract+'s;--refract-dur:'+refractDur+'s;">'+
+            '<div class="vip-medal-shell"></div>'+
+            '<div class="vip-gem">'+
+              '<i class="vip-aura-core"></i>'+
+              '<i class="vip-aura-ring"></i>'+
+              '<i class="vip-aura-mote m1" style="--mote-delay:'+mote1+'s;--mote-dur:2.55s"></i>'+
+              '<i class="vip-aura-mote m2" style="--mote-delay:'+mote2+'s;--mote-dur:3.05s"></i>'+
+              '<i class="vip-aura-mote m3" style="--mote-delay:'+mote3+'s;--mote-dur:2.75s"></i>'+
+              '<i class="vip-refraction"></i>'+
+            '</div>'+
+            '<span class="vip-rank">'+(i+1)+'</span>'+
+            '<i class="vip-metal-pin p1"></i><i class="vip-metal-pin p2"></i><i class="vip-metal-pin p3"></i><i class="vip-metal-pin p4"></i>'+
+          '</div>';
           html+='<div class="vipcard-item"><div class="vipcard-badge" data-rank="'+(i+1)+'" style="'+style+'">'+medal+'</div><div class="vipcard-name '+nameCls+'">'+p.name+'</div></div>';
         });
         html+='</div>';
@@ -1067,6 +1378,7 @@ var VIP_BADGE_IMAGES = [
     var item=document.createElement('div');
     var msgDur = isVip ? VIP_MSG_DURATION : MSG_DURATION;
     item.className='recent-item';
+    if(!isHornPull && !isVip) item.classList.add('drink-premium');
     if(isHornPull) item.classList.add('horn-led');
     if(isVip){
       item.style.background='rgba(4,2,14,.97)';
@@ -1226,5 +1538,41 @@ var VIP_BADGE_IMAGES = [
   poll();
   setInterval(poll, 5000);
 </script>
+
+<script>
+(function(){
+  function applyVipRandomTiming(){
+    var badges=document.querySelectorAll('#tyk-box.vip-mode .vipcard-badge');
+    badges.forEach(function(badge,idx){
+      if(badge.dataset.randomFxReady==='1') return;
+      badge.dataset.randomFxReady='1';
+      var rank=Number(badge.dataset.rank||idx+1);
+      var rnd=function(min,max){return min+Math.random()*(max-min);};
+
+      badge.style.setProperty('--badge-float-delay',(-rnd(.15,4.2)).toFixed(2)+'s');
+      badge.style.setProperty('--badge-float-dur',rnd(4.1,5.8).toFixed(2)+'s');
+      badge.style.setProperty('--badge-sweep-delay',(-rnd(.2,8.6)).toFixed(2)+'s');
+
+      if(rank<=3){
+        badge.style.setProperty('--badge-sweep-dur',rnd(2.35,3.75).toFixed(2)+'s');
+        badge.style.setProperty('--rand-refract-dur',rnd(2.3,3.8).toFixed(2)+'s');
+      }else{
+        badge.style.setProperty('--badge-sweep-dur',rnd(5.8,10.6).toFixed(2)+'s');
+        badge.style.setProperty('--rand-refract-dur',rnd(5.4,10.2).toFixed(2)+'s');
+      }
+      badge.style.setProperty('--rand-refract-delay',(-rnd(.2,8.5)).toFixed(2)+'s');
+
+      badge.querySelectorAll('.vip-aura-mote').forEach(function(mote){
+        mote.style.setProperty('--rand-mote-delay',(-rnd(.1,4.5)).toFixed(2)+'s');
+      });
+    });
+  }
+
+  var obs=new MutationObserver(function(){ applyVipRandomTiming(); });
+  obs.observe(document.body,{childList:true,subtree:true});
+  setTimeout(applyVipRandomTiming,200);
+})();
+</script>
+
 </body>
 </html>
