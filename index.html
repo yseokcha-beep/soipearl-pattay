@@ -456,8 +456,59 @@
     }
     .step-label::after { content:''; flex:1; height:1px; background:var(--border); }
 
-    .bar-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:40px; }
+    .bar-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px; }
     @media(max-width:480px) { .bar-grid { grid-template-columns:1fr; } }
+
+    /* Subtle placeholders for future venues */
+    .coming-grid {
+      width:72%; margin:0 auto 32px;
+      display:grid; grid-template-columns:repeat(2,1fr); gap:10px;
+    }
+    .coming-tile {
+      min-height:50px; display:flex; align-items:center; justify-content:center;
+      border:1px solid rgba(240,235,227,.075); background:rgba(255,255,255,.014);
+      color:rgba(240,235,227,.22); font-size:.58rem; font-weight:500;
+      letter-spacing:.21em; text-transform:uppercase; user-select:none; pointer-events:none;
+    }
+    @media(max-width:480px) {
+      .coming-grid { width:100%; }
+      .coming-tile { min-height:46px; }
+    }
+
+    /* VIP detail — ultra-compact standalone notice; receipt remains untouched */
+    .vip-receipt-note {
+      max-width:360px; margin:0 auto 12px; padding:8px 14px 9px;
+      border:1px solid rgba(212,168,67,.28);
+      background:linear-gradient(180deg,rgba(212,168,67,.018),rgba(255,255,255,.003));
+      text-align:center; position:relative;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.008);
+    }
+    .vip-receipt-note::before {
+      content:'◆'; position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+      width:22px; height:12px; line-height:12px; text-align:center;
+      background:var(--ink); color:rgba(212,168,67,.82); font-size:.38rem;
+    }
+    .vip-receipt-note::after {
+      content:''; position:absolute; inset:3px; pointer-events:none;
+      border:1px solid rgba(212,168,67,.045);
+    }
+    .vip-receipt-kicker {
+      display:flex; align-items:center; justify-content:center; gap:9px;
+      font-size:.50rem; font-weight:600; letter-spacing:.20em; text-transform:uppercase;
+      color:rgba(212,168,67,.92); margin:0 0 4px; white-space:nowrap;
+    }
+    .vip-receipt-kicker::before,.vip-receipt-kicker::after {
+      content:''; width:22px; height:1px; background:rgba(212,168,67,.22);
+    }
+    .vip-receipt-note p {
+      margin:0; font-size:.585rem; line-height:1.38; color:rgba(240,235,227,.52);
+    }
+    .vip-receipt-note p + p { margin-top:2px; }
+    .vip-receipt-note strong { color:rgba(240,235,227,.80); font-weight:500; }
+    @media(max-width:480px) {
+      .vip-receipt-note { width:calc(100% - 36px); max-width:360px; padding:7px 11px 8px; margin-bottom:11px; }
+      .vip-receipt-note p { font-size:.56rem; }
+    }
     .bar-tile {
       background: var(--ink2); border: 1px solid var(--border);
       padding: 22px 18px; cursor:pointer; position:relative; overflow:hidden;
@@ -946,6 +997,12 @@
       </div>
     </div>
 
+    <div class="coming-grid" aria-label="Future venues">
+      <div class="coming-tile">Coming Soon</div>
+      <div class="coming-tile">Coming Soon</div>
+    </div>
+
+
     <!-- Step 2 -->
     <p class="step-label">02 &nbsp; Who Are You Supporting?</p>
     <div class="staff-row">
@@ -1019,7 +1076,13 @@
     <!-- Success -->
     <div class="success-pg" id="success-pg">
       <h2 class="success-h" style="margin-bottom:20px;">Thank you for<br>your generosity.</h2>
-      <div class="receipt-box" id="receipt-box">
+      
+      <div class="vip-receipt-note">
+        <div class="vip-receipt-kicker">OFFICIAL VIP TOP 10</div>
+        <p>Verify with the last 4 digits of your payment card to receive your VIP Card at the venue.</p>
+        <p>If your name is listed in the <strong>Official VIP Top 10 for the day</strong>, enjoy <strong>10% off drinks anytime</strong> at any venue in our group.</p>
+      </div>
+<div class="receipt-box" id="receipt-box">
         <p class="receipt-site">pattayasoipearl.com</p>
         <div class="receipt-icon" id="r-icon">🌸</div>
         <p class="receipt-confirmed" id="r-confirmed">✦ Drink Confirmed ✦</p>
@@ -1038,7 +1101,7 @@
         <p class="receipt-ref" id="r-ref"></p>
         <p class="receipt-footer">Please show this to your staff member</p>
       </div>
-      <div class="act-row">
+<div class="act-row">
         <button class="act-btn" onclick="resetAll()">↺ &nbsp;Send Another</button>
       </div>
     </div>
