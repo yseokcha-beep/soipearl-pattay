@@ -1597,6 +1597,437 @@
     0 0 6px rgba(255,210,94,.18) !important;
 }
 
+
+
+/* === LEGACY BADGE TEST — ADD-ON ONLY; existing OFFICIAL VIP untouched === */
+#tyk-box.vip-mode .vip-legacy-badges{
+  height:7px;
+  margin-top:1px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:1.5px;
+  pointer-events:none;
+}
+#tyk-box.vip-mode .vip-legacy-gem{
+  width:5px;
+  height:5px;
+  transform:rotate(45deg);
+  border-radius:1px;
+  border:1px solid rgba(255,241,185,.85);
+  background:linear-gradient(135deg,#fff 0 24%,#b9d9ed 25% 47%,#fff8d9 48% 66%,#8fb9d5 67% 100%);
+  box-shadow:0 0 2px rgba(255,255,255,.85),0 0 4px rgba(224,184,73,.34);
+  animation:vipLegacyGem 3.2s ease-in-out infinite;
+}
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(2){animation-delay:-.8s}
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(3){animation-delay:-1.6s}
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(4){animation-delay:-2.4s}
+@keyframes vipLegacyGem{
+  0%,78%,100%{filter:brightness(.9);opacity:.76}
+  84%{filter:brightness(1.8);opacity:1}
+}
+#tyk-box.vip-mode .vip-legacy-count{
+  margin-left:2px;
+  font:700 7px/1 Arial,sans-serif;
+  color:#f2d27c;
+  text-shadow:0 0 3px rgba(226,181,61,.45);
+}
+
+
+
+/* =========================================================
+   LEGACY DIAMOND v2 — VISIBILITY / JEWEL QUALITY ONLY
+   Existing OFFICIAL VIP design remains untouched.
+   ========================================================= */
+#tyk-box.vip-mode .vip-legacy-badges{
+  height:10px !important;
+  margin-top:2px !important;
+  gap:2.5px !important;
+  overflow:visible !important;
+}
+
+/* real jewel silhouette: white/platinum center + thin gold setting */
+#tyk-box.vip-mode .vip-legacy-gem{
+  position:relative !important;
+  width:8px !important;
+  height:8px !important;
+  flex:0 0 8px !important;
+  border-radius:2px 2px 3px 2px !important;
+  transform:rotate(45deg) !important;
+  border:1px solid rgba(247,205,92,.96) !important;
+  background:
+    conic-gradient(
+      from 45deg,
+      #ffffff 0deg 38deg,
+      #9dc7df 39deg 80deg,
+      #f9fdff 81deg 128deg,
+      #6f9fbd 129deg 174deg,
+      #ffffff 175deg 222deg,
+      #b9dceb 223deg 270deg,
+      #fff9db 271deg 314deg,
+      #8fb8d1 315deg 360deg
+    ) !important;
+  box-shadow:
+    inset 0 0 1px rgba(255,255,255,1),
+    0 0 0 1px rgba(104,67,9,.60),
+    0 0 2px rgba(255,255,255,.90),
+    0 0 4px rgba(216,239,255,.55),
+    0 0 5px rgba(238,185,50,.28) !important;
+  opacity:.96 !important;
+  animation:legacyDiamondFacet 4.4s ease-in-out infinite !important;
+}
+
+/* inner facet gives it a diamond rather than a dot/star appearance */
+#tyk-box.vip-mode .vip-legacy-gem::before{
+  content:"";
+  position:absolute;
+  inset:1.5px;
+  border-radius:1px;
+  border-top:1px solid rgba(255,255,255,.92);
+  border-left:1px solid rgba(255,255,255,.60);
+  border-right:1px solid rgba(103,151,181,.50);
+  border-bottom:1px solid rgba(126,87,16,.35);
+  background:linear-gradient(135deg,
+    rgba(255,255,255,.95),
+    rgba(182,220,241,.72) 38%,
+    rgba(255,255,255,.98) 51%,
+    rgba(113,165,197,.62) 72%,
+    rgba(255,246,202,.76));
+}
+
+/* tiny independent refraction flash */
+#tyk-box.vip-mode .vip-legacy-gem::after{
+  content:"";
+  position:absolute;
+  width:3px;
+  height:3px;
+  left:-1px;
+  top:-1px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 3px #fff,0 0 6px rgba(218,240,255,.92);
+  opacity:0;
+  transform:rotate(-45deg);
+  animation:legacyDiamondSpark 4.4s ease-in-out infinite;
+}
+
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(1),
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(1)::after{animation-delay:-.4s !important}
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(2),
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(2)::after{animation-delay:-1.7s !important}
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(3),
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(3)::after{animation-delay:-2.8s !important}
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(4),
+#tyk-box.vip-mode .vip-legacy-gem:nth-child(4)::after{animation-delay:-3.65s !important}
+
+@keyframes legacyDiamondFacet{
+  0%,70%,100%{
+    filter:brightness(.96) saturate(.92);
+  }
+  76%{
+    filter:brightness(1.72) saturate(1.06);
+  }
+  82%{
+    filter:brightness(1.10);
+  }
+}
+@keyframes legacyDiamondSpark{
+  0%,72%,100%{opacity:0;transform:rotate(-45deg) scale(.35);}
+  76%{opacity:1;transform:rotate(-45deg) scale(1);}
+  80%{opacity:0;transform:rotate(-45deg) scale(.5);}
+}
+
+
+
+/* =========================================================
+   LEGACY FRAME DIAMOND TEST
+   Existing OFFICIAL VIP badge/icon/effects are untouched.
+   300 = no diamond, 600+ = diamonds overlaid on badge frame.
+   ========================================================= */
+
+/* retire the previous under-name test row */
+#tyk-box.vip-mode .vip-legacy-badges{
+  display:none !important;
+}
+
+/* overlay container — does not affect layout */
+#tyk-box.vip-mode .vip-legacy-frame{
+  position:absolute;
+  inset:0;
+  z-index:30;
+  pointer-events:none;
+  overflow:visible;
+}
+
+/* jewel itself */
+#tyk-box.vip-mode .vip-legacy-frame-gem{
+  position:absolute;
+  width:8px;
+  height:8px;
+  border-radius:2px;
+  transform:rotate(45deg);
+  border:1px solid rgba(248,207,94,.98);
+  background:
+    conic-gradient(from 45deg,
+      #fff 0deg 38deg,
+      #a8d1e8 39deg 82deg,
+      #fff 83deg 126deg,
+      #6f9fbd 127deg 174deg,
+      #f9fdff 175deg 222deg,
+      #bddfed 223deg 268deg,
+      #fff6d1 269deg 314deg,
+      #8fb9d2 315deg 360deg);
+  box-shadow:
+    inset 0 0 1px #fff,
+    0 0 0 1px rgba(82,51,5,.62),
+    0 0 2px rgba(255,255,255,.95),
+    0 0 5px rgba(211,238,255,.65),
+    0 0 5px rgba(238,184,49,.28);
+  animation:legacyFrameGemLive var(--lgdur,4.5s) ease-in-out infinite;
+}
+#tyk-box.vip-mode .vip-legacy-frame-gem::before{
+  content:"";
+  position:absolute;
+  inset:1.5px;
+  border-top:1px solid rgba(255,255,255,.95);
+  border-left:1px solid rgba(255,255,255,.65);
+  border-right:1px solid rgba(104,154,184,.50);
+  border-bottom:1px solid rgba(117,78,10,.32);
+}
+#tyk-box.vip-mode .vip-legacy-frame-gem::after{
+  content:"";
+  position:absolute;
+  left:-1px;
+  top:-1px;
+  width:3px;
+  height:3px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 3px #fff,0 0 6px rgba(220,242,255,.95);
+  opacity:0;
+  transform:rotate(-45deg);
+  animation:legacyFrameSpark var(--lgdur,4.5s) ease-in-out infinite;
+}
+
+/* positions change by jewel count:
+   1 = top center
+   2 = top-left / top-right
+   3 = top-left / top-center / top-right
+   4 = four corners
+*/
+#tyk-box.vip-mode .vip-legacy-frame.count-1 .g1{
+  left:50%; top:-4px; margin-left:-4px;
+}
+#tyk-box.vip-mode .vip-legacy-frame.count-2 .g1{
+  left:-3px; top:-3px;
+}
+#tyk-box.vip-mode .vip-legacy-frame.count-2 .g2{
+  right:-3px; top:-3px;
+}
+#tyk-box.vip-mode .vip-legacy-frame.count-3 .g1{
+  left:-3px; top:-3px;
+}
+#tyk-box.vip-mode .vip-legacy-frame.count-3 .g2{
+  left:50%; top:-4px; margin-left:-4px;
+}
+#tyk-box.vip-mode .vip-legacy-frame.count-3 .g3{
+  right:-3px; top:-3px;
+}
+#tyk-box.vip-mode .vip-legacy-frame.count-4 .g1{
+  left:-3px; top:-3px;
+}
+#tyk-box.vip-mode .vip-legacy-frame.count-4 .g2{
+  right:-3px; top:-3px;
+}
+#tyk-box.vip-mode .vip-legacy-frame.count-4 .g3{
+  left:-3px; bottom:-3px;
+}
+#tyk-box.vip-mode .vip-legacy-frame.count-4 .g4{
+  right:-3px; bottom:-3px;
+}
+
+/* 5+ test: four corner jewels + compact counter */
+#tyk-box.vip-mode .vip-legacy-frame.count-plus .g1{left:-3px;top:-3px}
+#tyk-box.vip-mode .vip-legacy-frame.count-plus .g2{right:-3px;top:-3px}
+#tyk-box.vip-mode .vip-legacy-frame.count-plus .g3{left:-3px;bottom:-3px}
+#tyk-box.vip-mode .vip-legacy-frame.count-plus .g4{right:-3px;bottom:-3px}
+#tyk-box.vip-mode .vip-legacy-frame-count{
+  position:absolute;
+  right:-10px;
+  bottom:-8px;
+  min-width:12px;
+  padding:1px 2px;
+  border-radius:5px;
+  font:700 7px/1 Arial,sans-serif;
+  color:#fff3c1;
+  background:rgba(10,8,4,.90);
+  border:1px solid rgba(226,180,62,.76);
+  box-shadow:0 0 4px rgba(225,182,64,.28);
+  text-shadow:0 0 3px rgba(255,224,126,.52);
+}
+
+#tyk-box.vip-mode .vip-legacy-frame-gem:nth-child(1){--lgdur:4.25s;animation-delay:-.35s}
+#tyk-box.vip-mode .vip-legacy-frame-gem:nth-child(1)::after{--lgdur:4.25s;animation-delay:-.35s}
+#tyk-box.vip-mode .vip-legacy-frame-gem:nth-child(2){--lgdur:5.05s;animation-delay:-1.75s}
+#tyk-box.vip-mode .vip-legacy-frame-gem:nth-child(2)::after{--lgdur:5.05s;animation-delay:-1.75s}
+#tyk-box.vip-mode .vip-legacy-frame-gem:nth-child(3){--lgdur:4.65s;animation-delay:-2.95s}
+#tyk-box.vip-mode .vip-legacy-frame-gem:nth-child(3)::after{--lgdur:4.65s;animation-delay:-2.95s}
+#tyk-box.vip-mode .vip-legacy-frame-gem:nth-child(4){--lgdur:5.45s;animation-delay:-4.05s}
+#tyk-box.vip-mode .vip-legacy-frame-gem:nth-child(4)::after{--lgdur:5.45s;animation-delay:-4.05s}
+
+@keyframes legacyFrameGemLive{
+  0%,70%,100%{filter:brightness(.94) saturate(.92)}
+  76%{filter:brightness(1.7) saturate(1.05)}
+  82%{filter:brightness(1.08)}
+}
+@keyframes legacyFrameSpark{
+  0%,72%,100%{opacity:0;transform:rotate(-45deg) scale(.3)}
+  76%{opacity:1;transform:rotate(-45deg) scale(1)}
+  80%{opacity:0;transform:rotate(-45deg) scale(.45)}
+}
+
+
+
+/* === LEGACY POSITION TEST v3: icon -> diamonds -> name === */
+/* hide frame-mounted jewels from previous test */
+#tyk-box.vip-mode .vip-legacy-frame{display:none !important;}
+
+/* compact jewel row placed between existing icon and existing name */
+#tyk-box.vip-mode .vip-legacy-mid{
+  height:7px;
+  margin-top:-1px;
+  margin-bottom:1px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:2px;
+  pointer-events:none;
+  overflow:visible;
+}
+#tyk-box.vip-mode .vip-legacy-mid-gem{
+  position:relative;
+  width:7px;
+  height:7px;
+  flex:0 0 7px;
+  transform:rotate(45deg);
+  border-radius:2px;
+  border:1px solid rgba(247,205,92,.96);
+  background:conic-gradient(from 45deg,#fff,#9fc9e1,#fff,#729fba,#f9fdff,#c2dfed,#fff4c8,#8eb8d0,#fff);
+  box-shadow:inset 0 0 1px #fff,0 0 0 1px rgba(76,47,4,.55),0 0 2px #fff,0 0 4px rgba(210,238,255,.56),0 0 4px rgba(232,180,46,.22);
+  animation:legacyMidFacet var(--mdur,4.7s) ease-in-out infinite;
+}
+#tyk-box.vip-mode .vip-legacy-mid-gem::after{
+  content:"";
+  position:absolute;
+  width:2.5px;height:2.5px;
+  left:-1px;top:-1px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 3px #fff,0 0 5px rgba(218,240,255,.9);
+  opacity:0;
+  transform:rotate(-45deg);
+  animation:legacyMidSpark var(--mdur,4.7s) ease-in-out infinite;
+}
+#tyk-box.vip-mode .vip-legacy-mid-gem:nth-child(1),
+#tyk-box.vip-mode .vip-legacy-mid-gem:nth-child(1)::after{--mdur:4.3s;animation-delay:-.4s}
+#tyk-box.vip-mode .vip-legacy-mid-gem:nth-child(2),
+#tyk-box.vip-mode .vip-legacy-mid-gem:nth-child(2)::after{--mdur:5.1s;animation-delay:-1.8s}
+#tyk-box.vip-mode .vip-legacy-mid-gem:nth-child(3),
+#tyk-box.vip-mode .vip-legacy-mid-gem:nth-child(3)::after{--mdur:4.65s;animation-delay:-2.9s}
+#tyk-box.vip-mode .vip-legacy-mid-gem:nth-child(4),
+#tyk-box.vip-mode .vip-legacy-mid-gem:nth-child(4)::after{--mdur:5.35s;animation-delay:-4s}
+@keyframes legacyMidFacet{
+  0%,71%,100%{filter:brightness(.94);opacity:.9}
+  77%{filter:brightness(1.7);opacity:1}
+  83%{filter:brightness(1.08)}
+}
+@keyframes legacyMidSpark{
+  0%,73%,100%{opacity:0;transform:rotate(-45deg) scale(.3)}
+  77%{opacity:1;transform:rotate(-45deg) scale(1)}
+  81%{opacity:0;transform:rotate(-45deg) scale(.45)}
+}
+
+
+
+/* =========================================================
+   LEGACY MILESTONE LEGEND — ADD-ON ONLY
+   Existing OFFICIAL VIP design, sizing, icons and effects untouched.
+   ========================================================= */
+#tyk-box.vip-mode .vip-milestone-legend{
+  position:absolute;
+  left:9px;
+  bottom:5px;
+  z-index:40;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  pointer-events:none;
+  white-space:nowrap;
+  font:700 6.5px/1 Arial,sans-serif;
+  letter-spacing:.075em;
+  color:rgba(226,205,151,.78);
+  text-shadow:0 0 3px rgba(220,181,76,.18);
+}
+
+/* miniature version of the actual legacy diamond */
+#tyk-box.vip-mode .vip-milestone-legend-gem{
+  position:relative;
+  width:6px;
+  height:6px;
+  flex:0 0 6px;
+  transform:rotate(45deg);
+  border-radius:1.5px;
+  border:1px solid rgba(247,205,92,.88);
+  background:conic-gradient(from 45deg,#fff,#9fc9e1,#fff,#729fba,#f9fdff,#c2dfed,#fff4c8,#8eb8d0,#fff);
+  box-shadow:inset 0 0 1px #fff,0 0 2px rgba(255,255,255,.78),0 0 3px rgba(214,237,250,.32);
+  animation:vipLegendGem 5s ease-in-out infinite;
+}
+@keyframes vipLegendGem{
+  0%,76%,100%{filter:brightness(.9);opacity:.78}
+  82%{filter:brightness(1.55);opacity:1}
+  88%{filter:brightness(1.02);opacity:.86}
+}
+#tyk-box.vip-mode .vip-milestone-legend strong{
+  font-weight:800;
+  color:rgba(239,211,135,.88);
+}
+
+
+
+/* =========================================================
+   SIMPLE DIAMOND LEGEND — compact corner notation only
+   ========================================================= */
+#tyk-box.vip-mode .vip-milestone-legend{
+  left:auto !important;
+  right:8px !important;
+  bottom:5px !important;
+  gap:3px !important;
+  font:700 6.5px/1 Arial,sans-serif !important;
+  letter-spacing:.03em !important;
+  color:rgba(232,214,168,.82) !important;
+  text-shadow:0 0 3px rgba(222,184,77,.20) !important;
+}
+#tyk-box.vip-mode .vip-milestone-legend strong{
+  color:rgba(245,218,145,.94) !important;
+  font-weight:800 !important;
+}
+#tyk-box.vip-mode .vip-milestone-legend-gem{
+  width:6px !important;
+  height:6px !important;
+  flex:0 0 6px !important;
+}
+
+
+
+/* DIAMOND LEGEND — move to upper-right corner */
+#tyk-box.vip-mode .vip-milestone-legend{
+  left:auto !important;
+  right:9px !important;
+  top:8px !important;
+  bottom:auto !important;
+  z-index:50 !important;
+}
+
 </style>
 </head>
 <body>
@@ -2415,6 +2846,143 @@ var VIP_BADGE_IMAGES = [
 
   new MutationObserver(addRank1Diamonds).observe(document.body,{childList:true,subtree:true});
   setTimeout(addRank1Diamonds,250);
+})();
+</script>
+
+
+<script>
+(function(){
+  var TEST_BADGES={1:2,2:1,3:3,4:4,5:1,6:2,7:1,8:3,9:1,10:2};
+
+  function addLegacyBadges(){
+    var items=document.querySelectorAll('#tyk-box.vip-mode .vipcard-item');
+    items.forEach(function(item){
+      if(item.querySelector('.vip-legacy-badges')) return;
+      var badge=item.querySelector('.vipcard-badge[data-rank]');
+      if(!badge) return;
+      var rank=parseInt(badge.getAttribute('data-rank'),10);
+      var count=TEST_BADGES[rank]||1;
+
+      var row=document.createElement('div');
+      row.className='vip-legacy-badges';
+      var visible=Math.min(count,4);
+      for(var i=0;i<visible;i++){
+        var gem=document.createElement('i');
+        gem.className='vip-legacy-gem';
+        row.appendChild(gem);
+      }
+      if(count>4){
+        var n=document.createElement('span');
+        n.className='vip-legacy-count';
+        n.textContent='×'+count;
+        row.appendChild(n);
+      }
+
+      var name=item.querySelector('.vipcard-name');
+      if(name && name.nextSibling) item.insertBefore(row,name.nextSibling);
+      else item.appendChild(row);
+    });
+  }
+
+  new MutationObserver(addLegacyBadges).observe(document.body,{childList:true,subtree:true});
+  setTimeout(addLegacyBadges,250);
+  setTimeout(addLegacyBadges,1000);
+})();
+</script>
+
+
+<script>
+(function(){
+  /* test cumulative drink totals; 300 is VIP entry and earns no diamond */
+  var TEST_TOTALS={1:1500,2:1200,3:900,4:600,5:500,6:460,7:410,8:370,9:340,10:300};
+
+  function legacyCount(total){
+    return Math.max(0, Math.floor((total-300)/300));
+  }
+
+  function mountFrameDiamonds(){
+    document.querySelectorAll('#tyk-box.vip-mode .vipcard-badge[data-rank]').forEach(function(badge){
+      if(badge.querySelector('.vip-legacy-frame')) return;
+      var rank=parseInt(badge.getAttribute('data-rank'),10);
+      var total=TEST_TOTALS[rank]||300;
+      var count=legacyCount(total);
+      if(count<=0) return;
+
+      var frame=document.createElement('div');
+      frame.className='vip-legacy-frame '+(count<=4?'count-'+count:'count-plus');
+
+      var visible=Math.min(count,4);
+      for(var i=1;i<=visible;i++){
+        var gem=document.createElement('i');
+        gem.className='vip-legacy-frame-gem g'+i;
+        frame.appendChild(gem);
+      }
+
+      if(count>4){
+        var n=document.createElement('span');
+        n.className='vip-legacy-frame-count';
+        n.textContent='×'+count;
+        frame.appendChild(n);
+      }
+      badge.appendChild(frame);
+    });
+  }
+
+  new MutationObserver(mountFrameDiamonds).observe(document.body,{childList:true,subtree:true});
+  setTimeout(mountFrameDiamonds,220);
+  setTimeout(mountFrameDiamonds,900);
+})();
+</script>
+
+
+<script>
+(function(){
+  /* 300 = VIP entry/no jewel; +300 each = one jewel */
+  var TEST_TOTALS_MID={1:1500,2:1200,3:900,4:600,5:500,6:460,7:410,8:370,9:340,10:300};
+
+  function cnt(total){return Math.max(0,Math.floor((total-300)/300));}
+
+  function mountMid(){
+    document.querySelectorAll('#tyk-box.vip-mode .vipcard-item').forEach(function(item){
+      if(item.querySelector('.vip-legacy-mid')) return;
+      var badge=item.querySelector('.vipcard-badge[data-rank]');
+      var name=item.querySelector('.vipcard-name');
+      if(!badge||!name) return;
+      var rank=parseInt(badge.getAttribute('data-rank'),10);
+      var count=cnt(TEST_TOTALS_MID[rank]||300);
+      if(count<=0) return;
+
+      var row=document.createElement('div');
+      row.className='vip-legacy-mid';
+      for(var i=0;i<Math.min(count,4);i++){
+        var gem=document.createElement('i');
+        gem.className='vip-legacy-mid-gem';
+        row.appendChild(gem);
+      }
+      item.insertBefore(row,name);
+    });
+  }
+  new MutationObserver(mountMid).observe(document.body,{childList:true,subtree:true});
+  setTimeout(mountMid,220);
+  setTimeout(mountMid,900);
+})();
+</script>
+
+
+<script>
+(function(){
+  function mountMilestoneLegend(){
+    var box=document.querySelector('#tyk-box.vip-mode');
+    if(!box || box.querySelector('.vip-milestone-legend')) return;
+
+    var legend=document.createElement('div');
+    legend.className='vip-milestone-legend';
+    legend.innerHTML='<i class="vip-milestone-legend-gem"></i><span>= <strong>300+</strong></span>';
+    box.appendChild(legend);
+  }
+  new MutationObserver(mountMilestoneLegend).observe(document.body,{childList:true,subtree:true});
+  setTimeout(mountMilestoneLegend,250);
+  setTimeout(mountMilestoneLegend,900);
 })();
 </script>
 
