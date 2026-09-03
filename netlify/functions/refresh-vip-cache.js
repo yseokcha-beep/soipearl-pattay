@@ -1,29 +1,65 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { getStore } = require('@netlify/blobs');
 
-// OFFICIAL VIP season rules:
-// - 2026: May 1 through Dec 31 (service began in May)
-// - 2027 onward: Jan 1 through Dec 31 automatically
-// Cache key remains "month-3" so the existing overlay does NOT need any changes.
+// OFFICIAL VIP monthly persistent cache.
+// Overlay/webhook compatibility stays unchanged:
+// overlay -> webhook?month=3 -> cache key "month-3"
+//
+// Season rules:
+// 2026: May 1-Dec 31
+// 2027+: Jan 1-Dec 31 automatically
+//
+// Completed months are fetched once and stored.
+// Current month refreshes every 10 minutes.
+// During first migration, only ONE missing completed month is backfilled per run.
+// Existing month-3 is not overwritten until all completed months exist.
 
-function getVipSeasonRange() {
-  const now = new Date();
-  const year = now.getFullYear();
+function thailandParts(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
 
-  // Thailand local midnight expressed with +07:00.
-  const start =
-    year === 2026
-      ? new Date('2026-05-01T00:00:00+07:00')
-      : new Date(`${year}-01-01T00:00:00+07:00`);
-
-  // Exclusive upper bound: Jan 1 of next year.
-  const endExclusive = new Date(`${year + 1}-01-01T00:00:00+07:00`);
-
-  return { year, start, endExclusive };
+  const get = type => Number(parts.find(p => p.type === type).value);
+  return { year: get('year'), month: get('month'), day: get('day') };
 }
 
-async function fetchVipSeasonOrders() {
-  const { start, endExclusive } = getVipSeasonRange();
+function monthKey(year, month) {
+  return `vip-${year}-${String(month).padStart(2, '0')}`;
+}
+
+function monthRange(year, month) {
+  const mm = String(month).padStart(2, '0');
+  const start = new Date(`${year}-${mm}-01T00:00:00+07:00`);
+
+  const nextYear = month === 12 ? year + 1 : year;
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextMM = String(nextMonth).padStart(2, '0');
+  const endExclusive = new Date(`${nextYear}-${nextMM}-01T00:00:00+07:00`);
+
+  return { start, endExclusive };
+}
+
+function seasonMonths() {
+  const now = thailandParts();
+  const startMonth = now.year === 2026 ? 5 : 1;
+  const months = [];
+
+  for (let m = startMonth; m <= now.month; m++) {
+    months.push({ year: now.year, month: m });
+  }
+
+  return {
+    seasonYear: now.year,
+    currentMonth: now.month,
+    months,
+  };
+}
+
+async function fetchStripeMonth(year, month) {
+  const { start, endExclusive } = monthRange(year, month);
   const createdGte = Math.floor(start.getTime() / 1000);
   const createdLt = Math.floor(endExclusive.getTime() / 1000);
 
@@ -64,6 +100,10 @@ async function fetchVipSeasonOrders() {
     });
 }
 
+async function getJson(store, key) {
+  return await store.get(key, { type: 'json' });
+}
+
 exports.handler = async () => {
   const store = getStore({
     name: 'vip-cache',
@@ -71,34 +111,114 @@ exports.handler = async () => {
     token: process.env.BLOBS_TOKEN,
   });
 
-  const { year, start, endExclusive } = getVipSeasonRange();
-  const results = {};
-
   try {
-    const orders = await fetchVipSeasonOrders();
+    const { seasonYear, currentMonth, months } = seasonMonths();
 
-    // Keep this legacy cache key unchanged for overlay compatibility.
-    await store.setJSON('month-3', {
-      orders,
+    // Backfill only one missing completed month per invocation.
+    for (const item of months) {
+      if (item.month === currentMonth) continue;
+
+      const key = monthKey(item.year, item.month);
+      const cached = await getJson(store, key);
+
+      if (!cached || !Array.isArray(cached.orders)) {
+        const orders = await fetchStripeMonth(item.year, item.month);
+
+        await store.setJSON(key, {
+          orders,
+          year: item.year,
+          month: item.month,
+          completed: true,
+          updatedAt: new Date().toISOString(),
+        });
+
+        const result = {
+          status: 'backfill_progress',
+          season: seasonYear,
+          saved: key,
+          orders: orders.length,
+          message: 'One completed month cached. Run again or wait for next scheduled run.',
+        };
+
+        console.log('refresh-vip-cache:', JSON.stringify(result));
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(result),
+        };
+      }
+    }
+
+    // All completed months are ready: refresh current month only.
+    const currentKey = monthKey(seasonYear, currentMonth);
+    const currentOrders = await fetchStripeMonth(seasonYear, currentMonth);
+
+    await store.setJSON(currentKey, {
+      orders: currentOrders,
+      year: seasonYear,
+      month: currentMonth,
+      completed: false,
       updatedAt: new Date().toISOString(),
-      season: year,
-      period: {
-        start: start.toISOString(),
-        endExclusive: endExclusive.toISOString(),
-      },
     });
 
-    results[3] = `ok (${orders.length} orders) — VIP ${year} season`;
-  } catch (err) {
-    results[3] = `failed: ${err.message}`;
-    console.error(`refresh-vip-cache VIP season failed:`, err.message);
-  }
+    // Merge all monthly caches.
+    let mergedOrders = [];
+    const monthSummary = {};
 
-  console.log('refresh-vip-cache done:', JSON.stringify(results));
-  return { statusCode: 200, body: JSON.stringify(results) };
+    for (const item of months) {
+      const key = monthKey(item.year, item.month);
+      const cached = await getJson(store, key);
+      const orders = cached && Array.isArray(cached.orders) ? cached.orders : [];
+
+      mergedOrders = mergedOrders.concat(orders);
+      monthSummary[key] = orders.length;
+    }
+
+    // Deduplicate by PaymentIntent id.
+    const unique = new Map();
+    for (const order of mergedOrders) {
+      if (order && order.id) unique.set(order.id, order);
+    }
+    mergedOrders = Array.from(unique.values());
+
+    // Keep the legacy key so the existing overlay/webhook do not change.
+    await store.setJSON('month-3', {
+      orders: mergedOrders,
+      updatedAt: new Date().toISOString(),
+      season: seasonYear,
+      cacheMode: 'monthly-persistent',
+      months: monthSummary,
+    });
+
+    const result = {
+      status: 'ready',
+      season: seasonYear,
+      totalOrders: mergedOrders.length,
+      months: monthSummary,
+      message: 'month-3 cache updated successfully.',
+    };
+
+    console.log('refresh-vip-cache done:', JSON.stringify(result));
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(result),
+    };
+  } catch (err) {
+    console.error('refresh-vip-cache failed:', err);
+
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: 'failed',
+        error: err.message,
+      }),
+    };
+  }
 };
 
-// Netlify Scheduled Function — refresh every 10 minutes.
 exports.config = {
   schedule: '*/10 * * * *',
 };
