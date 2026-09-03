@@ -1,18 +1,45 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { getStore } = require('@netlify/blobs');
 
-async function fetchMonthOrders(monthParam) {
+// OFFICIAL VIP season rules:
+// - 2026: May 1 through Dec 31 (service began in May)
+// - 2027 onward: Jan 1 through Dec 31 automatically
+// Cache key remains "month-3" so the existing overlay does NOT need any changes.
+
+function getVipSeasonRange() {
   const now = new Date();
-  const startDate = new Date(now.getFullYear(), now.getMonth() - (monthParam - 1), 1);
-  const created = Math.floor(startDate.getTime() / 1000);
+  const year = now.getFullYear();
+
+  // Thailand local midnight expressed with +07:00.
+  const start =
+    year === 2026
+      ? new Date('2026-05-01T00:00:00+07:00')
+      : new Date(`${year}-01-01T00:00:00+07:00`);
+
+  // Exclusive upper bound: Jan 1 of next year.
+  const endExclusive = new Date(`${year + 1}-01-01T00:00:00+07:00`);
+
+  return { year, start, endExclusive };
+}
+
+async function fetchVipSeasonOrders() {
+  const { start, endExclusive } = getVipSeasonRange();
+  const createdGte = Math.floor(start.getTime() / 1000);
+  const createdLt = Math.floor(endExclusive.getTime() / 1000);
 
   let allData = [];
   let lastId;
+
   while (true) {
-    const params = { created: { gte: created }, limit: 100 };
+    const params = {
+      created: { gte: createdGte, lt: createdLt },
+      limit: 100,
+    };
     if (lastId) params.starting_after = lastId;
+
     const page = await stripe.paymentIntents.list(params);
     allData = allData.concat(page.data);
+
     if (!page.has_more) break;
     lastId = page.data[page.data.length - 1].id;
   }
@@ -37,33 +64,41 @@ async function fetchMonthOrders(monthParam) {
     });
 }
 
-// 캐시가 필요한 누적 기간들 (여기 숫자만 추가/삭제하면 됨, 예: OFFICIAL VIP가 나중에 6개월로 바뀌면 6 추가)
-const MONTHS_TO_CACHE = [3];
-
 exports.handler = async () => {
   const store = getStore({
     name: 'vip-cache',
     siteID: process.env.BLOBS_SITE_ID,
     token: process.env.BLOBS_TOKEN,
   });
+
+  const { year, start, endExclusive } = getVipSeasonRange();
   const results = {};
 
-  for (const monthParam of MONTHS_TO_CACHE) {
-    try {
-      const orders = await fetchMonthOrders(monthParam);
-      await store.setJSON(`month-${monthParam}`, { orders, updatedAt: new Date().toISOString() });
-      results[monthParam] = `ok (${orders.length} orders)`;
-    } catch (err) {
-      results[monthParam] = `failed: ${err.message}`;
-      console.error(`refresh-vip-cache month=${monthParam} failed:`, err.message);
-    }
+  try {
+    const orders = await fetchVipSeasonOrders();
+
+    // Keep this legacy cache key unchanged for overlay compatibility.
+    await store.setJSON('month-3', {
+      orders,
+      updatedAt: new Date().toISOString(),
+      season: year,
+      period: {
+        start: start.toISOString(),
+        endExclusive: endExclusive.toISOString(),
+      },
+    });
+
+    results[3] = `ok (${orders.length} orders) — VIP ${year} season`;
+  } catch (err) {
+    results[3] = `failed: ${err.message}`;
+    console.error(`refresh-vip-cache VIP season failed:`, err.message);
   }
 
   console.log('refresh-vip-cache done:', JSON.stringify(results));
   return { statusCode: 200, body: JSON.stringify(results) };
 };
 
-// Netlify 예약 함수(Scheduled Functions) 설정 — 10분마다 자동 실행
+// Netlify Scheduled Function — refresh every 10 minutes.
 exports.config = {
   schedule: '*/10 * * * *',
 };
