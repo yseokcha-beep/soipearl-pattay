@@ -2529,7 +2529,7 @@ var VIP_BADGE_IMAGES = [
             '<span class="vip-rank">'+(i+1)+'</span>'+
             '<i class="vip-metal-pin p1"></i><i class="vip-metal-pin p2"></i><i class="vip-metal-pin p3"></i><i class="vip-metal-pin p4"></i>'+
           '</div>';
-          html+='<div class="vipcard-item"><div class="vipcard-badge" data-rank="'+(i+1)+'" style="'+style+'">'+medal+'</div><div class="vipcard-name '+nameCls+'">'+p.name+'</div></div>';
+          html+='<div class="vipcard-item"><div class="vipcard-badge" data-rank="'+(i+1)+'" data-drinks="'+p.drinks+'" style="'+style+'">'+medal+'</div><div class="vipcard-name '+nameCls+'">'+p.name+'</div></div>';
         });
         html+='</div>';
       });
@@ -2850,106 +2850,32 @@ var VIP_BADGE_IMAGES = [
 </script>
 
 
-<script>
-(function(){
-  var TEST_BADGES={1:2,2:1,3:3,4:4,5:1,6:2,7:1,8:3,9:1,10:2};
-
-  function addLegacyBadges(){
-    var items=document.querySelectorAll('#tyk-box.vip-mode .vipcard-item');
-    items.forEach(function(item){
-      if(item.querySelector('.vip-legacy-badges')) return;
-      var badge=item.querySelector('.vipcard-badge[data-rank]');
-      if(!badge) return;
-      var rank=parseInt(badge.getAttribute('data-rank'),10);
-      var count=TEST_BADGES[rank]||1;
-
-      var row=document.createElement('div');
-      row.className='vip-legacy-badges';
-      var visible=Math.min(count,4);
-      for(var i=0;i<visible;i++){
-        var gem=document.createElement('i');
-        gem.className='vip-legacy-gem';
-        row.appendChild(gem);
-      }
-      if(count>4){
-        var n=document.createElement('span');
-        n.className='vip-legacy-count';
-        n.textContent='×'+count;
-        row.appendChild(n);
-      }
-
-      var name=item.querySelector('.vipcard-name');
-      if(name && name.nextSibling) item.insertBefore(row,name.nextSibling);
-      else item.appendChild(row);
-    });
-  }
-
-  new MutationObserver(addLegacyBadges).observe(document.body,{childList:true,subtree:true});
-  setTimeout(addLegacyBadges,250);
-  setTimeout(addLegacyBadges,1000);
-})();
-</script>
-
 
 <script>
 (function(){
-  /* test cumulative drink totals; 300 is VIP entry and earns no diamond */
-  var TEST_TOTALS={1:1500,2:1200,3:900,4:600,5:500,6:460,7:410,8:370,9:340,10:300};
-
-  function legacyCount(total){
-    return Math.max(0, Math.floor((total-300)/300));
+  /* REAL cumulative drinks: 300 = VIP entry/no diamond; each additional 300 = 1 diamond */
+  function cnt(total){
+    total=parseInt(total,10)||0;
+    return Math.max(0,Math.floor((total-300)/300));
   }
 
-  function mountFrameDiamonds(){
-    document.querySelectorAll('#tyk-box.vip-mode .vipcard-badge[data-rank]').forEach(function(badge){
-      if(badge.querySelector('.vip-legacy-frame')) return;
-      var rank=parseInt(badge.getAttribute('data-rank'),10);
-      var total=TEST_TOTALS[rank]||300;
-      var count=legacyCount(total);
-      if(count<=0) return;
-
-      var frame=document.createElement('div');
-      frame.className='vip-legacy-frame '+(count<=4?'count-'+count:'count-plus');
-
-      var visible=Math.min(count,4);
-      for(var i=1;i<=visible;i++){
-        var gem=document.createElement('i');
-        gem.className='vip-legacy-frame-gem g'+i;
-        frame.appendChild(gem);
-      }
-
-      if(count>4){
-        var n=document.createElement('span');
-        n.className='vip-legacy-frame-count';
-        n.textContent='×'+count;
-        frame.appendChild(n);
-      }
-      badge.appendChild(frame);
-    });
-  }
-
-  new MutationObserver(mountFrameDiamonds).observe(document.body,{childList:true,subtree:true});
-  setTimeout(mountFrameDiamonds,220);
-  setTimeout(mountFrameDiamonds,900);
-})();
-</script>
-
-
-<script>
-(function(){
-  /* 300 = VIP entry/no jewel; +300 each = one jewel */
-  var TEST_TOTALS_MID={1:1500,2:1200,3:900,4:600,5:500,6:460,7:410,8:370,9:340,10:300};
-
-  function cnt(total){return Math.max(0,Math.floor((total-300)/300));}
-
-  function mountMid(){
+  function mountRealMilestoneDiamonds(){
     document.querySelectorAll('#tyk-box.vip-mode .vipcard-item').forEach(function(item){
-      if(item.querySelector('.vip-legacy-mid')) return;
       var badge=item.querySelector('.vipcard-badge[data-rank]');
       var name=item.querySelector('.vipcard-name');
       if(!badge||!name) return;
-      var rank=parseInt(badge.getAttribute('data-rank'),10);
-      var count=cnt(TEST_TOTALS_MID[rank]||300);
+
+      var count=cnt(badge.getAttribute('data-drinks'));
+      var applied=parseInt(item.getAttribute('data-legacy-count')||'-1',10);
+
+      /* No DOM changes if this item's milestone state is already correct. */
+      if(applied===count) return;
+
+      var old=item.querySelector('.vip-legacy-mid');
+      if(old) old.remove();
+
+      item.setAttribute('data-legacy-count', String(count));
+
       if(count<=0) return;
 
       var row=document.createElement('div');
@@ -2962,12 +2888,22 @@ var VIP_BADGE_IMAGES = [
       item.insertBefore(row,name);
     });
   }
-  new MutationObserver(mountMid).observe(document.body,{childList:true,subtree:true});
-  setTimeout(mountMid,220);
-  setTimeout(mountMid,900);
+
+  var scheduled=false;
+  var observer=new MutationObserver(function(){
+    if(scheduled) return;
+    scheduled=true;
+    requestAnimationFrame(function(){
+      scheduled=false;
+      mountRealMilestoneDiamonds();
+    });
+  });
+
+  observer.observe(document.body,{childList:true,subtree:true});
+  setTimeout(mountRealMilestoneDiamonds,220);
+  setTimeout(mountRealMilestoneDiamonds,900);
 })();
 </script>
-
 
 <script>
 (function(){
