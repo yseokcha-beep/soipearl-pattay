@@ -459,20 +459,28 @@
     .bar-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px; }
     @media(max-width:480px) { .bar-grid { grid-template-columns:1fr; } }
 
-    /* Subtle placeholders for future venues */
+    /* Future venues — compact, centered balance */
     .coming-grid {
-      width:72%; margin:0 auto 32px;
+      width:68%; margin:0 auto 32px;
       display:grid; grid-template-columns:repeat(2,1fr); gap:10px;
     }
     .coming-tile {
-      min-height:50px; display:flex; align-items:center; justify-content:center;
-      border:1px solid rgba(240,235,227,.075); background:rgba(255,255,255,.014);
-      color:rgba(240,235,227,.22); font-size:.58rem; font-weight:500;
-      letter-spacing:.21em; text-transform:uppercase; user-select:none; pointer-events:none;
+      min-height:60px; padding:14px 16px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      border:1px solid var(--border); background:var(--ink2);
+      text-align:center; user-select:none; pointer-events:none;
+    }
+    .coming-tile-name {
+      font-family:var(--serif); font-size:.92rem; font-weight:700;
+      color:var(--smoke2); line-height:1.15;
+    }
+    .coming-tile-sub {
+      font-size:.55rem; letter-spacing:.14em; text-transform:uppercase;
+      color:var(--smoke3); margin-top:4px;
     }
     @media(max-width:480px) {
-      .coming-grid { width:100%; }
-      .coming-tile { min-height:46px; }
+      .coming-grid { width:86%; grid-template-columns:repeat(2,1fr); }
+      .coming-tile { min-height:56px; padding:12px 8px; }
     }
 
     /* VIP detail — ultra-compact standalone notice; receipt remains untouched */
@@ -998,8 +1006,14 @@
     </div>
 
     <div class="coming-grid" aria-label="Future venues">
-      <div class="coming-tile">Coming Soon</div>
-      <div class="coming-tile">Coming Soon</div>
+      <div class="coming-tile">
+        <div class="coming-tile-name">Sakura</div>
+        <div class="coming-tile-sub">Coming Soon</div>
+      </div>
+      <div class="coming-tile">
+        <div class="coming-tile-name">Brooklynn</div>
+        <div class="coming-tile-sub">Coming Soon</div>
+      </div>
     </div>
 
 
