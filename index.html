@@ -6,202 +6,13 @@
   <title>Soi 6 Pattaya — Staff Gratuity</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-    <script>
-  // ══ 변수 ══
-  var selectedBar = null;
-  var tipAmt = 630;
-
-  // ══ Navigation ══
-  function go(id) {
-    document.querySelectorAll('.pg').forEach(function(p) { p.classList.remove('on'); });
-    document.querySelectorAll('.nav-menu a').forEach(function(a) { a.classList.remove('on'); });
-    var pg = document.getElementById('pg-' + id);
-    var nav = document.getElementById('n-' + id);
-    if (!pg || !nav) return;
-    pg.style.animation = 'none';
-    pg.offsetHeight;
-    pg.style.animation = '';
-    pg.classList.add('on');
-    nav.classList.add('on');
-    document.getElementById('nav-menu').classList.remove('open');
-    window.scrollTo(0, 0);
-  }
-
-  function toggleNav() {
-    document.getElementById('nav-menu').classList.toggle('open');
-  }
-
-  // ══ Bar / Amount ══
-  function pickBar(el) {
-    document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
-    el.classList.add('on');
-    selectedBar = el.dataset.bar;
-    syncSubtitle();
-  }
-
-  function syncSubtitle() {
-    var name = document.getElementById('sname').value.trim();
-    var desc = document.getElementById('form-desc');
-    if (selectedBar && name)
-      desc.innerHTML = 'Sending a tip to <strong>' + name + '</strong> at ' + selectedBar + '.';
-    else if (selectedBar)
-      desc.textContent = 'Enter the staff name above.';
-    else
-      desc.textContent = 'Select a bar and enter a staff name above.';
-  }
-
-  function pickAmt(btn) {
-    document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.remove('on'); });
-    btn.classList.add('on');
-    var v = parseInt(btn.dataset.v);
-    document.getElementById('custom-row').style.display = v === 0 ? 'flex' : 'none';
-    var hint = document.getElementById('custom-hint');
-    if (hint) hint.style.display = v === 0 ? 'block' : 'none';
-    tipAmt = v;
-    updateFeeNote();
-  }
-
-  // ══ 수수료 계산 ══
-  function calcFee(amt, intl) {
-    if (intl) return Math.ceil(amt * 0.0675 + 10);
-    return Math.ceil(amt * 0.0365 + 10);
-  }
-
-  function updateFeeNote() {
-    var note = document.getElementById('fee-note');
-    if (!note) return;
-    var amt = tipAmt || 0;
-    if (amt > 0) {
-      var feeDom = calcFee(amt, false);
-      var feeIntl = calcFee(amt, true);
-      note.innerHTML = '<span>Processing fee: 6.75% + ฿10 (incl. VAT)</span><div style="border-top: 0.5px solid rgba(212,168,67,0.2); margin-top: 8px; padding-top: 8px; display: flex; flex-direction: column; gap: 4px;"><p style="margin:0; font-size:0.74rem; color:#aaa;">⚠ UnionPay cards are not supported — please use Visa or Mastercard.</p><p style="margin:0; font-size:0.74rem; color:#aaa;">🌐 If payment fails, try opening this page in Chrome or Safari.</p></div>';
-    } else {
-      note.innerHTML = 'Stripe fee: 3.65%+฿10 (Thai) / 4.75%+฿10+2% (International)';
-    }
-  }
-
-  // ══ Stripe ══
-  var stripe, cardElement;
-  function initStripe() {
-    if (typeof Stripe === 'undefined') { setTimeout(initStripe, 100); return; }
-    stripe = Stripe('pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP');
-    var elements = stripe.elements({
-      appearance: { theme:'night', variables:{ colorPrimary:'#d4a843', colorBackground:'#1a1a1a', colorText:'#f0ebe3', colorDanger:'#e05c5c', borderRadius:'2px' } }
-    });
-    cardElement = elements.create('card', {
-      style: { base: { color:'#f0ebe3', fontSize:'15px', '::placeholder':{ color:'rgba(240,235,227,0.35)' } } },
-      hidePostalCode: true
-    });
-    cardElement.mount('#stripe-wrap');
-    cardElement.on('change', function(e) {
-      document.getElementById('card-err').textContent = e.error ? e.error.message : '';
-    });
-  }
-
-  async function submitPay() {
-    if (!stripe || !cardElement) { alert('Payment system loading, please wait.'); return; }
-    if (!selectedBar) { alert('Please select a bar first.'); return; }
-    if (!tipAmt || tipAmt < 20) { alert('Minimum tip is ฿20.'); return; }
-    var btn = document.getElementById('sub-btn');
-    btn.disabled = true;
-    btn.textContent = 'Processing…';
-    var nameVal = document.getElementById('uname').value || 'Anonymous';
-    var result = await stripe.createToken(cardElement, { name: nameVal });
-    if (result.error) {
-      document.getElementById('card-err').textContent = result.error.message;
-      btn.disabled = false;
-      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-      return;
-    }
-    var fee = calcFee(tipAmt, true);
-    var total = tipAmt + fee;
-    var staffName = document.getElementById('sname').value || 'Staff Member';
-    var staffNo = document.getElementById('snum') ? document.getElementById('snum').value : '';
-    var msgVal = document.getElementById('umsg') ? document.getElementById('umsg').value : '';
-    document.getElementById('form-area').style.display = 'none';
-    var success = document.getElementById('success-pg');
-    if (success) {
-      success.style.display = 'block';
-      document.getElementById('r-bar').textContent = selectedBar || '—';
-      document.getElementById('r-staff').textContent = staffName + (staffNo ? ' (#' + staffNo + ')' : '');
-      document.getElementById('r-from').textContent = nameVal;
-      document.getElementById('r-tip').textContent = '฿' + tipAmt.toLocaleString();
-      document.getElementById('r-fee').textContent = '฿' + fee.toLocaleString() + ' (Stripe fee)';
-      document.getElementById('r-total').textContent = '฿' + total.toLocaleString();
-      document.getElementById('s-staff2').textContent = staffName;
-      var msgRow = document.getElementById('r-msg-row');
-      if (msgVal && msgRow) {
-        msgRow.style.display = 'flex';
-        document.getElementById('r-msg').textContent = '"' + msgVal + '"';
-      }
-    }
-    btn.disabled = false;
-    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-  }
-
-  function resetAll() {
-    document.getElementById('success-pg').style.display = 'none';
-    document.getElementById('form-area').style.display = 'block';
-    document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
-    selectedBar = null; tipAmt = 630;
-    ['sname','snum','uname','umsg'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    document.getElementById('card-err').textContent = '';
-    document.getElementById('form-desc').textContent = 'Select a bar and enter a staff name above.';
-    var btn = document.getElementById('sub-btn');
-    btn.disabled = false;
-    btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-    document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.remove('on'); });
-    document.getElementById('custom-row').style.display = 'none';
-    updateFeeNote();
-  }
-
-  // ══ 슬라이드쇼 ══
-  var _si = 0, _total = 3, _timer = null, _touchX = null;
-  function goSlide(n) {
-    var slides = document.querySelectorAll('.slide-bg .slide');
-    if (!slides.length) return;
-    slides[_si].classList.remove('active');
-    _si = (n + _total) % _total;
-    slides[_si].classList.add('active');
-    clearInterval(_timer);
-    _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    initStripe();
-    updateFeeNote();
-
-    var hero = document.querySelector('.voucher-hero');
-    if (hero) {
-      hero.addEventListener('touchstart', function(e) { _touchX = e.touches[0].clientX; }, { passive: true });
-      hero.addEventListener('touchend', function(e) {
-        if (_touchX === null) return;
-        var dx = e.changedTouches[0].clientX - _touchX;
-        if (Math.abs(dx) > 40) goSlide(_si + (dx < 0 ? 1 : -1));
-        _touchX = null;
-      }, { passive: true });
-    }
-
-    document.getElementById('custom-amt').addEventListener('input', function() {
-      tipAmt = parseInt(this.value) || 0;
-      // Google Pay 금액 실시간 업데이트
-      if (stripeElements && tipAmt > 0) {
-        var fee = calcFee(tipAmt);
-        var total = tipAmt + fee;
-        stripeElements.update({ amount: total * 100 }).catch(function(){});
-      }
-      updateFeeNote();
-    });
-
-    document.getElementById('sname').addEventListener('input', syncSubtitle);
-
-    _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
-  });
-  </script>
   <style>
+    [hidden] { display:none !important; }
+    .order-locked { pointer-events:none; opacity:.65; }
+    .order-total { padding:12px 10px; border:1px solid var(--amber); color:var(--amber); font-size:.84rem; line-height:1.65; margin:8px 0 16px; text-align:center; }
+    .payment-recovery { margin:10px 0 20px; }
+    #order-reference { font-size:.68rem; color:var(--smoke2); overflow-wrap:anywhere; margin-bottom:10px; }
+    .payment-recovery .act-btn { letter-spacing:.06em; }
     :root {
       --ink:       #0d0d0d;
       --ink2:      #161616;
@@ -1021,11 +832,11 @@
     <p class="step-label">02 &nbsp; Who Are You Supporting?</p>
     <div class="staff-row">
       <div>
-        <label class="f-label">Staff Name</label>
-        <input id="sname" class="f-input" type="text" maxlength="50" placeholder="e.g. Ning" oninput="syncSubtitle()"/>
+        <label class="f-label" for="sname">Staff Name</label>
+        <input id="sname" class="f-input" type="text" maxlength="50" placeholder="e.g. Ning"/>
       </div>
       <div>
-        <label class="f-label">Staff No. <span style="opacity:.4">(optional)</span></label>
+        <label class="f-label" for="snum">Staff No. <span style="opacity:.4">(optional)</span></label>
         <input id="snum" class="f-input" type="text" maxlength="10" placeholder="07"/>
       </div>
     </div>
@@ -1057,15 +868,24 @@
         </div>
         <p class="custom-hint" id="custom-hint" style="display:none">Enter any amount you'd like — in multiples of ฿210 per drink.</p>
 
-        <label class="f-label" style="margin-top:6px">Your Name <span style="opacity:.4">(optional)</span></label>
+        <label class="f-label" for="uname" style="margin-top:6px">Your Name <span style="opacity:.4">(optional)</span></label>
         <input id="uname" class="f-input" type="text" maxlength="50" placeholder="Anonymous"/>
 
-        <label class="f-label">Message <span style="opacity:.4">(optional)</span></label>
+        <label class="f-label" for="umsg">Message <span style="opacity:.4">(optional)</span></label>
         <input id="umsg" class="f-input" type="text" maxlength="100" placeholder="A kind word for the staff…"/>
 
         <label class="f-label">Card Details</label>
-        <div class="stripe-wrap" id="stripe-wrap"></div>
-        <div id="card-err"></div>
+        <div class="stripe-wrap" id="stripe-wrap">Loading payment options…</div>
+        <div id="card-err" role="status" aria-live="polite"></div>
+        <p id="order-total" class="order-total" aria-live="polite" hidden></p>
+        <div id="payment-recovery" class="payment-recovery" hidden>
+          <p id="order-reference"></p>
+          <div class="act-row">
+            <button type="button" class="act-btn" id="check-payment-btn" onclick="checkPayment()">Check payment status</button>
+            <button type="button" class="act-btn" id="cancel-order-btn" onclick="cancelOrder()">Cancel this order</button>
+            <button type="button" class="act-btn" id="new-order-btn" onclick="resetAll()" hidden>Start a new order</button>
+          </div>
+        </div>
 
         <div class="fee-note" id="fee-note">
           <span>Processing fee: 6.75% + ฿10 (incl. VAT)</span>
@@ -1074,7 +894,7 @@
             <p style="margin:0; font-size:0.74rem; color:#aaa;">🌐 If payment fails, try opening this page in Chrome or Safari.</p>
           </div>
         </div>
-        <button class="submit-btn" id="sub-btn" onclick="submitPay()">
+        <button class="submit-btn" id="sub-btn" type="button" onclick="submitPay()" disabled>
           Send a Drink <span class="submit-arrow">→</span>
         </button>
 
@@ -1116,7 +936,7 @@
         <p class="receipt-footer">Please show this to your staff member</p>
       </div>
 <div class="act-row">
-        <button class="act-btn" onclick="resetAll()">↺ &nbsp;Send Another</button>
+        <button class="act-btn" id="another-btn" type="button" onclick="resetAll()">↺ &nbsp;Send Another</button>
       </div>
     </div>
 
@@ -1256,342 +1076,578 @@
 
 <script src="https://js.stripe.com/v3/"></script>
 <script>
-// ── 변수 ──
-var selectedBar = null;
-var tipAmt = 630;
-var isHornPull = false;
-var stripe = null;
+'use strict';
+var selectedBar = null, tipAmt = null, amountMode = null, isHornPull = false;
+var stripe = null, stripeElements = null, paymentElement = null;
+var elementReady = false, elementAmount = null, updatingAmount = null, desiredAmount = null;
+var busy = false, activeOrder = null, retryAllowed = false, storageOK = true, booted = false;
+var STORAGE_KEY = 'soi6.checkout.v2', LOCK_KEY = 'soi6.checkout.v2';
+var COOKIE_KEY = 'soi6_checkout_v2', localStoreReady = false, cookieStoreReady = false;
+var lockDatabase = null, legacyLease = null;
+var ALLOWED_BARS = ['Nikki Bar', 'Lollipop', 'PG Bar'];
+var RETRY_STATUSES = ['requires_payment_method', 'requires_confirmation', 'requires_action'];
+var _si = 0, _timer = null, _touchX = null;
 
-
-// ── 수수료 계산 ──
-function calcFee(amt) {
-  return Math.ceil(amt * 0.0675 + 10);
-}
-
-// ── Navigation ──
+function el(id) { return document.getElementById(id); }
+function value(id) { return el(id).value.trim(); }
+function money(n) { return '฿' + n.toLocaleString('en-US'); }
+function calcFee(n) { return Math.ceil(n * 0.0675 + 10); }
+function validAmount(n) { return Number.isSafeInteger(n) && n >= 20 && n <= 100000; }
+function message(text) { el('card-err').textContent = text || ''; }
+function locked() { return busy || !!activeOrder || !storageOK; }
 function go(id) {
-  document.querySelectorAll('.pg').forEach(function(p) { p.classList.remove('on'); });
-  document.querySelectorAll('.nav-menu a').forEach(function(a) { a.classList.remove('on'); });
-  var pg = document.getElementById('pg-' + id);
-  var nav = document.getElementById('n-' + id);
+  var pg = el('pg-' + id), nav = el('n-' + id);
   if (!pg || !nav) return;
-  pg.style.animation = 'none';
-  pg.offsetHeight;
-  pg.style.animation = '';
-  pg.classList.add('on');
-  nav.classList.add('on');
-  var nm = document.getElementById('nav-menu');
-  if (nm) nm.classList.remove('open');
+  document.querySelectorAll('.pg, .nav-menu a').forEach(function(n) { n.classList.remove('on'); });
+  pg.classList.add('on'); nav.classList.add('on'); el('nav-menu').classList.remove('open');
   window.scrollTo(0, 0);
 }
-
-function toggleNav() {
-  var nm = document.getElementById('nav-menu');
-  if (nm) nm.classList.toggle('open');
+function toggleNav() { el('nav-menu').classList.toggle('open'); }
+function orderProblem() {
+  if (!ALLOWED_BARS.includes(selectedBar)) return 'Please select a bar.';
+  if (!amountMode || !validAmount(tipAmt)) return 'Please enter an amount between 20 and 100,000 THB.';
+  if (!isHornPull && !value('sname')) return 'Please enter the staff name.';
+  return '';
 }
-
-// ── Bar / Amount ──
-function pickBar(el) {
-  document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
-  el.classList.add('on');
-  selectedBar = el.dataset.bar;
-  syncSubtitle();
+function snapshot() {
+  return Object.freeze({ amount: tipAmt, bar: selectedBar,
+    staffName: isHornPull ? 'Horn Pull' : value('sname'),
+    staffNo: isHornPull ? '' : value('snum'), fromName: value('uname'),
+    message: value('umsg'), isHornPull: isHornPull });
 }
-
+function sameOrder(a, b) { return !!a && !!b && JSON.stringify(a) === JSON.stringify(b); }
+function checkoutUUID() {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  // getRandomValues predates randomUUID and keeps IDs cryptographically random.
+  var bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
+  var hex = Array.from(bytes, function(n) { return ('0' + n.toString(16)).slice(-2); }).join('');
+  return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
+}
+function readCookie(name) {
+  var prefix = name + '=', parts = document.cookie.split(';');
+  for (var i = 0; i < parts.length; i++) {
+    var part = parts[i].trim();
+    if (part.indexOf(prefix) === 0) return decodeURIComponent(part.slice(prefix.length));
+  }
+  return null;
+}
+function writeCookie(name, raw) {
+  var encoded = raw === null ? '' : encodeURIComponent(raw);
+  if (encoded.length > 3800) throw new Error('Unable to save your payment reference.');
+  document.cookie = name + '=' + encoded + '; Path=/; SameSite=Lax; Secure; Max-Age=' + (raw === null ? '0' : '2592000');
+  if (readCookie(name) !== raw) throw new Error('Unable to save your payment reference.');
+}
+function setupOrderStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY + '.check', 'ok');
+    localStoreReady = localStorage.getItem(STORAGE_KEY + '.check') === 'ok';
+    localStorage.removeItem(STORAGE_KEY + '.check');
+  } catch (error) { localStoreReady = false; }
+  try { writeCookie(COOKIE_KEY + '_check', 'ok'); writeCookie(COOKIE_KEY + '_check', null); cookieStoreReady = true; }
+  catch (error) { cookieStoreReady = false; }
+  if (!localStoreReady && !cookieStoreReady) {
+    throw new Error('Please allow site storage or cookies so your payment can be recovered after a connection problem.');
+  }
+}
+function parseStored(raw) {
+  if (!raw) return null;
+  var record = JSON.parse(raw);
+  if (record.v !== 2 || !/^v2_\d{13}_[0-9a-f-]{36}$/.test(record.orderId || '') ||
+      !record.order || !validAmount(record.order.amount) || !ALLOWED_BARS.includes(record.order.bar)) {
+    throw new Error('An existing order needs verification. Please contact the venue before paying again.');
+  }
+  return record;
+}
+function readStored() {
+  var local = null, cookie = null;
+  if (localStoreReady) {
+    try { local = localStorage.getItem(STORAGE_KEY); }
+    catch (error) { localStoreReady = false; if (!cookieStoreReady) throw error; }
+  }
+  if (cookieStoreReady) cookie = readCookie(COOKIE_KEY);
+  local = parseStored(local); cookie = parseStored(cookie);
+  if (local && cookie && (local.orderId !== cookie.orderId || !sameOrder(local.order, cookie.order))) {
+    throw new Error('Existing payment references differ. Please contact the venue before paying again.');
+  }
+  return local || cookie;
+}
+function assertOrderLease() {
+  if (legacyLease && (legacyLease.lost || Date.now() >= legacyLease.expires)) {
+    throw new Error('This payment needs a status check after the tab was paused.');
+  }
+}
+function persist(record) {
+  assertOrderLease();
+  // The compact cookie is a first-party fallback, never a card/client-secret store.
+  var compact = { v: record.v, orderId: record.orderId, order: record.order,
+    status: record.status, paymentIntentId: record.paymentIntentId, accessToken: record.accessToken };
+  var saved = false;
+  if (localStoreReady) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(record)); saved = localStorage.getItem(STORAGE_KEY) === JSON.stringify(record); }
+    catch (error) { localStoreReady = false; }
+  }
+  if (cookieStoreReady) {
+    try { writeCookie(COOKIE_KEY, JSON.stringify(compact)); saved = true; }
+    catch (error) { cookieStoreReady = false; }
+  }
+  if (!saved || !readStored() || readStored().orderId !== record.orderId) throw new Error('Unable to save your payment reference.');
+}
+function removeStored() {
+  assertOrderLease();
+  if (localStoreReady) localStorage.removeItem(STORAGE_KEY);
+  if (cookieStoreReady) writeCookie(COOKIE_KEY, null);
+  if (readStored()) throw new Error('Unable to clear the completed order. Please try again.');
+}
+function openLockDatabase() {
+  if (lockDatabase) return Promise.resolve(lockDatabase);
+  return new Promise(function(resolve, reject) {
+    if (typeof indexedDB === 'undefined') { reject(new Error('Please open this page in Safari or Chrome to continue.')); return; }
+    var finished = false, request;
+    var timer = setTimeout(function() { finished = true; reject(new Error('Please reload to finish preparing checkout.')); }, 5000);
+    try { request = indexedDB.open('soi6-checkout-locks', 1); }
+    catch (error) { clearTimeout(timer); reject(error); return; }
+    request.onupgradeneeded = function() { request.result.createObjectStore('locks'); };
+    request.onerror = function() { clearTimeout(timer); finished = true; reject(new Error('Please allow site storage to continue safely.')); };
+    request.onsuccess = function() {
+      clearTimeout(timer);
+      if (finished) { request.result.close(); return; }
+      lockDatabase = request.result;
+      lockDatabase.onversionchange = function() { lockDatabase.close(); lockDatabase = null; };
+      resolve(lockDatabase);
+    };
+  });
+}
+async function changeLegacyLock(change) {
+  var db = await openLockDatabase();
+  return new Promise(function(resolve, reject) {
+    var result, tx = db.transaction('locks', 'readwrite'), store = tx.objectStore('locks');
+    var request = store.get(LOCK_KEY);
+    request.onsuccess = function() {
+      result = change(request.result || null);
+      if (result === null) store.delete(LOCK_KEY);
+      else if (result !== false) store.put(result, LOCK_KEY);
+    };
+    tx.oncomplete = function() { resolve(result); };
+    tx.onabort = function() { reject(new Error('Unable to coordinate this payment. Check its status before retrying.')); };
+  });
+}
+function anotherTabIsPaying() {
+  var existing = readStored(); if (existing) restoreOrder(existing);
+  retryAllowed = false;
+  message('This payment is being handled in another tab. Wait, then check payment status.');
+}
+async function withLegacyOrderLock(callback) {
+  var owner = checkoutUUID();
+  var acquired = await changeLegacyLock(function(current) {
+    return current && current.expires > Date.now() ? false : { owner: owner, expires: Date.now() + 60000 };
+  });
+  if (!acquired) { anotherTabIsPaying(); return; }
+  var lease = legacyLease = { owner: owner, expires: acquired.expires, lost: false }, renewing = false;
+  var heartbeat = setInterval(async function() {
+    if (renewing || lease.lost) return;
+    renewing = true;
+    try {
+      var renewed = await changeLegacyLock(function(current) {
+        return current && current.owner === owner && current.expires > Date.now() ? { owner: owner, expires: Date.now() + 60000 } : false;
+      });
+      if (renewed) lease.expires = renewed.expires; else lease.lost = true;
+    } catch (error) { lease.lost = true; }
+    finally { renewing = false; }
+  }, 15000);
+  try { assertOrderLease(); return await callback(); }
+  finally {
+    clearInterval(heartbeat);
+    try { await changeLegacyLock(function(current) { return current && current.owner === owner ? null : false; }); }
+    catch (error) { /* Expiry permits recovery after a closed or disconnected tab. */ }
+    legacyLease = null;
+  }
+}
+function safetyError(error) {
+  storageOK = false; retryAllowed = false;
+  message(error.message || 'Unable to protect this payment. Please contact the venue.');
+  syncControls();
+}
+function syncControls() {
+  var freeze = locked();
+  document.querySelectorAll('.bar-tile').forEach(function(n) {
+    n.setAttribute('aria-disabled', String(freeze)); n.classList.toggle('order-locked', freeze);
+  });
+  document.querySelectorAll('.amt-tile').forEach(function(n) { n.disabled = freeze; });
+  ['sname', 'snum', 'custom-amt', 'uname', 'umsg'].forEach(function(id) {
+    el(id).disabled = freeze || (isHornPull && (id === 'sname' || id === 'snum'));
+  });
+  var ready = storageOK && !busy && !orderProblem() && stripeElements && elementReady &&
+    updatingAmount === null && elementAmount === (tipAmt + calcFee(tipAmt)) * 100;
+  el('sub-btn').disabled = !ready || (!!activeOrder && !retryAllowed);
+  el('sub-btn').textContent = busy ? 'Processing…' :
+    (activeOrder && retryAllowed ? 'Retry same payment — ' : 'Send a Drink') +
+    (activeOrder && retryAllowed && validAmount(tipAmt) ? money(tipAmt + calcFee(tipAmt)) : '');
+  el('check-payment-btn').disabled = busy || !activeOrder || !storageOK;
+  el('cancel-order-btn').disabled = busy || !activeOrder || !storageOK;
+  el('cancel-order-btn').hidden = !activeOrder || ['succeeded', 'canceled'].includes(activeOrder.status);
+  el('new-order-btn').hidden = !activeOrder || activeOrder.status !== 'canceled';
+  el('new-order-btn').disabled = busy || !storageOK;
+  el('another-btn').disabled = busy || !storageOK;
+}
 function syncSubtitle() {
-  var snameEl = document.getElementById('sname');
-  var name = snameEl ? snameEl.value.trim() : '';
-  var desc = document.getElementById('form-desc');
-  if (!desc) return;
-  if (isHornPull && selectedBar)
-    desc.innerHTML = 'Horn Pull for <strong>every staff</strong> at ' + selectedBar + '.';
-  else if (isHornPull)
-    desc.textContent = 'Select a bar for the Horn Pull.';
-  else if (selectedBar && name)
-    desc.innerHTML = 'Sending a drink to <strong>' + name + '</strong> at ' + selectedBar + '.';
-  else if (selectedBar)
-    desc.textContent = 'Enter the staff name above.';
-  else
-    desc.textContent = 'Select a bar and enter a staff name above.';
+  el('form-desc').textContent = selectedBar ?
+    (isHornPull ? 'Horn Pull for every staff at ' + selectedBar + '.' :
+      (value('sname') ? 'Sending a drink to ' + value('sname') + ' at ' + selectedBar + '.' : 'Enter the staff name above.')) :
+    'Select a bar and enter a staff name above.';
+  syncControls();
 }
-
-function pickAmt(btn) {
-  document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.remove('on'); });
-  btn.classList.add('on');
-  var v = parseInt(btn.dataset.v);
-  var cr = document.getElementById('custom-row');
-  if (cr) cr.style.display = v === 0 ? 'flex' : 'none';
-  var hint = document.getElementById('custom-hint');
-  if (hint) hint.style.display = v === 0 ? 'block' : 'none';
-  if (v > 0) tipAmt = v;
-  isHornPull = btn.classList.contains('horn-tile');
-  // Google Pay 금액 실시간 업데이트
-  if (stripeElements && tipAmt > 0) {
-    var fee = calcFee(tipAmt);
-    var total = tipAmt + fee;
-    stripeElements.update({ amount: total * 100 }).catch(function(){});
-  }
-
-  var sn = document.getElementById('sname');
-  var sno = document.getElementById('snum');
-  if (isHornPull) {
-    if (sn) { sn.value = ''; sn.disabled = true; sn.placeholder = 'Not needed for Horn Pull'; }
-    if (sno) { sno.value = ''; sno.disabled = true; sno.placeholder = '—'; }
-  } else {
-    if (sn) { sn.disabled = false; sn.placeholder = 'e.g. Ning'; }
-    if (sno) { sno.disabled = false; sno.placeholder = '07'; }
-  }
+function updateFeeNote() {
+  var summary = el('order-total');
+  summary.hidden = !validAmount(tipAmt);
+  if (!summary.hidden) summary.textContent = 'Drink amount ' + money(tipAmt) + ' + processing fee ' +
+    money(calcFee(tipAmt)) + ' = Total ' + money(tipAmt + calcFee(tipAmt));
+}
+function destroyPaymentElement() {
+  if (paymentElement) paymentElement.destroy();
+  paymentElement = null; stripeElements = null; elementReady = false;
+  elementAmount = null; updatingAmount = null; desiredAmount = null;
+  el('stripe-wrap').textContent = 'Loading payment options…';
+}
+function applyNextAmount() {
+  if (!stripeElements || updatingAmount !== null || desiredAmount === elementAmount) return;
+  updatingAmount = desiredAmount;
+  try { stripeElements.update({ amount: updatingAmount }); }
+  catch (error) { updatingAmount = null; elementReady = false; message('Unable to update the payment amount. Please reload before paying.'); }
+  syncControls();
+}
+function syncPaymentAmount() {
+  updateFeeNote();
+  if (!stripe) { syncControls(); return; }
+  // Keep the original Payment Element visible before an amount is selected.
+  // 21000 is only its original display initialization amount (in satang):
+  // it never selects an order amount or creates a PaymentIntent. Both the
+  // button and submitPay require an explicit valid order; the selected total
+  // must finish updating in Elements before payment can be submitted.
+  var total = validAmount(tipAmt) ? (tipAmt + calcFee(tipAmt)) * 100 : 21000;
+  desiredAmount = total;
+  if (stripeElements) { applyNextAmount(); syncControls(); return; }
+  el('stripe-wrap').textContent = '';
+  var group = stripe.elements({ mode: 'payment', amount: total, currency: 'thb',
+    paymentMethodTypes: ['card', 'promptpay'],
+    appearance: { theme: 'night', variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' } } });
+  stripeElements = group; elementAmount = total;
+  group.on('update-end', function() {
+    if (stripeElements !== group) return;
+    if (updatingAmount !== null) elementAmount = updatingAmount;
+    updatingAmount = null; applyNextAmount(); syncControls();
+  });
+  paymentElement = group.create('payment', { layout: 'tabs' });
+  paymentElement.on('ready', function() { if (stripeElements === group) { elementReady = true; syncControls(); } });
+  paymentElement.on('loaderror', function() { elementReady = false; message('Payment options could not load. Please reload the page.'); syncControls(); });
+  paymentElement.mount('#stripe-wrap');
+  syncControls();
+}
+function pickBar(node) {
+  if (locked() || !ALLOWED_BARS.includes(node.dataset.bar)) return;
+  selectedBar = node.dataset.bar;
+  document.querySelectorAll('.bar-tile').forEach(function(n) { n.classList.toggle('on', n === node); });
   syncSubtitle();
 }
-
-function resetAll() {
-  var sp = document.getElementById('success-pg');
-  var fa = document.getElementById('form-area');
-  if (sp) sp.style.display = 'none';
-  if (fa) fa.style.display = 'block';
-  document.querySelectorAll('.bar-tile').forEach(function(t) { t.classList.remove('on'); });
-  selectedBar = null;
-  tipAmt = 630;
-  isHornPull = false;
-  var rbox2 = document.getElementById('receipt-box');
-  if (rbox2) rbox2.classList.remove('horn-border');
-  ['sname','snum','uname','umsg'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  var snameReset = document.getElementById('sname');
-  var snumReset = document.getElementById('snum');
-  if (snameReset) { snameReset.disabled = false; snameReset.placeholder = 'e.g. Ning'; }
-  if (snumReset) { snumReset.disabled = false; snumReset.placeholder = '07'; }
-  var ce = document.getElementById('card-err');
-  if (ce) ce.textContent = '';
-  var fd = document.getElementById('form-desc');
-  if (fd) fd.textContent = 'Select a bar and enter a staff name above.';
-  var btn = document.getElementById('sub-btn');
-  if (btn) { btn.disabled = false; btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>'; }
-  document.querySelectorAll('.amt-tile').forEach(function(b) { b.classList.remove('on'); });
-  var cr = document.getElementById('custom-row');
-  if (cr) cr.style.display = 'none';
-  if (paymentElement) { paymentElement.destroy(); paymentElement = null; stripeElements = null; }
-  mountCardElement();
+function pickAmt(node) {
+  if (locked()) return;
+  var n = Number(node.dataset.v);
+  if (![0, 210, 420, 630, 840, 1050, 5250].includes(n)) return;
+  amountMode = n === 0 ? 'custom' : 'preset';
+  isHornPull = node.classList.contains('horn-tile');
+  tipAmt = n === 0 ? (value('custom-amt') ? Number(value('custom-amt')) : null) : n;
+  document.querySelectorAll('.amt-tile').forEach(function(button) { button.classList.toggle('on', button === node); });
+  el('custom-row').style.display = n === 0 ? 'flex' : 'none';
+  el('custom-hint').style.display = n === 0 ? 'block' : 'none';
+  if (isHornPull) { el('sname').value = ''; el('snum').value = ''; }
+  el('sname').placeholder = isHornPull ? 'Not needed for Horn Pull' : 'e.g. Ning';
+  el('snum').placeholder = isHornPull ? '—' : '07';
+  message(''); syncPaymentAmount(); syncSubtitle();
 }
-
-// ── Stripe ──
-var stripeElements = null;
-var paymentElement = null;
-
-function initStripe() {
-  if (typeof Stripe === 'undefined') {
-    setTimeout(initStripe, 200);
-    return;
+function restoreOrder(record) {
+  activeOrder = record; retryAllowed = false;
+  var o = record.order;
+  selectedBar = o.bar; tipAmt = o.amount; isHornPull = o.isHornPull;
+  amountMode = 'restored';
+  el('sname').value = isHornPull ? '' : o.staffName; el('snum').value = o.staffNo;
+  el('uname').value = o.fromName; el('umsg').value = o.message;
+  document.querySelectorAll('.bar-tile').forEach(function(n) { n.classList.toggle('on', n.dataset.bar === selectedBar); });
+  document.querySelectorAll('.amt-tile').forEach(function(n) { n.classList.remove('on'); });
+  // This is the customer's existing order, never a default for a new order.
+  el('custom-row').style.display = 'flex'; el('custom-amt').value = String(tipAmt);
+  el('custom-hint').style.display = 'none';
+  el('payment-recovery').hidden = false;
+  el('order-reference').textContent = 'Order reference: ' + record.orderId;
+  updateFeeNote(); syncSubtitle();
+}
+function validateResponse(data, record) {
+  if (data.checkoutVersion !== 2 || data.orderId !== record.orderId || !data.paymentIntentId ||
+      !data.clientSecret || !data.accessToken || !data.receipt ||
+      (record.paymentIntentId && record.paymentIntentId !== data.paymentIntentId)) {
+    throw new Error('Payment setup needs verification. Please contact the venue before retrying.');
   }
-  stripe = Stripe('pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP');
-  mountCardElement();
+  var r = data.receipt, o = record.order;
+  if (r.amount !== o.amount || r.fee !== calcFee(o.amount) || r.total !== o.amount + calcFee(o.amount) ||
+      r.bar !== o.bar || r.staffName !== o.staffName || r.staffNo !== o.staffNo ||
+      r.fromName !== o.fromName || r.message !== o.message || r.isHornPull !== o.isHornPull) {
+    throw new Error('The payment does not match this order. Please contact the venue.');
+  }
 }
-
-function mountCardElement() {
-  var mountEl = document.getElementById('stripe-wrap');
-  if (!mountEl) return;
-  mountEl.innerHTML = '';
-
-  // 금액 없이 카드창만 먼저 표시 (appearance만 설정)
-  stripeElements = stripe.elements({
-    mode: 'payment',
-    amount: 21000, // 임시 기본값 (฿210), 실제 결제 시 새로 생성
-    currency: 'thb',
-    paymentMethodTypes: ['card', 'promptpay'],
-    appearance: {
-      theme: 'night',
-      variables: { colorPrimary: '#d4a843', colorBackground: '#1a1a1a', colorText: '#f0ebe3', borderRadius: '2px' }
+async function api(body) {
+  var controller = new AbortController();
+  var timer = setTimeout(function() { controller.abort(); }, 20000);
+  try {
+    var response = await fetch('/.netlify/functions/pay', { method: 'POST',
+      headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      body: JSON.stringify(Object.assign({ checkoutVersion: 2 }, body)), signal: controller.signal });
+    var data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Unable to verify payment status.');
+    return data;
+  } finally { clearTimeout(timer); }
+}
+async function fetchOrder(record) {
+  var data = record.paymentIntentId ? await api({ action: 'status', orderId: record.orderId,
+    paymentIntentId: record.paymentIntentId, accessToken: record.accessToken }) :
+    await api(Object.assign({ action: 'create', orderId: record.orderId }, record.order));
+  validateResponse(data, record);
+  record.paymentIntentId = data.paymentIntentId; record.accessToken = data.accessToken;
+  record.status = data.status; record.receipt = data.receipt;
+  persist(record); activeOrder = record;
+  return data;
+}
+async function withOrderLock(callback) {
+  if (!navigator.locks || typeof navigator.locks.request !== 'function') return withLegacyOrderLock(callback);
+  return navigator.locks.request(LOCK_KEY, { ifAvailable: true }, async function(lock) {
+    if (!lock) {
+      anotherTabIsPaying();
+      return;
     }
+    return callback();
   });
-  paymentElement = stripeElements.create('payment', { layout: 'tabs' });
-  paymentElement.mount('#stripe-wrap');
-  paymentElement.on('change', function(e) {
-    var err = document.getElementById('card-err');
-    if (err) err.textContent = e.error ? e.error.message : '';
-  });
+}
+function showReceipt(data) {
+  var r = data.receipt;
+  el('form-area').style.display = 'none'; el('success-pg').style.display = 'block';
+  el('r-bar').textContent = r.bar;
+  el('r-staff').textContent = r.isHornPull ? 'All staff on shift' : r.staffName + (r.staffNo ? ' (#' + r.staffNo + ')' : '');
+  el('r-from').textContent = r.fromName || 'Anonymous';
+  el('r-tip').textContent = money(r.amount); el('r-fee').textContent = money(r.fee); el('r-total').textContent = money(r.total);
+  el('r-msg-row').style.display = r.message ? 'flex' : 'none'; el('r-msg').textContent = r.message ? '"' + r.message + '"' : '';
+  el('r-icon').textContent = r.isHornPull ? '🔔' : '🌸';
+  el('r-icon').classList.toggle('horn-icon', r.isHornPull);
+  el('r-confirmed').textContent = r.isHornPull ? '🎺 HORN PULL 🎺' : '✦ Drink Confirmed ✦';
+  el('r-confirmed').classList.toggle('horn-confirmed', r.isHornPull);
+  el('receipt-box').classList.toggle('horn-border', r.isHornPull);
+  el('r-subline').style.display = r.isHornPull ? 'block' : 'none';
+  el('r-date').textContent = new Date(r.date).toLocaleString('en-GB');
+  el('r-ref').textContent = 'Ref: ' + data.paymentIntentId;
+  go('vouchers');
+}
+function applyStatus(data, detail) {
+  retryAllowed = false;
+  if (data.status === 'succeeded') { showReceipt(data); return; }
+  el('form-area').style.display = 'block'; el('success-pg').style.display = 'none';
+  el('payment-recovery').hidden = false;
+  if (RETRY_STATUSES.includes(data.status)) {
+    retryAllowed = true; syncPaymentAmount();
+    message(detail || 'This order is not paid. You can retry this same payment, or cancel the order to change your selection.');
+  } else if (data.status === 'canceled') {
+    message('This order was canceled. Choose Start a new order to make a fresh selection.');
+  } else {
+    message('Your payment is awaiting confirmation. Use Check payment status before placing another order.');
+  }
+}
+function uncertain(error) {
+  retryAllowed = false;
+  el('payment-recovery').hidden = !activeOrder;
+  message((error && error.message ? error.message + ' ' : '') +
+    (activeOrder ? 'Use Check payment status. Do not start another payment until this order is verified.' : 'Please try again before submitting a payment.'));
 }
 
 async function submitPay() {
-  if (!stripe || !stripeElements) { alert('Payment system loading, please wait.'); return; }
-  if (!selectedBar) { alert('Please select a bar first.'); return; }
-  if (!tipAmt || tipAmt < 20) { alert('Minimum amount is 20 THB.'); return; }
-
-  var btn = document.getElementById('sub-btn');
-  btn.disabled = true;
-  btn.textContent = 'Processing...';
-
-  var uname = document.getElementById('uname');
-  var sname = document.getElementById('sname');
-  var snum = document.getElementById('snum');
-  var umsg = document.getElementById('umsg');
-
-  var nameVal = (uname && uname.value) ? uname.value : 'Anonymous';
-  var staffName = (sname && sname.value) ? sname.value : 'Staff Member';
-  var staffNameForSend = isHornPull ? 'Horn Pull' : staffName;
-  var staffNo = (snum && snum.value) ? snum.value : '';
-  var msgVal = (umsg && umsg.value) ? umsg.value : '';
-  var fee = calcFee(tipAmt);
-  var total = tipAmt + fee;
-
+  if (busy || !storageOK) return;
+  var problem = orderProblem();
+  if (problem) { message(problem); return; }
+  if (activeOrder && !retryAllowed) { message('Check the existing payment status first.'); return; }
+  if (!stripeElements || !elementReady || updatingAmount !== null || elementAmount !== (tipAmt + calcFee(tipAmt)) * 100) {
+    message('Please wait for payment options to finish loading.'); return;
+  }
+  var order = snapshot(), group = stripeElements, knownId = activeOrder && activeOrder.orderId;
+  busy = true; message(''); syncControls();
   try {
-    // 버튼 클릭 시에만 PaymentIntent 생성
-    var payRes = await fetch('/.netlify/functions/pay', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: tipAmt,
-        bar: selectedBar,
-        staffName: staffNameForSend,
-        staffNo: staffNo,
-        fromName: nameVal,
-        message: msgVal
-      })
-    });
-    var payData = await payRes.json();
-
-    if (!payData.clientSecret) {
-      var ce = document.getElementById('card-err');
-      if (ce) ce.textContent = payData.error || 'Payment failed. Please try again.';
-      btn.disabled = false;
-      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-      return;
-    }
-
-    // elements 금액을 실제값으로 업데이트
-    await stripeElements.update({ amount: total * 100 });
-
-    // 카드 정보 먼저 검증
-    var submitResult = await stripeElements.submit();
-    if (submitResult.error) {
-      var ce = document.getElementById('card-err');
-      if (ce) ce.textContent = submitResult.error.message;
-      btn.disabled = false;
-      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-      return;
-    }
-
-    var result = await stripe.confirmPayment({
-      elements: stripeElements,
-      clientSecret: payData.clientSecret,
-      confirmParams: {
-        payment_method_data: { billing_details: { name: nameVal } },
-        return_url: window.location.href
-      },
-      redirect: 'if_required'
-    });
-
-    if (result.error) {
-      var ce = document.getElementById('card-err');
-      if (ce) ce.textContent = result.error.message;
-      btn.disabled = false;
-      btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
-      return;
-    }
-
-    // 성공!
-    var fa = document.getElementById('form-area');
-    var sp = document.getElementById('success-pg');
-    if (fa) fa.style.display = 'none';
-    if (sp) {
-      sp.style.display = 'block';
-      var rbar = document.getElementById('r-bar');
-      var rstaff = document.getElementById('r-staff');
-      var rfrom = document.getElementById('r-from');
-      var rtip = document.getElementById('r-tip');
-      var rfee = document.getElementById('r-fee');
-      var rtotal = document.getElementById('r-total');
-      var rdate = document.getElementById('r-date');
-      var rref = document.getElementById('r-ref');
-      var rmsgrow = document.getElementById('r-msg-row');
-      var rmsg = document.getElementById('r-msg');
-      var ricon = document.getElementById('r-icon');
-      var rconfirmed = document.getElementById('r-confirmed');
-      var rsubline = document.getElementById('r-subline');
-      var rbox = document.getElementById('receipt-box');
-
-      if (ricon && rconfirmed) {
-        if (isHornPull) {
-          ricon.textContent = '🔔';
-          ricon.classList.add('horn-icon');
-          rconfirmed.textContent = '🎺 HORN PULL 🎺';
-          rconfirmed.classList.add('horn-confirmed');
-          if (rsubline) rsubline.style.display = 'block';
-          if (rbox) rbox.classList.add('horn-border');
-        } else {
-          ricon.textContent = '🌸';
-          ricon.classList.remove('horn-icon');
-          rconfirmed.textContent = '✦ Drink Confirmed ✦';
-          rconfirmed.classList.remove('horn-confirmed');
-          if (rsubline) rsubline.style.display = 'none';
-          if (rbox) rbox.classList.remove('horn-border');
-        }
+    // Wallet collection starts directly in the click handler, before network
+    // requests or lock acquisition. It cannot charge a PaymentIntent by itself.
+    var validation = await group.submit();
+    if (validation.error) { message(validation.error.message); return; }
+    await withOrderLock(async function() {
+      var existing = readStored();
+      if (existing && (!knownId || existing.orderId !== knownId)) {
+        restoreOrder(existing); applyStatus(await fetchOrder(existing)); return;
       }
-
-      if (rbar) rbar.textContent = selectedBar;
-      if (rstaff) rstaff.textContent = isHornPull ? 'All staff on shift' : (staffName + (staffNo ? ' (#' + staffNo + ')' : ''));
-      if (rfrom) rfrom.textContent = nameVal;
-      if (rtip) rtip.textContent = '฿' + tipAmt.toLocaleString();
-      if (rfee) rfee.textContent = '฿' + fee.toLocaleString();
-      if (rtotal) rtotal.textContent = '฿' + total.toLocaleString();
-      if (msgVal && rmsgrow && rmsg) {
-        rmsgrow.style.display = 'flex';
-        rmsg.textContent = '"' + msgVal + '"';
+      if (knownId && (!existing || !sameOrder(existing.order, order))) {
+        throw new Error('The saved order changed. Reload to verify its status.');
       }
-      var now = new Date();
-      var dateStr = now.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) + ', ' + now.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
-      if (rdate) rdate.textContent = dateStr;
-      if (rref && result.paymentIntent) rref.textContent = 'Ref: ' + result.paymentIntent.id;
-    }
-
-  } catch(e) {
-    var ce = document.getElementById('card-err');
-    if (ce) ce.textContent = 'Connection error. Please try again.';
-  }
-
-  btn.disabled = false;
-  btn.innerHTML = 'Send a Drink <span class="submit-arrow">→</span>';
+      var record = existing || { v: 2, orderId: 'v2_' + Date.now() + '_' + checkoutUUID(), order: order, status: 'unverified' };
+      // Persist before the first server call; refresh/network loss must keep the
+      // same order ID. Never generate a new ID as an error recovery strategy.
+      persist(record); activeOrder = record; restoreOrder(record);
+      var data = await fetchOrder(record);
+      if (!RETRY_STATUSES.includes(data.status)) { applyStatus(data); return; }
+      record.status = 'confirming'; persist(record); retryAllowed = false;
+      var returnURL = new URL(window.location.href);
+      ['payment_intent', 'payment_intent_client_secret', 'redirect_status'].forEach(function(k) { returnURL.searchParams.delete(k); });
+      returnURL.searchParams.set('checkout_order', record.orderId);
+      var confirmation = await stripe.confirmPayment({ elements: group, clientSecret: data.clientSecret,
+        confirmParams: { return_url: returnURL.href }, redirect: 'if_required' });
+      // Neither a client error nor a lost response proves the payment failed.
+      // Only a fresh server read determines whether retry is available.
+      data = await fetchOrder(record);
+      applyStatus(data, confirmation.error && confirmation.error.message);
+    });
+  } catch (error) { uncertain(error); }
+  finally { busy = false; syncControls(); }
 }
-
-// ── 슬라이드쇼 ──
-var _si = 0, _total = 3, _timer = null, _touchX = null;
+async function checkPayment() {
+  if (busy || !storageOK) return;
+  busy = true; retryAllowed = false; message('Checking payment status…'); syncControls();
+  try {
+    await withOrderLock(async function() {
+      var record = readStored();
+      if (!record) throw new Error('No saved payment reference was found. Please contact the venue.');
+      restoreOrder(record); applyStatus(await fetchOrder(record));
+    });
+  } catch (error) { uncertain(error); }
+  finally { busy = false; syncControls(); }
+}
+async function cancelOrder() {
+  if (busy || !storageOK || !activeOrder) return;
+  busy = true; retryAllowed = false; syncControls();
+  try {
+    await withOrderLock(async function() {
+      var record = readStored();
+      if (!record) throw new Error('No saved payment reference was found.');
+      restoreOrder(record);
+      var data = await fetchOrder(record);
+      if (RETRY_STATUSES.includes(data.status)) {
+        data = await api({ action: 'cancel', orderId: record.orderId, paymentIntentId: record.paymentIntentId, accessToken: record.accessToken });
+        validateResponse(data, record); record.status = data.status; record.receipt = data.receipt; persist(record);
+      }
+      applyStatus(data);
+    });
+  } catch (error) { uncertain(error); }
+  finally { busy = false; syncControls(); }
+}
+function clearForm() {
+  activeOrder = null; retryAllowed = false; selectedBar = null; tipAmt = null; amountMode = null; isHornPull = false;
+  ['sname', 'snum', 'uname', 'umsg', 'custom-amt'].forEach(function(id) { el(id).value = ''; });
+  document.querySelectorAll('.bar-tile, .amt-tile').forEach(function(n) { n.classList.remove('on'); });
+  el('custom-row').style.display = 'none'; el('custom-hint').style.display = 'none';
+  el('sname').placeholder = 'e.g. Ning'; el('snum').placeholder = '07';
+  el('success-pg').style.display = 'none'; el('form-area').style.display = 'block';
+  el('r-msg-row').style.display = 'none'; el('r-msg').textContent = '';
+  el('payment-recovery').hidden = true; el('order-reference').textContent = '';
+  destroyPaymentElement(); syncPaymentAmount(); message(''); syncSubtitle();
+}
+async function resetAll() {
+  // Send Another only verifies the previous order and clears the form.
+  // It must never submit payment details or confirm a payment.
+  if (busy || !storageOK) return;
+  var expectedId = activeOrder && activeOrder.orderId;
+  busy = true; syncControls();
+  try {
+    await withOrderLock(async function() {
+      var record = readStored();
+      if (record) {
+        if (record.orderId !== expectedId) { restoreOrder(record); applyStatus(await fetchOrder(record)); return; }
+        var data = await fetchOrder(record);
+        if (!['succeeded', 'canceled'].includes(data.status)) { restoreOrder(record); applyStatus(data); return; }
+        removeStored();
+      }
+      clearReturnQuery(); clearForm();
+    });
+  } catch (error) { uncertain(error); }
+  finally { busy = false; syncControls(); }
+}
+function clearReturnQuery() {
+  var u = new URL(window.location.href);
+  ['payment_intent', 'payment_intent_client_secret', 'redirect_status', 'checkout_order'].forEach(function(k) { u.searchParams.delete(k); });
+  history.replaceState(null, '', u.href);
+}
+async function recoverReturn() {
+  var u = new URL(window.location.href), id = u.searchParams.get('payment_intent'), secret = u.searchParams.get('payment_intent_client_secret');
+  if (!id || !secret) return false;
+  busy = true; syncControls();
+  try {
+    await withOrderLock(async function() {
+      var data = await api({ action: 'recover', paymentIntentId: id, clientSecret: secret });
+      if (data.checkoutVersion !== 2 || !data.receipt) throw new Error('This payment must be checked with the venue.');
+      var r = data.receipt, existing = readStored();
+      if (existing && existing.orderId !== data.orderId) throw new Error('Another order is already open. Please contact the venue to check both references.');
+      var record = existing || { v: 2, orderId: data.orderId, order: { amount: r.amount, bar: r.bar, staffName: r.staffName,
+        staffNo: r.staffNo, fromName: r.fromName, message: r.message, isHornPull: r.isHornPull } };
+      validateResponse(data, record);
+      record.paymentIntentId = data.paymentIntentId; record.accessToken = data.accessToken; record.status = data.status; record.receipt = r;
+      persist(record); restoreOrder(record); clearReturnQuery(); applyStatus(data); go('vouchers');
+    });
+  } catch (error) { safetyError(error); }
+  finally { busy = false; syncControls(); }
+  return true;
+}
 function goSlide(n) {
-  var slides = document.querySelectorAll('.slide-bg .slide');
-  if (!slides.length) return;
-  slides[_si].classList.remove('active');
-  _si = (n + _total) % _total;
-  slides[_si].classList.add('active');
-  clearInterval(_timer);
-  _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
+  var slides = document.querySelectorAll('.slide-bg .slide'); if (!slides.length) return;
+  slides[_si].classList.remove('active'); _si = (n + slides.length) % slides.length; slides[_si].classList.add('active');
+  clearInterval(_timer); _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
 }
-
-// ── 초기화 ──
-window.addEventListener('load', function() {
-  initStripe();
-
-  var hero = document.querySelector('.voucher-hero');
-  if (hero) {
-    hero.addEventListener('touchstart', function(e) { _touchX = e.touches[0].clientX; }, { passive: true });
-    hero.addEventListener('touchend', function(e) {
-      if (_touchX === null) return;
-      var dx = e.changedTouches[0].clientX - _touchX;
-      if (Math.abs(dx) > 40) goSlide(_si + (dx < 0 ? 1 : -1));
-      _touchX = null;
-    }, { passive: true });
+function initStripe(attempt) {
+  if (stripe) return;
+  if (typeof Stripe === 'undefined') {
+    if ((attempt || 0) < 75) { setTimeout(function() { initStripe((attempt || 0) + 1); }, 200); return; }
+    message('Payment options could not load. Please reload the page.'); return;
   }
-
-  var ca = document.getElementById('custom-amt');
-  if (ca) ca.addEventListener('input', function() {
-    var v = parseInt(this.value);
-    if (v > 0) tipAmt = v;
+  stripe = Stripe('pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP');
+  syncPaymentAmount();
+}
+async function bootCheckout() {
+  if (booted) return; booted = true;
+  clearForm();
+  el('custom-amt').addEventListener('input', function() {
+    if (locked() || amountMode !== 'custom') return;
+    tipAmt = this.value.trim() ? Number(this.value) : null;
+    message(''); syncPaymentAmount(); syncSubtitle();
   });
-
-  var sn = document.getElementById('sname');
-  if (sn) sn.addEventListener('input', syncSubtitle);
-
+  ['sname', 'snum', 'uname', 'umsg'].forEach(function(id) { el(id).addEventListener('input', syncSubtitle); });
+  var hero = document.querySelector('.voucher-hero');
+  hero.addEventListener('touchstart', function(e) { _touchX = e.touches[0].clientX; }, { passive: true });
+  hero.addEventListener('touchend', function(e) {
+    if (_touchX === null) return; var dx = e.changedTouches[0].clientX - _touchX;
+    if (Math.abs(dx) > 40) goSlide(_si + (dx < 0 ? 1 : -1)); _touchX = null;
+  }, { passive: true });
   _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
+  try {
+    checkoutUUID();
+    setupOrderStorage();
+    var saved = readStored();
+    if (saved) { restoreOrder(saved); go('vouchers'); }
+    initStripe();
+    if (await recoverReturn()) return;
+    if (saved) await checkPayment();
+    else if (new URL(window.location.href).searchParams.has('checkout_order')) {
+      throw new Error('A previous payment reference is missing. Please contact the venue before paying again.');
+    }
+  } catch (error) { safetyError(error); }
+  syncControls();
+}
+window.addEventListener('storage', function(event) {
+  if (event.key !== STORAGE_KEY || busy) return;
+  try {
+    var saved = readStored();
+    if (saved) { restoreOrder(saved); message('An order is open in this browser. Check its payment status before continuing.'); }
+    else if (activeOrder) clearForm();
+  } catch (error) { safetyError(error); }
+  syncControls();
 });
+window.addEventListener('pageshow', function(event) { if (event.persisted && !busy && activeOrder) checkPayment(); });
+document.addEventListener('DOMContentLoaded', bootCheckout, { once: true });
 </script>
 </body>
 </html>
