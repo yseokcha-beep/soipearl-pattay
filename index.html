@@ -631,7 +631,15 @@
     .slide-bg .slide.active { opacity:1; }
     .slide-bg-overlay { position:absolute; inset:0; z-index:1; background:linear-gradient(to bottom,rgba(0,0,0,0.1),rgba(13,13,13,0.85)); }
     .pg.on { display:block; animation:fadeUp 0.55s ease forwards; }
-    .success-pg { display:none; text-align:center; padding:40px 20px; }
+    .success-pg {
+      display:none; position:relative; z-index:1; text-align:center;
+      min-height:100vh; min-height:100svh; padding:40px 20px;
+      padding:calc(40px + env(safe-area-inset-top, 0px)) 20px calc(40px + env(safe-area-inset-bottom, 0px));
+    }
+    .success-pg:focus { outline:none; }
+    .success-pg .act-row { max-width:360px; margin:0 auto; justify-content:center; }
+    .receipt-status { max-width:360px; margin:0 auto 16px; color:#c97b6e; font-size:.78rem; line-height:1.5; }
+    .receipt-status:empty { display:none; }
     .success-icon { font-size:3rem; margin-bottom:16px; }
     .success-tag { font-size:.65rem; font-weight:500; letter-spacing:.28em; text-transform:uppercase; color:var(--amber); margin-bottom:16px; }
     .success-h { font-family:var(--serif); font-size:clamp(1.8rem,5vw,2.8rem); font-weight:400; font-style:italic; margin-bottom:24px; line-height:1.1; }
@@ -690,6 +698,7 @@
   </style>
 </head>
 <body>
+<div id="site-content">
 
 <div class="toast" id="toast">Link copied</div>
 
@@ -907,38 +916,6 @@
       </div>
     </div>
 
-    <!-- Success -->
-    <div class="success-pg" id="success-pg">
-      <h2 class="success-h" style="margin-bottom:20px;">Thank you for<br>your generosity.</h2>
-      
-      <div class="vip-receipt-note">
-        <div class="vip-receipt-kicker">OFFICIAL VIP TOP 10</div>
-        <p>Verify with the last 4 digits of your payment card to receive your VIP Card at the venue.</p>
-        <p>Official VIP Top 10 members enjoy <strong>10% off drinks <span style="color:var(--amber);font-weight:800;letter-spacing:.06em;">ON-SITE</span></strong> at any venue in our group.</p>
-      </div>
-<div class="receipt-box" id="receipt-box">
-        <p class="receipt-site">pattayasoipearl.com</p>
-        <div class="receipt-icon" id="r-icon">🌸</div>
-        <p class="receipt-confirmed" id="r-confirmed">✦ Drink Confirmed ✦</p>
-        <p class="horn-subline" id="r-subline" style="display:none">Drinks For Staffs</p>
-        <hr class="receipt-line">
-        <div class="receipt-row"><span class="receipt-label">Bar</span><span class="receipt-value" id="r-bar">—</span></div>
-        <div class="receipt-row"><span class="receipt-label">Staff</span><span class="receipt-value" id="r-staff">—</span></div>
-        <div class="receipt-row"><span class="receipt-label">From</span><span class="receipt-value" id="r-from">—</span></div>
-        <div class="receipt-row" id="r-msg-row" style="display:none"><span class="receipt-label">Message</span><span class="receipt-value" id="r-msg">—</span></div>
-        <hr class="receipt-line">
-        <div class="receipt-row"><span class="receipt-label">Drink Amount</span><span class="receipt-value" id="r-tip">—</span></div>
-        <div class="receipt-row"><span class="receipt-label">Processing Fee</span><span class="receipt-value" id="r-fee">—</span></div>
-        <div class="receipt-total-row"><span class="receipt-total-label">Total Charged</span><span class="receipt-total-val" id="r-total">—</span></div>
-        <hr class="receipt-line">
-        <div class="receipt-row"><span class="receipt-label">Date</span><span class="receipt-value" id="r-date">—</span></div>
-        <p class="receipt-ref" id="r-ref"></p>
-        <p class="receipt-footer">Please show this to your staff member</p>
-      </div>
-<div class="act-row">
-        <button class="act-btn" id="another-btn" type="button" onclick="resetAll()">↺ &nbsp;Send Another</button>
-      </div>
-    </div>
 
   </div>
 </div>
@@ -1074,6 +1051,43 @@
 </div>
 
 
+</div><!-- /site-content -->
+
+<!-- Payment receipt: outside the main site so it cannot scroll behind this view. -->
+    <main class="success-pg" id="success-pg" tabindex="-1" aria-labelledby="receipt-heading">
+      <h2 id="receipt-heading" class="success-h" style="margin-bottom:20px;">Thank you for<br>your generosity.</h2>
+      
+      <div class="vip-receipt-note">
+        <div class="vip-receipt-kicker">OFFICIAL VIP TOP 10</div>
+        <p>Verify with the last 4 digits of your payment card to receive your VIP Card at the venue.</p>
+        <p>Official VIP Top 10 members enjoy <strong>10% off drinks <span style="color:var(--amber);font-weight:800;letter-spacing:.06em;">ON-SITE</span></strong> at any venue in our group.</p>
+      </div>
+<div class="receipt-box" id="receipt-box">
+        <p class="receipt-site">pattayasoipearl.com</p>
+        <div class="receipt-icon" id="r-icon">🌸</div>
+        <p class="receipt-confirmed" id="r-confirmed">✦ Drink Confirmed ✦</p>
+        <p class="horn-subline" id="r-subline" style="display:none">Drinks For Staffs</p>
+        <hr class="receipt-line">
+        <div class="receipt-row"><span class="receipt-label">Bar</span><span class="receipt-value" id="r-bar">—</span></div>
+        <div class="receipt-row"><span class="receipt-label">Staff</span><span class="receipt-value" id="r-staff">—</span></div>
+        <div class="receipt-row"><span class="receipt-label">From</span><span class="receipt-value" id="r-from">—</span></div>
+        <div class="receipt-row" id="r-msg-row" style="display:none"><span class="receipt-label">Message</span><span class="receipt-value" id="r-msg">—</span></div>
+        <hr class="receipt-line">
+        <div class="receipt-row"><span class="receipt-label">Drink Amount</span><span class="receipt-value" id="r-tip">—</span></div>
+        <div class="receipt-row"><span class="receipt-label">Processing Fee</span><span class="receipt-value" id="r-fee">—</span></div>
+        <div class="receipt-total-row"><span class="receipt-total-label">Total Charged</span><span class="receipt-total-val" id="r-total">—</span></div>
+        <hr class="receipt-line">
+        <div class="receipt-row"><span class="receipt-label">Date</span><span class="receipt-value" id="r-date">—</span></div>
+        <p class="receipt-ref" id="r-ref"></p>
+        <p class="receipt-footer">Please show this to your staff member</p>
+      </div>
+<p class="receipt-status" id="receipt-status" role="status" aria-live="polite"></p>
+      <div class="act-row">
+        <button class="act-btn" id="another-btn" type="button" onclick="resetAll()">↺ &nbsp;Send Another</button>
+        <button class="act-btn" id="receipt-check-btn" type="button" onclick="checkPayment()" hidden>Check payment status</button>
+      </div>
+    </main>
+
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 'use strict';
@@ -1093,7 +1107,20 @@ function value(id) { return el(id).value.trim(); }
 function money(n) { return '฿' + n.toLocaleString('en-US'); }
 function calcFee(n) { return Math.ceil(n * 0.0675 + 10); }
 function validAmount(n) { return Number.isSafeInteger(n) && n >= 20 && n <= 100000; }
-function message(text) { el('card-err').textContent = text || ''; }
+function message(text) {
+  el('card-err').textContent = text || '';
+  el('receipt-status').textContent = text || '';
+  el('receipt-check-btn').hidden = !text || !activeOrder;
+}
+function setReceiptView(show) {
+  el('site-content').style.display = show ? 'none' : 'block';
+  el('success-pg').style.display = show ? 'block' : 'none';
+  if (show) {
+    el('nav-menu').classList.remove('open');
+    el('success-pg').focus();
+    window.scrollTo(0, 0);
+  }
+}
 function locked() { return busy || !!activeOrder || !storageOK; }
 function go(id) {
   var pg = el('pg-' + id), nav = el('n-' + id);
@@ -1284,6 +1311,7 @@ function syncControls() {
     (activeOrder && retryAllowed ? 'Retry same payment — ' : 'Send a Drink') +
     (activeOrder && retryAllowed && validAmount(tipAmt) ? money(tipAmt + calcFee(tipAmt)) : '');
   el('check-payment-btn').disabled = busy || !activeOrder || !storageOK;
+  el('receipt-check-btn').disabled = busy || !activeOrder || !storageOK;
   el('cancel-order-btn').disabled = busy || !activeOrder || !storageOK;
   el('cancel-order-btn').hidden = !activeOrder || ['succeeded', 'canceled'].includes(activeOrder.status);
   el('new-order-btn').hidden = !activeOrder || activeOrder.status !== 'canceled';
@@ -1427,7 +1455,7 @@ async function withOrderLock(callback) {
 }
 function showReceipt(data) {
   var r = data.receipt;
-  el('form-area').style.display = 'none'; el('success-pg').style.display = 'block';
+  el('form-area').style.display = 'none';
   el('r-bar').textContent = r.bar;
   el('r-staff').textContent = r.isHornPull ? 'All staff on shift' : r.staffName + (r.staffNo ? ' (#' + r.staffNo + ')' : '');
   el('r-from').textContent = r.fromName || 'Anonymous';
@@ -1441,12 +1469,12 @@ function showReceipt(data) {
   el('r-subline').style.display = r.isHornPull ? 'block' : 'none';
   el('r-date').textContent = new Date(r.date).toLocaleString('en-GB');
   el('r-ref').textContent = 'Ref: ' + data.paymentIntentId;
-  go('vouchers');
+  message(''); go('vouchers'); setReceiptView(true);
 }
 function applyStatus(data, detail) {
   retryAllowed = false;
   if (data.status === 'succeeded') { showReceipt(data); return; }
-  el('form-area').style.display = 'block'; el('success-pg').style.display = 'none';
+  el('form-area').style.display = 'block'; setReceiptView(false);
   el('payment-recovery').hidden = false;
   if (RETRY_STATUSES.includes(data.status)) {
     retryAllowed = true; syncPaymentAmount();
@@ -1538,15 +1566,17 @@ async function cancelOrder() {
   finally { busy = false; syncControls(); }
 }
 function clearForm() {
+  var wasReceipt = el('success-pg').style.display === 'block';
   activeOrder = null; retryAllowed = false; selectedBar = null; tipAmt = null; amountMode = null; isHornPull = false;
   ['sname', 'snum', 'uname', 'umsg', 'custom-amt'].forEach(function(id) { el(id).value = ''; });
   document.querySelectorAll('.bar-tile, .amt-tile').forEach(function(n) { n.classList.remove('on'); });
   el('custom-row').style.display = 'none'; el('custom-hint').style.display = 'none';
   el('sname').placeholder = 'e.g. Ning'; el('snum').placeholder = '07';
-  el('success-pg').style.display = 'none'; el('form-area').style.display = 'block';
+  setReceiptView(false); el('form-area').style.display = 'block';
   el('r-msg-row').style.display = 'none'; el('r-msg').textContent = '';
   el('payment-recovery').hidden = true; el('order-reference').textContent = '';
   destroyPaymentElement(); syncPaymentAmount(); message(''); syncSubtitle();
+  if (wasReceipt) go('vouchers');
 }
 async function resetAll() {
   // Send Another only verifies the previous order and clears the form.
