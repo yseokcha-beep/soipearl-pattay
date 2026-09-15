@@ -9,7 +9,6 @@
   <style>
     [hidden] { display:none !important; }
     .order-locked { pointer-events:none; opacity:.65; }
-    .order-total { padding:12px 10px; border:1px solid var(--amber); color:var(--amber); font-size:.84rem; line-height:1.65; margin:8px 0 16px; text-align:center; }
     .payment-recovery { margin:10px 0 20px; }
     #order-reference { font-size:.68rem; color:var(--smoke2); overflow-wrap:anywhere; margin-bottom:10px; }
     .payment-recovery .act-btn { letter-spacing:.06em; }
@@ -886,7 +885,6 @@
         <label class="f-label">Card Details</label>
         <div class="stripe-wrap" id="stripe-wrap">Loading payment options…</div>
         <div id="card-err" role="status" aria-live="polite"></div>
-        <p id="order-total" class="order-total" aria-live="polite" hidden></p>
         <div id="payment-recovery" class="payment-recovery" hidden>
           <p id="order-reference"></p>
           <div class="act-row">
@@ -1325,12 +1323,6 @@ function syncSubtitle() {
     'Select a bar and enter a staff name above.';
   syncControls();
 }
-function updateFeeNote() {
-  var summary = el('order-total');
-  summary.hidden = !validAmount(tipAmt);
-  if (!summary.hidden) summary.textContent = 'Drink amount ' + money(tipAmt) + ' + processing fee ' +
-    money(calcFee(tipAmt)) + ' = Total ' + money(tipAmt + calcFee(tipAmt));
-}
 function destroyPaymentElement() {
   if (paymentElement) paymentElement.destroy();
   paymentElement = null; stripeElements = null; elementReady = false;
@@ -1345,7 +1337,6 @@ function applyNextAmount() {
   syncControls();
 }
 function syncPaymentAmount() {
-  updateFeeNote();
   if (!stripe) { syncControls(); return; }
   // Keep the original Payment Element visible before an amount is selected.
   // 21000 is only its original display initialization amount (in satang):
@@ -1406,7 +1397,7 @@ function restoreOrder(record) {
   el('custom-hint').style.display = 'none';
   el('payment-recovery').hidden = false;
   el('order-reference').textContent = 'Order reference: ' + record.orderId;
-  updateFeeNote(); syncSubtitle();
+  syncSubtitle();
 }
 function validateResponse(data, record) {
   if (data.checkoutVersion !== 2 || data.orderId !== record.orderId || !data.paymentIntentId ||
