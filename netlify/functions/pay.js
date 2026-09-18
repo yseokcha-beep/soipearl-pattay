@@ -86,7 +86,7 @@ exports.handler = async (event) => {
       const age = Date.now() - Number(ORDER_ID.exec(id)[1]);
       // Stripe keeps idempotency keys for at least 24 h. Never recreate an old
       // order after that retention window; status/cancel remain available by ID.
-      if (age < -120000 || age >= CREATE_WINDOW_MS) {
+      if (age < -600000 || age >= CREATE_WINDOW_MS) {
         invalid('This order must be checked with the venue before another payment. Please quote your order reference.', 409);
       }
       const fee = Math.ceil(order.amount * 0.0675 + 10);
