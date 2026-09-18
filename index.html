@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="checkout-build" content="2026091801">
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Soi 6 Pattaya — Staff Gratuity</title>
@@ -8,8 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
     [hidden] { display:none !important; }
-    .order-locked { pointer-events:none; opacity:.65; }
     .order-total { padding:12px 10px; border:1px solid var(--amber); color:var(--amber); font-size:.84rem; line-height:1.65; margin:8px 0 16px; text-align:center; }
+    .order-locked { pointer-events:none; opacity:.65; }
     .payment-recovery { margin:10px 0 20px; }
     #order-reference { font-size:.68rem; color:var(--smoke2); overflow-wrap:anywhere; margin-bottom:10px; }
     .payment-recovery .act-btn { letter-spacing:.06em; }
@@ -1098,6 +1099,47 @@ var busy = false, activeOrder = null, retryAllowed = false, storageOK = true, bo
 var STORAGE_KEY = 'soi6.checkout.v2', LOCK_KEY = 'soi6.checkout.v2';
 var COOKIE_KEY = 'soi6_checkout_v2', localStoreReady = false, cookieStoreReady = false;
 var lockDatabase = null, legacyLease = null;
+var statusRetryTimer = null, statusRetryCount = 0, statusRetryOrderId = null;
+var STATUS_RETRY_DELAYS = [1500, 4000, 10000];
+var verifiedCompletion = null;
+var checkoutRetryTimer = null, checkoutRetryCount = 0, storageRecoveryNeeded = false;
+var paymentLoadFailed = false, stripeInitTimer = null, stripeReloadScript = null;
+var storageRefreshTimer = null, receiptTimeLookup = null;
+var PAGE_BUILD = 2026091801, pageUpdateChecking = false, pageUpdateLastCheck = 0;
+var checkoutTouched = false, pageReloading = false;
+// Increase PAGE_BUILD and the matching checkout-build meta tag on future releases.
+function canRefreshPage() {
+  if (!booted || busy || activeOrder || !storageOK || checkoutTouched || pageReloading ||
+      selectedBar || amountMode || tipAmt !== null || document.visibilityState === 'hidden') return false;
+  if (['sname', 'snum', 'uname', 'umsg', 'custom-amt'].some(function(id) { return value(id); })) return false;
+  var u = new URL(window.location.href);
+  if (['payment_intent', 'payment_intent_client_secret', 'redirect_status', 'checkout_order'].some(function(k) { return u.searchParams.has(k); })) return false;
+  try { return !readStored(); } catch (error) { return false; }
+}
+async function checkForPageUpdate() {
+  if (pageUpdateChecking || !canRefreshPage() || Date.now() - pageUpdateLastCheck < 30000) return;
+  pageUpdateChecking = true; pageUpdateLastCheck = Date.now();
+  var controller = new AbortController(), timer = setTimeout(function() { controller.abort(); }, 10000);
+  try {
+    var u = new URL(window.location.href);
+    // Request only the document header where supported; a full response also works.
+    u.searchParams.set('checkout_update_check', String(Date.now()));
+    var response = await fetch(u.href, { method: 'GET', cache: 'no-store',
+      headers: { Range: 'bytes=0-4095' }, signal: controller.signal });
+    if (!response.ok) return;
+    var head = (await response.text()).slice(0, 4096);
+    var match = head.match(/<meta\s+name="checkout-build"\s+content="(\d{10})"\s*\/?\s*>/i);
+    if (!match) return;
+    var next = Number(match[1]), current = new URL(window.location.href);
+    if (next <= PAGE_BUILD || next <= Number(current.searchParams.get('checkout_build') || 0) || !canRefreshPage()) return;
+    // Recheck after the network wait: input or payment may have started meanwhile.
+    current.searchParams.delete('checkout_update_check');
+    current.searchParams.set('checkout_build', String(next));
+    pageReloading = true;
+    window.location.replace(current.href);
+  } catch (error) { /* An update check never blocks checkout or changes payment state. */ }
+  finally { clearTimeout(timer); pageUpdateChecking = false; }
+}
 var ALLOWED_BARS = ['Nikki Bar', 'Lollipop', 'PG Bar'];
 var RETRY_STATUSES = ['requires_payment_method', 'requires_confirmation', 'requires_action'];
 var _si = 0, _timer = null, _touchX = null;
@@ -1295,6 +1337,103 @@ function safetyError(error) {
   message(error.message || 'Unable to protect this payment. Please contact the venue.');
   syncControls();
 }
+function scheduleCheckoutRecovery() {
+  if ((!storageRecoveryNeeded && (!paymentLoadFailed || activeOrder)) || checkoutRetryTimer !== null ||
+      checkoutRetryCount >= STATUS_RETRY_DELAYS.length) return;
+  if (!storageRecoveryNeeded && stripeReloadScript) return;
+  checkoutRetryTimer = setTimeout(async function() {
+    checkoutRetryTimer = null;
+    if (busy) { scheduleCheckoutRecovery(); return; }
+    checkoutRetryCount++;
+    await recoverCheckoutSetup();
+  }, STATUS_RETRY_DELAYS[checkoutRetryCount]);
+}
+async function recoverCheckoutSetup() {
+  if (busy) { scheduleCheckoutRecovery(); return; }
+  if (storageRecoveryNeeded) {
+    busy = true; syncControls();
+    try {
+      setupOrderStorage();
+      var saved = readStored(), u = new URL(window.location.href);
+      var returning = u.searchParams.has('payment_intent') && u.searchParams.has('payment_intent_client_secret');
+      if (!saved && (activeOrder || (u.searchParams.has('checkout_order') && !returning))) {
+        throw new Error('A previous payment reference is missing. Please contact the venue before paying again.');
+      }
+      // Rechecking must never erase an unresolved order or trust a local paid label.
+      storageOK = true; storageRecoveryNeeded = false; message('');
+      if (saved) restoreOrder(saved);
+      initStripe();
+      if (returning) await recoverReturn();
+      else if (saved) {
+        message('Checking your existing payment…');
+        if (saved.paymentIntentId) { stopStatusRecovery(); scheduleStatusRecovery(); }
+        else message('Use Check payment status to recover your existing order.');
+      }
+    } catch (error) { safetyError(error); }
+    finally { busy = false; syncControls(); }
+  }
+  // Only reload failed payment options before an order has been submitted.
+  // Existing orders use status recovery, never a new payment or cleared fields.
+  if (storageOK && paymentLoadFailed && !activeOrder && !busy) {
+    if (!stripe && typeof Stripe === 'undefined') reloadStripeScript();
+    else {
+      paymentLoadFailed = false;
+      if (stripeElements) destroyPaymentElement();
+      if (stripe) syncPaymentAmount(); else initStripe();
+    }
+  }
+  if (paymentLoadFailed && !activeOrder && !stripeReloadScript && checkoutRetryCount >= STATUS_RETRY_DELAYS.length) {
+    message('Payment options could not load. Check your connection; we will retry when it reconnects.');
+  }
+  scheduleCheckoutRecovery();
+}
+function resumeCheckoutRecovery() {
+  if (storageRecoveryNeeded || (paymentLoadFailed && !activeOrder)) {
+    clearTimeout(checkoutRetryTimer); checkoutRetryTimer = null; checkoutRetryCount = 0;
+    scheduleCheckoutRecovery();
+  }
+  resumeStatusRecovery();
+  if (activeOrder && activeOrder.status === 'succeeded' && activeOrder.receipt &&
+      !activeOrder.receipt.date && el('success-pg').style.display === 'block') refreshReceiptTime(activeOrder);
+}
+function reloadStripeScript() {
+  if (stripeReloadScript || typeof Stripe !== 'undefined') return;
+  var script = document.createElement('script');
+  stripeReloadScript = script;
+  script.src = 'https://js.stripe.com/v3/'; script.async = true;
+  var timeout = setTimeout(function() { finish(); }, 12000);
+  function finish() {
+    if (stripeReloadScript !== script) return;
+    clearTimeout(timeout); script.onload = null; script.onerror = null;
+    stripeReloadScript = null; script.remove();
+    if (typeof Stripe !== 'undefined') { paymentLoadFailed = false; initStripe(); }
+    else scheduleCheckoutRecovery();
+  }
+  script.onload = finish; script.onerror = finish;
+  document.head.appendChild(script);
+}
+function queueStoredOrderRefresh() {
+  if (storageRefreshTimer !== null) return;
+  // Allow the localStorage and cookie copies to finish updating together.
+  storageRefreshTimer = setTimeout(function() {
+    storageRefreshTimer = null;
+    if (busy) { queueStoredOrderRefresh(); return; }
+    if (!storageOK) { scheduleCheckoutRecovery(); return; }
+    try {
+      var saved = readStored();
+      if (saved) {
+        if (activeOrder && saved.orderId === activeOrder.orderId &&
+            sameOrder(saved.order, activeOrder.order) && el('success-pg').style.display === 'block') return;
+        restoreOrder(saved); message('Checking your existing payment…');
+        stopStatusRecovery(); scheduleStatusRecovery();
+        if (!saved.paymentIntentId) message('An order is open in this browser. Waiting for its payment reference.');
+      } else if (activeOrder) clearForm();
+    } catch (error) {
+      storageRecoveryNeeded = true; safetyError(error); scheduleCheckoutRecovery();
+    }
+    syncControls();
+  }, 500);
+}
 function syncControls() {
   var freeze = locked();
   document.querySelectorAll('.bar-tile').forEach(function(n) {
@@ -1310,8 +1449,8 @@ function syncControls() {
   el('sub-btn').textContent = busy ? 'Processing…' :
     (activeOrder && retryAllowed ? 'Retry same payment — ' : 'Send a Drink') +
     (activeOrder && retryAllowed && validAmount(tipAmt) ? money(tipAmt + calcFee(tipAmt)) : '');
-  el('check-payment-btn').disabled = busy || !activeOrder || !storageOK;
-  el('receipt-check-btn').disabled = busy || !activeOrder || !storageOK;
+  el('check-payment-btn').disabled = busy || !activeOrder;
+  el('receipt-check-btn').disabled = busy || !activeOrder;
   el('cancel-order-btn').disabled = busy || !activeOrder || !storageOK;
   el('cancel-order-btn').hidden = !activeOrder || ['succeeded', 'canceled'].includes(activeOrder.status);
   el('new-order-btn').hidden = !activeOrder || activeOrder.status !== 'canceled';
@@ -1341,7 +1480,12 @@ function applyNextAmount() {
   if (!stripeElements || updatingAmount !== null || desiredAmount === elementAmount) return;
   updatingAmount = desiredAmount;
   try { stripeElements.update({ amount: updatingAmount }); }
-  catch (error) { updatingAmount = null; elementReady = false; message('Unable to update the payment amount. Please reload before paying.'); }
+  catch (error) {
+    updatingAmount = null; elementReady = false; paymentLoadFailed = true;
+    message(activeOrder ? 'Payment options could not update. Check the existing payment status before retrying.' :
+      'Payment options could not update. We are reconnecting; no payment has been submitted.');
+    scheduleCheckoutRecovery();
+  }
   syncControls();
 }
 function syncPaymentAmount() {
@@ -1366,8 +1510,25 @@ function syncPaymentAmount() {
     updatingAmount = null; applyNextAmount(); syncControls();
   });
   paymentElement = group.create('payment', { layout: 'tabs' });
-  paymentElement.on('ready', function() { if (stripeElements === group) { elementReady = true; syncControls(); } });
-  paymentElement.on('loaderror', function() { elementReady = false; message('Payment options could not load. Please reload the page.'); syncControls(); });
+  paymentElement.on('focus', function() { if (stripeElements === group) checkoutTouched = true; });
+  paymentElement.on('ready', function() {
+    if (stripeElements !== group) return;
+    elementReady = true;
+    if (paymentLoadFailed && !activeOrder && storageOK) message('');
+    paymentLoadFailed = false;
+    if (!storageRecoveryNeeded) {
+      clearTimeout(checkoutRetryTimer); checkoutRetryTimer = null; checkoutRetryCount = 0;
+    }
+    syncControls();
+  });
+  paymentElement.on('loaderror', function() {
+    if (stripeElements !== group) return;
+    elementReady = false; paymentLoadFailed = true;
+    message(activeOrder ? 'Payment options could not load. Check the existing payment status before retrying.' :
+      'Payment options could not load. We are reconnecting; no payment has been submitted.');
+    if (!activeOrder) scheduleCheckoutRecovery();
+    syncControls();
+  });
   paymentElement.mount('#stripe-wrap');
   syncControls();
 }
@@ -1393,6 +1554,8 @@ function pickAmt(node) {
   message(''); syncPaymentAmount(); syncSubtitle();
 }
 function restoreOrder(record) {
+  if (verifiedCompletion && (verifiedCompletion.orderId !== record.orderId ||
+      !sameOrder(verifiedCompletion.order, record.order))) verifiedCompletion = null;
   activeOrder = record; retryAllowed = false;
   var o = record.order;
   selectedBar = o.bar; tipAmt = o.amount; isHornPull = o.isHornPull;
@@ -1453,6 +1616,78 @@ async function withOrderLock(callback) {
     return callback();
   });
 }
+function stopStatusRecovery() {
+  clearTimeout(statusRetryTimer); statusRetryTimer = null;
+  statusRetryCount = 0; statusRetryOrderId = null;
+}
+function scheduleStatusRecovery() {
+  if (!storageOK || !activeOrder || !activeOrder.paymentIntentId ||
+      activeOrder.status === 'canceled' || el('success-pg').style.display === 'block') return;
+  if (statusRetryOrderId !== activeOrder.orderId) {
+    stopStatusRecovery(); statusRetryOrderId = activeOrder.orderId;
+  }
+  if (statusRetryTimer !== null || statusRetryCount >= STATUS_RETRY_DELAYS.length) return;
+  var expectedId = activeOrder.orderId;
+  statusRetryTimer = setTimeout(async function() {
+    statusRetryTimer = null;
+    if (!activeOrder || activeOrder.orderId !== expectedId || !activeOrder.paymentIntentId || !storageOK) return;
+    if (busy) { scheduleStatusRecovery(); return; }
+    statusRetryCount++;
+    // This path can only retrieve an existing payment, never create or confirm one.
+    await checkPayment(true);
+  }, STATUS_RETRY_DELAYS[statusRetryCount]);
+}
+function resumeStatusRecovery() {
+  if (!busy && storageOK && activeOrder && activeOrder.paymentIntentId && !retryAllowed &&
+      activeOrder.status !== 'canceled' && el('success-pg').style.display !== 'block') {
+    stopStatusRecovery(); scheduleStatusRecovery();
+  }
+}
+function acceptStripeReceipt(record, data, intent) {
+  if (!intent || intent.status !== 'succeeded') return false;
+  validateResponse(data, record);
+  if (intent.id !== record.paymentIntentId || intent.amount !== data.receipt.total * 100 || intent.currency !== 'thb') {
+    throw new Error('The payment does not match this order. Please contact the venue.');
+  }
+  // Stripe has already confirmed this exact payment. A second server request
+  // must not prevent its receipt from appearing during a connection problem.
+  // The pre-confirmation receipt can contain a previous attempt's time.
+  // Show success now; obtain the actual charge time separately, without blocking.
+  var completed = Object.assign({}, data, { status: 'succeeded',
+    receipt: Object.assign({}, data.receipt, { date: null }) });
+  record.status = 'succeeded'; record.receipt = completed.receipt; activeOrder = record;
+  var saveFailed = false;
+  try { persist(record); } catch (error) { saveFailed = true; }
+  applyStatus(completed);
+  refreshReceiptTime(record);
+  if (saveFailed) {
+    message('Payment successful. Please keep this receipt. We could not save the latest status on this device; check payment status before starting another order.');
+  }
+  return true;
+}
+function refreshReceiptTime(record) {
+  if (receiptTimeLookup && receiptTimeLookup.orderId === record.orderId) return;
+  var lookup = { orderId: record.orderId, paymentIntentId: record.paymentIntentId };
+  receiptTimeLookup = lookup;
+  function currentReceipt() {
+    return receiptTimeLookup === lookup && activeOrder && activeOrder.orderId === lookup.orderId &&
+      activeOrder.paymentIntentId === lookup.paymentIntentId && !activeOrder.receipt.date &&
+      el('success-pg').style.display === 'block';
+  }
+  lookup.done = (async function() {
+    try {
+      var data = await api({ action: 'status', orderId: record.orderId,
+        paymentIntentId: record.paymentIntentId, accessToken: record.accessToken });
+      validateResponse(data, record);
+      if (data.status !== 'succeeded' || !data.receipt.date || !Number.isFinite(Date.parse(data.receipt.date))) throw new Error('Time unavailable');
+      if (!currentReceipt()) return;
+      activeOrder.receipt = data.receipt;
+      el('r-date').textContent = new Date(data.receipt.date).toLocaleString('en-GB');
+    } catch (error) {
+      if (currentReceipt()) el('r-date').textContent = 'Time unavailable';
+    } finally { if (receiptTimeLookup === lookup) receiptTimeLookup = null; }
+  })();
+}
 function showReceipt(data) {
   var r = data.receipt;
   el('form-area').style.display = 'none';
@@ -1467,29 +1702,53 @@ function showReceipt(data) {
   el('r-confirmed').classList.toggle('horn-confirmed', r.isHornPull);
   el('receipt-box').classList.toggle('horn-border', r.isHornPull);
   el('r-subline').style.display = r.isHornPull ? 'block' : 'none';
-  el('r-date').textContent = new Date(r.date).toLocaleString('en-GB');
+  el('r-date').textContent = r.date ? new Date(r.date).toLocaleString('en-GB') : 'Confirming time…';
   el('r-ref').textContent = 'Ref: ' + data.paymentIntentId;
   message(''); go('vouchers'); setReceiptView(true);
 }
 function applyStatus(data, detail) {
   retryAllowed = false;
-  if (data.status === 'succeeded') { showReceipt(data); return; }
+  // Only a fresh server/Stripe result grants this shortcut. A saved local status
+  // alone never permits discarding an order whose payment is still unknown.
+  if (activeOrder && ['succeeded', 'canceled'].includes(data.status)) {
+    verifiedCompletion = { orderId: data.orderId, paymentIntentId: data.paymentIntentId,
+      status: data.status, order: activeOrder.order };
+  } else verifiedCompletion = null;
+  if (data.status === 'succeeded') { stopStatusRecovery(); showReceipt(data); return; }
   el('form-area').style.display = 'block'; setReceiptView(false);
   el('payment-recovery').hidden = false;
   if (RETRY_STATUSES.includes(data.status)) {
+    stopStatusRecovery();
     retryAllowed = true; syncPaymentAmount();
     message(detail || 'This order is not paid. You can retry this same payment, or cancel the order to change your selection.');
   } else if (data.status === 'canceled') {
+    stopStatusRecovery();
     message('This order was canceled. Choose Start a new order to make a fresh selection.');
   } else {
-    message('Your payment is awaiting confirmation. Use Check payment status before placing another order.');
+    message(statusRetryCount < STATUS_RETRY_DELAYS.length ?
+      'We are checking your payment. Your receipt will appear when payment is confirmed. Please do not pay again.' :
+      'Your payment is still awaiting confirmation. Use Check payment status to retrieve your receipt. Please do not pay again.');
+    scheduleStatusRecovery();
   }
+}
+function isConnectionError(error) {
+  return !!error && (error.name === 'AbortError' || /fetch|network|connection|verify this payment|lost.*response/i.test(error.message || ''));
 }
 function uncertain(error) {
   retryAllowed = false;
   el('payment-recovery').hidden = !activeOrder;
-  message((error && error.message ? error.message + ' ' : '') +
-    (activeOrder ? 'Use Check payment status. Do not start another payment until this order is verified.' : 'Please try again before submitting a payment.'));
+  var networkError = isConnectionError(error);
+  if (activeOrder && networkError && activeOrder.status === 'succeeded' && el('success-pg').style.display === 'block') {
+    message('Payment successful. The connection was interrupted while checking this order. Please keep your receipt and try Check payment status again.');
+  } else if (activeOrder && networkError) {
+    message('We could not confirm the payment result because the connection was interrupted. Your payment may already be complete. Please do not pay again. ' +
+      (activeOrder.paymentIntentId && statusRetryCount < STATUS_RETRY_DELAYS.length && el('success-pg').style.display !== 'block' ?
+        'We are checking again automatically.' : 'Use Check payment status to retrieve your receipt.'));
+  } else {
+    message((error && error.message ? error.message + ' ' : '') +
+      (activeOrder ? 'Use Check payment status. Do not start another payment until this order is verified.' : 'Please try again before submitting a payment.'));
+  }
+  if (networkError) scheduleStatusRecovery();
 }
 
 async function submitPay() {
@@ -1527,6 +1786,7 @@ async function submitPay() {
       returnURL.searchParams.set('checkout_order', record.orderId);
       var confirmation = await stripe.confirmPayment({ elements: group, clientSecret: data.clientSecret,
         confirmParams: { return_url: returnURL.href }, redirect: 'if_required' });
+      if (acceptStripeReceipt(record, data, confirmation.paymentIntent)) return;
       // Neither a client error nor a lost response proves the payment failed.
       // Only a fresh server read determines whether retry is available.
       data = await fetchOrder(record);
@@ -1535,15 +1795,46 @@ async function submitPay() {
   } catch (error) { uncertain(error); }
   finally { busy = false; syncControls(); }
 }
-async function checkPayment() {
-  if (busy || !storageOK) return;
+async function checkPayment(statusOnly) {
+  if (busy) return;
   busy = true; retryAllowed = false; message('Checking payment status…'); syncControls();
   try {
-    await withOrderLock(async function() {
-      var record = readStored();
-      if (!record) throw new Error('No saved payment reference was found. Please contact the venue.');
-      restoreOrder(record); applyStatus(await fetchOrder(record));
-    });
+    var record;
+    try { record = readStored(); }
+    catch (error) {
+      if (!activeOrder || !activeOrder.paymentIntentId || !activeOrder.accessToken) throw error;
+      record = activeOrder;
+    }
+    if (!record && !localStoreReady && !cookieStoreReady && activeOrder && activeOrder.paymentIntentId) record = activeOrder;
+    if (!record) throw new Error('No saved payment reference was found. Please contact the venue.');
+    if (statusOnly === true && (!record.paymentIntentId || record.orderId !== statusRetryOrderId)) { stopStatusRecovery(); return; }
+    if (record.paymentIntentId) {
+      // A status request cannot charge or cancel anything, so it needs no tab
+      // lock. Do not write its response back to shared storage without a lock.
+      var data = await api({ action: 'status', orderId: record.orderId,
+        paymentIntentId: record.paymentIntentId, accessToken: record.accessToken });
+      validateResponse(data, record);
+      var current;
+      try { current = readStored(); } catch (error) { current = activeOrder; }
+      if (!current && !localStoreReady && !cookieStoreReady) current = activeOrder;
+      if (!current) { clearForm(); return; }
+      if (current.orderId !== record.orderId || !sameOrder(current.order, record.order)) {
+        stopStatusRecovery(); restoreOrder(current);
+        message('Another order was opened in this browser. Check its payment status before continuing.');
+        return;
+      }
+      record.status = data.status; record.receipt = data.receipt;
+      restoreOrder(record); applyStatus(data);
+    } else {
+      // Recovering a lost creation reply still requires the original shared
+      // lock and idempotency key; it must never start an unrelated payment.
+      if (!storageOK) throw new Error('Please reload to recover the saved payment reference.');
+      await withOrderLock(async function() {
+        var saved = readStored();
+        if (!saved) throw new Error('No saved payment reference was found. Please contact the venue.');
+        restoreOrder(saved); applyStatus(await fetchOrder(saved));
+      });
+    }
   } catch (error) { uncertain(error); }
   finally { busy = false; syncControls(); }
 }
@@ -1566,6 +1857,10 @@ async function cancelOrder() {
   finally { busy = false; syncControls(); }
 }
 function clearForm() {
+  stopStatusRecovery();
+  checkoutTouched = false;
+  receiptTimeLookup = null;
+  verifiedCompletion = null;
   var wasReceipt = el('success-pg').style.display === 'block';
   activeOrder = null; retryAllowed = false; selectedBar = null; tipAmt = null; amountMode = null; isHornPull = false;
   ['sname', 'snum', 'uname', 'umsg', 'custom-amt'].forEach(function(id) { el(id).value = ''; });
@@ -1589,8 +1884,12 @@ async function resetAll() {
       var record = readStored();
       if (record) {
         if (record.orderId !== expectedId) { restoreOrder(record); applyStatus(await fetchOrder(record)); return; }
-        var data = await fetchOrder(record);
-        if (!['succeeded', 'canceled'].includes(data.status)) { restoreOrder(record); applyStatus(data); return; }
+        var completedHere = verifiedCompletion && verifiedCompletion.orderId === record.orderId &&
+          verifiedCompletion.paymentIntentId === record.paymentIntentId && sameOrder(verifiedCompletion.order, record.order);
+        if (!completedHere) {
+          var data = await fetchOrder(record);
+          if (!['succeeded', 'canceled'].includes(data.status)) { restoreOrder(record); applyStatus(data); return; }
+        }
         removeStored();
       }
       clearReturnQuery(); clearForm();
@@ -1619,7 +1918,10 @@ async function recoverReturn() {
       record.paymentIntentId = data.paymentIntentId; record.accessToken = data.accessToken; record.status = data.status; record.receipt = r;
       persist(record); restoreOrder(record); clearReturnQuery(); applyStatus(data); go('vouchers');
     });
-  } catch (error) { safetyError(error); }
+  } catch (error) {
+    if (isConnectionError(error)) uncertain(error);
+    else safetyError(error);
+  }
   finally { busy = false; syncControls(); }
   return true;
 }
@@ -1629,10 +1931,15 @@ function goSlide(n) {
   clearInterval(_timer); _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
 }
 function initStripe(attempt) {
-  if (stripe) return;
+  if (stripe || stripeInitTimer !== null) return;
   if (typeof Stripe === 'undefined') {
-    if ((attempt || 0) < 75) { setTimeout(function() { initStripe((attempt || 0) + 1); }, 200); return; }
-    message('Payment options could not load. Please reload the page.'); return;
+    if ((attempt || 0) < 75) {
+      stripeInitTimer = setTimeout(function() { stripeInitTimer = null; initStripe((attempt || 0) + 1); }, 200); return;
+    }
+    paymentLoadFailed = true;
+    message(activeOrder ? 'Payment options could not load. Check the existing payment status before retrying.' :
+      'Payment options could not load. We are reconnecting; no payment has been submitted.');
+    scheduleCheckoutRecovery(); return;
   }
   stripe = Stripe('pk_live_51TRTbYEn6mJoEIoKB9HLSoimzT74QGYGPiI2gIHYmJbrlsqPVyW9WuwJi21F5lNYzf1VfhE3zueVsOpZOziP8wSV00c66Q50sP');
   syncPaymentAmount();
@@ -1640,6 +1947,10 @@ function initStripe(attempt) {
 async function bootCheckout() {
   if (booted) return; booted = true;
   clearForm();
+  ['sname', 'snum', 'uname', 'umsg', 'custom-amt'].forEach(function(id) {
+    el(id).addEventListener('input', function() { checkoutTouched = true; });
+  });
+  setInterval(checkForPageUpdate, 300000);
   el('custom-amt').addEventListener('input', function() {
     if (locked() || amountMode !== 'custom') return;
     tipAmt = this.value.trim() ? Number(this.value) : null;
@@ -1655,8 +1966,10 @@ async function bootCheckout() {
   _timer = setInterval(function() { goSlide(_si + 1); }, 5000);
   try {
     checkoutUUID();
+    storageRecoveryNeeded = true;
     setupOrderStorage();
     var saved = readStored();
+    storageRecoveryNeeded = false;
     if (saved) { restoreOrder(saved); go('vouchers'); }
     initStripe();
     if (await recoverReturn()) return;
@@ -1664,20 +1977,19 @@ async function bootCheckout() {
     else if (new URL(window.location.href).searchParams.has('checkout_order')) {
       throw new Error('A previous payment reference is missing. Please contact the venue before paying again.');
     }
-  } catch (error) { safetyError(error); }
+  } catch (error) { safetyError(error); scheduleCheckoutRecovery(); }
   syncControls();
+  await checkForPageUpdate();
 }
 window.addEventListener('storage', function(event) {
-  if (event.key !== STORAGE_KEY || busy) return;
-  try {
-    var saved = readStored();
-    if (saved) { restoreOrder(saved); message('An order is open in this browser. Check its payment status before continuing.'); }
-    else if (activeOrder) clearForm();
-  } catch (error) { safetyError(error); }
-  syncControls();
+  if (event.key === STORAGE_KEY || event.key === null) queueStoredOrderRefresh();
 });
-window.addEventListener('pageshow', function(event) { if (event.persisted && !busy && activeOrder) checkPayment(); });
+window.addEventListener('pageshow', function(event) { if (event.persisted) resumeCheckoutRecovery(); });
+window.addEventListener('online', resumeCheckoutRecovery);
+document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'visible') resumeCheckoutRecovery(); });
 document.addEventListener('DOMContentLoaded', bootCheckout, { once: true });
+window.addEventListener('pageshow', checkForPageUpdate);
+document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'visible') checkForPageUpdate(); });
 </script>
 </body>
 </html>
