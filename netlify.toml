@@ -17,5 +17,10 @@
 [functions]
   node_bundler = "esbuild"
 
+# OFFICIAL VIP: refresh the existing season cache every 10 minutes (UTC).
+# Registered here so Netlify schedules the existing refresh-vip-cache handler.
+[functions."refresh-vip-cache"]
+  schedule = "*/10 * * * *"
+
 [[plugins]]
   package = "@netlify/plugin-functions-install-core"
