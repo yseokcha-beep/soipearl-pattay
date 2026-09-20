@@ -2028,6 +2028,11 @@
   z-index:50 !important;
 }
 
+/* Hide the 300+ legend whenever the box is NOT in OFFICIAL VIP mode. */
+#tyk-box:not(.vip-mode) .vip-milestone-legend{
+  display:none !important;
+}
+
 </style>
 </head>
 <body>
@@ -2574,6 +2579,10 @@ var VIP_BADGE_IMAGES = [
         }, 20000);
       })
       .catch(function(){});
+  }
+  // Start the existing live-data sequence on load; keep preview modes separate.
+  if (!window.location.search.includes('testvip=') && !window.location.search.includes('test=')) {
+    runMonthlyCycle();
   }
   setInterval(runMonthlyCycle, 10*60*1000);
 
