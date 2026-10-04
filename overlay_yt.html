@@ -2665,6 +2665,388 @@
 }
 /* keep other alerts unchanged */
 
+
+/* RANK 2 — Platinum Ice Diamond + subtle opal prism */
+.recent-item.vip-rank-2{--vr-main:#eaf7ff!important;--vr-glow:rgba(139,211,255,.92)!important}
+.recent-item.vip-rank-2 .vip-rank-border{
+ padding:3px!important;
+ background:conic-gradient(from var(--vip-rank-angle),#8fcfff,#f9fdff 12%,#c7b8ff 20%,#fff 27%,#9ff4ff 36%,#ffd8f4 45%,#eef8ff 55%,#a7d7ff 66%,#fff 76%,#d7c7ff 87%,#8fcfff)!important;
+ filter:brightness(1.38) saturate(1.18) drop-shadow(0 0 3px #fff) drop-shadow(0 0 8px rgba(147,219,255,.92)) drop-shadow(0 0 14px rgba(192,170,255,.45))!important;
+ animation:vipRankBorderSpin 2.05s linear infinite,vipRank2Prism 1.55s ease-in-out infinite!important
+}
+.recent-item.vip-rank-2 .vip-sunray{
+ width:16px!important;height:16px!important;border-radius:2px!important;
+ background:linear-gradient(135deg,transparent 0 18%,#fff 19% 39%,transparent 40% 59%,#b7f4ff 60% 79%,transparent 80%),linear-gradient(45deg,#fff,#bfefff 26%,#e0c8ff 49%,#ffd9f2 68%,#fff)!important;
+ box-shadow:0 0 4px #fff,0 0 9px rgba(148,225,255,.98),0 0 16px rgba(190,160,255,.62)!important
+}
+.recent-item.vip-rank-2 .vip-sunray.s1{animation-duration:1.18s!important}
+.recent-item.vip-rank-2 .vip-sunray.s2{animation-duration:1.42s!important}
+.recent-item.vip-rank-2 .vip-sunray.s3{animation-duration:1.68s!important}
+@keyframes vipRank2Prism{0%,100%{opacity:.84;filter:brightness(1)}50%{opacity:1;filter:brightness(1.28)}}
+
+/* RANK 3 — Amber Bronze + warm jewel */
+.recent-item.vip-rank-3{--vr-main:#ffad45!important;--vr-glow:rgba(255,116,38,.88)!important}
+.recent-item.vip-rank-3 .vip-rank-border{
+ padding:2.9px!important;
+ background:conic-gradient(from var(--vip-rank-angle),#9b451c,#ff9a38 12%,#ffe09a 20%,#fff5d3 25%,#d86a27 36%,#ffb64d 48%,#7f351a 58%,#ffd078 69%,#fff1c5 76%,#c55a22 88%,#9b451c)!important;
+ filter:brightness(1.30) saturate(1.25) drop-shadow(0 0 3px rgba(255,238,193,.88)) drop-shadow(0 0 8px rgba(255,145,47,.82)) drop-shadow(0 0 13px rgba(197,78,24,.42))!important;
+ animation:vipRankBorderSpin 2.35s linear infinite,vipRank3Amber 1.75s ease-in-out infinite!important
+}
+.recent-item.vip-rank-3 .vip-sunray{
+ width:15px!important;height:15px!important;border-radius:2px!important;
+ background:linear-gradient(135deg,transparent 0 20%,#fff5d6 21% 39%,transparent 40% 60%,#ffb13f 61% 79%,transparent 80%),linear-gradient(45deg,#fff3c9,#ffcb6b 30%,#e66d28 54%,#ffd98e 76%,#a9481f)!important;
+ box-shadow:0 0 3px #fff0c6,0 0 8px rgba(255,164,54,.94),0 0 14px rgba(211,77,25,.55)!important
+}
+.recent-item.vip-rank-3 .vip-sunray.s1{animation-duration:1.32s!important}
+.recent-item.vip-rank-3 .vip-sunray.s2{animation-duration:1.58s!important}
+.recent-item.vip-rank-3 .vip-sunray.s3{animation-duration:1.86s!important}
+@keyframes vipRank3Amber{0%,100%{opacity:.82;filter:brightness(1)}50%{opacity:1;filter:brightness(1.20)}}
+
+
+/* === RANK 2 BOOST: thicker ice-blue + clearly visible opal prism === */
+.recent-item.vip-rank-2 .vip-rank-border{
+  padding:4.2px!important;
+  background:conic-gradient(
+    from var(--vip-rank-angle),
+    #63caff 0%,#aeeaff 10%,#faffff 17%,
+    #cf77ff 24%,#ff78c9 31%,#ffffff 37%,
+    #55dcff 45%,#9cecff 54%,#ffffff 61%,
+    #a96dff 69%,#ff8bd4 77%,#dff8ff 84%,
+    #5fcaff 92%,#63caff 100%
+  )!important;
+  filter:
+    brightness(1.48) saturate(1.34)
+    drop-shadow(0 0 4px rgba(255,255,255,1))
+    drop-shadow(0 0 10px rgba(83,213,255,.98))
+    drop-shadow(0 0 18px rgba(178,100,255,.64))
+    drop-shadow(0 0 23px rgba(255,104,198,.38))!important;
+  animation:vipRankBorderSpin 1.82s linear infinite,vipRank2PrismBoost 1.28s ease-in-out infinite!important;
+}
+.recent-item.vip-rank-2 .vip-sunray{
+  width:18px!important;height:18px!important;
+  background:
+    linear-gradient(135deg,transparent 0 16%,#fff 17% 36%,transparent 37% 55%,#72e6ff 56% 72%,transparent 73%),
+    linear-gradient(45deg,#ffffff 0%,#62d9ff 23%,#c36cff 46%,#ff78c9 67%,#ffffff 84%,#76ddff 100%)!important;
+  box-shadow:
+    0 0 4px #fff,
+    0 0 10px rgba(87,220,255,1),
+    0 0 17px rgba(188,91,255,.82),
+    0 0 22px rgba(255,100,198,.55)!important;
+}
+@keyframes vipRank2PrismBoost{
+  0%,100%{opacity:.88;filter:brightness(1)}
+  42%{opacity:1;filter:brightness(1.35)}
+  58%{opacity:1;filter:brightness(1.55)}
+  72%{opacity:.94;filter:brightness(1.18)}
+}
+
+
+/* === RANK 2 BALANCE: keep the jewel look, tone it down slightly === */
+.recent-item.vip-rank-2 .vip-rank-border{
+  padding:3.6px!important;
+  filter:
+    brightness(1.34) saturate(1.22)
+    drop-shadow(0 0 3px rgba(255,255,255,.92))
+    drop-shadow(0 0 8px rgba(83,213,255,.82))
+    drop-shadow(0 0 13px rgba(178,100,255,.46))
+    drop-shadow(0 0 16px rgba(255,104,198,.24))!important;
+  animation:vipRankBorderSpin 2.05s linear infinite,vipRank2Balanced 1.5s ease-in-out infinite!important;
+}
+.recent-item.vip-rank-2 .vip-sunray{
+  width:16px!important;height:16px!important;
+  box-shadow:
+    0 0 3px #fff,
+    0 0 8px rgba(87,220,255,.90),
+    0 0 13px rgba(188,91,255,.58),
+    0 0 16px rgba(255,100,198,.34)!important;
+}
+@keyframes vipRank2Balanced{
+  0%,100%{opacity:.86;filter:brightness(1)}
+  50%{opacity:1;filter:brightness(1.30)}
+}
+
+
+/* === RANK 2 FINAL PLATINUM BALANCE ===
+   85% platinum/white-silver, 10% ice blue, ~5% brief opal prism. */
+.recent-item.vip-rank-2{
+  --vr-main:#eef3f7!important;
+  --vr-glow:rgba(205,225,240,.86)!important;
+}
+.recent-item.vip-rank-2 .vip-rank-border{
+  padding:3.6px!important;
+  background:conic-gradient(
+    from var(--vip-rank-angle),
+    #aeb8c2 0%,#f8fbfd 12%,#cbd3da 23%,#ffffff 34%,
+    #b9c4cd 45%,#eaf9ff 54%,#ffffff 63%,#c5cdd5 72%,
+    #d9c9f2 77%,#f3d9e8 80%,#ffffff 83%,
+    #bcc7d0 91%,#aeb8c2 100%
+  )!important;
+  filter:
+    brightness(1.34) saturate(1.06)
+    drop-shadow(0 0 3px rgba(255,255,255,.96))
+    drop-shadow(0 0 8px rgba(205,226,240,.78))
+    drop-shadow(0 0 12px rgba(145,184,210,.28))!important;
+  animation:vipRankBorderSpin 2.15s linear infinite,vipRank2PlatinumBreathe 1.55s ease-in-out infinite!important;
+}
+.recent-item.vip-rank-2 .vip-sunray{
+  width:16px!important;height:16px!important;
+  background:
+    linear-gradient(135deg,transparent 0 18%,#fff 19% 40%,transparent 41% 60%,#dff7ff 61% 79%,transparent 80%),
+    linear-gradient(45deg,#ffffff 0%,#cbd4dc 32%,#f7fbfd 56%,#dbefff 74%,#ffffff 100%)!important;
+  box-shadow:
+    0 0 3px #fff,
+    0 0 8px rgba(220,239,250,.90),
+    0 0 13px rgba(164,201,224,.42)!important;
+}
+@keyframes vipRank2PlatinumBreathe{
+  0%,100%{opacity:.87;filter:brightness(1)}
+  50%{opacity:1;filter:brightness(1.28)}
+}
+/* brief prism glint only at peak; platinum remains dominant */
+.recent-item.vip-rank-2 .vip-sunray.s2{
+  background:
+    linear-gradient(135deg,transparent 0 18%,#fff 19% 40%,transparent 41% 60%,#dff7ff 61% 79%,transparent 80%),
+    linear-gradient(45deg,#ffffff 0%,#cbd4dc 38%,#d9c9f2 49%,#f1d5e5 55%,#eefaff 64%,#ffffff 100%)!important;
+}
+
+
+/* === RANK 2 METALLIC PLATINUM BALANCE ===
+   ~60% metallic platinum, 25% ice blue, 10% white shine, 5% prism. */
+.recent-item.vip-rank-2{
+  --vr-main:#aeb9c5!important;
+  --vr-glow:rgba(103,194,235,.82)!important;
+}
+.recent-item.vip-rank-2 .vip-rank-border{
+  padding:3.7px!important;
+  background:conic-gradient(
+    from var(--vip-rank-angle),
+    #66727e 0%,#9ba7b3 9%,#d0d8df 18%,
+    #75c9ee 26%,#bcecff 34%,#87939f 43%,
+    #e9eef2 51%,#8e9ba7 59%,#67c7ef 68%,
+    #a7dff7 75%,#c99fe5 79%,#efb5d7 82%,
+    #f5f8fa 85%,#9aa6b1 91%,#66727e 100%
+  )!important;
+  filter:
+    brightness(1.24) saturate(1.13)
+    drop-shadow(0 0 3px rgba(241,249,255,.86))
+    drop-shadow(0 0 8px rgba(88,192,235,.68))
+    drop-shadow(0 0 13px rgba(70,105,130,.34))!important;
+  animation:vipRankBorderSpin 2.05s linear infinite,vipRank2MetalPulse 1.5s ease-in-out infinite!important;
+}
+.recent-item.vip-rank-2 .vip-sunray{
+  width:16px!important;height:16px!important;
+  background:
+    linear-gradient(135deg,transparent 0 18%,#f9fdff 19% 38%,transparent 39% 59%,#80d8f8 60% 79%,transparent 80%),
+    linear-gradient(45deg,#8996a2 0%,#dbe3e9 27%,#7bcff0 48%,#f5f8fa 66%,#9aa6b2 100%)!important;
+  box-shadow:
+    0 0 3px rgba(255,255,255,.92),
+    0 0 8px rgba(90,203,244,.82),
+    0 0 13px rgba(91,139,168,.46)!important;
+}
+.recent-item.vip-rank-2 .vip-sunray.s2{
+  background:
+    linear-gradient(135deg,transparent 0 18%,#fff 19% 38%,transparent 39% 59%,#83d8f7 60% 79%,transparent 80%),
+    linear-gradient(45deg,#8795a1 0%,#dce5eb 30%,#72cceb 46%,#c796df 54%,#e9a9cf 59%,#eef8fc 66%,#8f9ca8 100%)!important;
+}
+@keyframes vipRank2MetalPulse{
+  0%,100%{opacity:.88;filter:brightness(.98)}
+  45%{opacity:1;filter:brightness(1.18)}
+  58%{opacity:1;filter:brightness(1.34)}
+  72%{opacity:.94;filter:brightness(1.08)}
+}
+
+
+/* === CLEANUP REQUEST ===
+   1) remove the top-center fixed diamond
+   2) remove the large crown
+   3) copy the small glowing bottom-right corner ornament to all 4 corners
+   4) tone down the popping diamond sparkles only
+*/
+.recent-item.vip-rank-1::before{display:none!important}
+.recent-item.vip-rank-1 .vip-rank1-crown{display:none!important}
+
+/* Four identical tiny corner glints, based on the small bottom-right look */
+.rank1-corner-glints{
+  display:none;position:absolute;inset:0;overflow:visible;
+  pointer-events:none;z-index:2147483647;
+}
+.recent-item.vip-rank-1 .rank1-corner-glints{display:block}
+.rank1-corner-glints i{
+  position:absolute;width:8px;height:8px;border-radius:1px;
+  background:linear-gradient(135deg,#fff 0%,#fff9d7 35%,#ffd84c 62%,#fff 100%);
+  transform:rotate(45deg);
+  box-shadow:0 0 3px #fff,0 0 6px #ffe56c,0 0 9px rgba(255,184,28,.72);
+  animation:rank1CornerGlint 1.9s ease-in-out infinite;
+}
+.rank1-corner-glints .tl{left:-4px;top:-4px}
+.rank1-corner-glints .tr{right:-4px;top:-4px;animation-delay:-.45s}
+.rank1-corner-glints .br{right:-4px;bottom:-4px;animation-delay:-.9s}
+.rank1-corner-glints .bl{left:-4px;bottom:-4px;animation-delay:-1.35s}
+@keyframes rank1CornerGlint{
+  0%,100%{opacity:.70;filter:brightness(1);transform:rotate(45deg) scale(.86)}
+  48%{opacity:1;filter:brightness(1.55);transform:rotate(45deg) scale(1.12)}
+  62%{opacity:.86;filter:brightness(1.16);transform:rotate(45deg) scale(.96)}
+}
+
+/* Tone down only the moving/popping diamond sparkles */
+.recent-item[class*="vip-rank-"] .vip-sunray{
+  width:11px!important;height:11px!important;
+  opacity:0;
+  box-shadow:0 0 2px rgba(255,255,255,.82),0 0 5px var(--vr-main),0 0 8px var(--vr-glow)!important;
+}
+.recent-item[class*="vip-rank-"] .vip-sunray.s1{animation-duration:1.85s!important}
+.recent-item[class*="vip-rank-"] .vip-sunray.s2{animation-duration:2.20s!important}
+.recent-item[class*="vip-rank-"] .vip-sunray.s3{animation-duration:2.55s!important}
+
+/* Rank 1 moving diamonds remain a little richer, but restrained */
+.recent-item.vip-rank-1 .vip-sunray{
+  width:13px!important;height:13px!important;
+  box-shadow:0 0 2px #fff,0 0 6px #ffe58a,0 0 10px rgba(255,184,32,.62)!important;
+}
+
+
+/* === TOP 3 FINAL SEPARATION ===
+   Rank 1: brighter champagne royal gold
+   Rank 2: metallic platinum unchanged
+   Rank 3: deeper amber/copper with restrained rose-gold highlight
+   Rank 1 corner glints: staggered, less synchronized sparkle
+*/
+
+/* Rank 1 — brighter champagne/yellow royal gold */
+.recent-item.vip-rank-1{
+  --vr-main:#ffd84a!important;
+  --vr-glow:rgba(255,178,20,.90)!important;
+}
+.recent-item.vip-rank-1 .vip-rank-border{
+  background:conic-gradient(
+    from var(--vip-rank-angle),
+    #b87800 0%,#ffd02d 12%,#fff2a3 22%,#fffdf0 29%,
+    #ffc21c 39%,#ffe46c 51%,#fff8c7 60%,#f2a800 70%,
+    #ffd84a 82%,#fff1a0 91%,#b87800 100%
+  )!important;
+  filter:brightness(1.38) saturate(1.18)
+    drop-shadow(0 0 3px rgba(255,255,255,.96))
+    drop-shadow(0 0 8px rgba(255,208,58,.90))
+    drop-shadow(0 0 14px rgba(255,153,0,.48))!important;
+}
+
+/* Rank 1 corner glints — deliberately staggered / varied rhythm */
+.rank1-corner-glints .tl{animation-duration:2.15s!important;animation-delay:-.18s!important}
+.rank1-corner-glints .tr{animation-duration:2.72s!important;animation-delay:-1.31s!important}
+.rank1-corner-glints .br{animation-duration:2.38s!important;animation-delay:-.84s!important}
+.rank1-corner-glints .bl{animation-duration:3.05s!important;animation-delay:-2.17s!important}
+
+/* Rank 3 — deeper copper/amber, visually separated from Rank 1 */
+.recent-item.vip-rank-3{
+  --vr-main:#d86d27!important;
+  --vr-glow:rgba(191,72,27,.78)!important;
+}
+.recent-item.vip-rank-3 .vip-rank-border{
+  background:conic-gradient(
+    from var(--vip-rank-angle),
+    #6f2c18 0%,#a84420 11%,#d96828 22%,#f59a45 31%,
+    #ffd09a 39%,#b94f24 48%,#7d301a 57%,#d4632c 67%,
+    #e9a07d 73%,#c86b55 78%,#f0b083 84%,#9a3d1f 91%,#6f2c18 100%
+  )!important;
+  filter:brightness(1.18) saturate(1.24)
+    drop-shadow(0 0 3px rgba(255,215,177,.72))
+    drop-shadow(0 0 7px rgba(222,104,43,.66))
+    drop-shadow(0 0 11px rgba(135,48,23,.38))!important;
+}
+/* restrained rose-gold jewel glint for Rank 3 */
+.recent-item.vip-rank-3 .vip-sunray{
+  background:
+    linear-gradient(135deg,transparent 0 20%,#ffe1c5 21% 39%,transparent 40% 60%,#d98570 61% 79%,transparent 80%),
+    linear-gradient(45deg,#8d351d 0%,#d76631 31%,#e8a080 53%,#f1bc91 72%,#8a321b 100%)!important;
+  box-shadow:0 0 2px rgba(255,224,194,.78),0 0 5px rgba(213,103,67,.66),0 0 8px rgba(139,50,27,.38)!important;
+}
+
+
+/* === RANK 1 FINAL CORNERS ===
+   Keep diamond glints on TL/TR/BL.
+   Replace BR glint with a clearer, slightly larger crown to emphasize #1.
+*/
+.rank1-corner-glints .br{display:none!important}
+
+.rank1-br-crown{
+  display:none;
+  position:absolute;
+  right:-8px;
+  bottom:-9px;
+  width:23px;
+  height:19px;
+  z-index:2147483647;
+  pointer-events:none;
+  overflow:visible;
+  transform:rotate(-7deg);
+  filter:
+    drop-shadow(0 1px 1px rgba(0,0,0,.82))
+    drop-shadow(0 0 4px rgba(255,244,171,.95))
+    drop-shadow(0 0 8px rgba(255,190,25,.88));
+  animation:rank1BRCrownGlow 1.65s ease-in-out infinite;
+}
+.recent-item.vip-rank-1 .rank1-br-crown{display:block}
+.rank1-br-crown svg{display:block;width:23px;height:19px;overflow:visible}
+
+@keyframes rank1BRCrownGlow{
+  0%,100%{
+    opacity:.90;
+    transform:rotate(-7deg) scale(.96);
+    filter:brightness(1.05) drop-shadow(0 1px 1px rgba(0,0,0,.82)) drop-shadow(0 0 4px rgba(255,238,157,.82)) drop-shadow(0 0 7px rgba(255,184,24,.72));
+  }
+  50%{
+    opacity:1;
+    transform:rotate(-7deg) scale(1.08);
+    filter:brightness(1.40) drop-shadow(0 1px 1px rgba(0,0,0,.82)) drop-shadow(0 0 6px #fff4ad) drop-shadow(0 0 11px rgba(255,196,32,.98));
+  }
+}
+
+
+/* === TOP 10 VIP LABEL ===
+   Small compact VIP badge inside the top-right corner; rank-colored metallic text. */
+.vip-rank-label{
+  display:none;
+  position:absolute;
+  right:10px;
+  top:7px;
+  z-index:10020;
+  pointer-events:none;
+  font-family:Arial,sans-serif;
+  font-size:9px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:0;
+  padding:3px 5px 2px;
+  border-radius:5px;
+  color:var(--vr-main);
+  background:rgba(8,8,8,.64);
+  border:1px solid var(--vr-main);
+  text-shadow:0 0 4px var(--vr-glow);
+  box-shadow:inset 0 0 5px rgba(255,255,255,.06),0 0 5px var(--vr-glow);
+  opacity:.92;
+}
+.recent-item[class*="vip-rank-"] .vip-rank-label{display:block}
+
+/* Rank 1 VIP: champagne gold; crown remains bottom-right */
+.recent-item.vip-rank-1 .vip-rank-label{
+  color:#ffe47a;
+  border-color:#ffd34b;
+  text-shadow:0 0 4px #fff1a5,0 0 7px rgba(255,186,25,.62);
+  box-shadow:inset 0 0 5px rgba(255,244,180,.10),0 0 5px rgba(255,187,24,.40);
+}
+/* Rank 2 VIP: metallic platinum */
+.recent-item.vip-rank-2 .vip-rank-label{
+  color:#d3dce4;
+  border-color:#aeb9c5;
+  text-shadow:0 0 4px #eaf9ff,0 0 6px rgba(103,194,235,.45);
+}
+/* Rank 3 VIP: deep amber bronze */
+.recent-item.vip-rank-3 .vip-rank-label{
+  color:#e79258;
+  border-color:#c55e2d;
+  text-shadow:0 0 4px rgba(255,202,155,.75),0 0 6px rgba(181,68,26,.42);
+}
+
 </style>
 </head>
 <body>
@@ -3104,6 +3486,9 @@
     rays.innerHTML='<i class="vip-sunray s1"></i><i class="vip-sunray s2"></i><i class="vip-sunray s3"></i>';
     item.appendChild(rays);
     item.insertAdjacentHTML('beforeend',`<span class="vip-rank1-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
+    item.insertAdjacentHTML('beforeend',`<span class="rank1-corner-glints" aria-hidden="true"><i class="tl"></i><i class="tr"></i><i class="br"></i><i class="bl"></i></span>`);
+    item.insertAdjacentHTML('beforeend',`<span class="vip-rank-label" aria-hidden="true">VIP</span>`);
+    item.insertAdjacentHTML('beforeend',`<span class="rank1-br-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
   }
   // TEST ONLY: append ?testvipborder=all to preview all 10 rank border colors at once.
   function showVipRankBorderTestAll(){
@@ -3125,6 +3510,9 @@
       rays.innerHTML='<i class="vip-sunray s1"></i><i class="vip-sunray s2"></i><i class="vip-sunray s3"></i>';
       item.appendChild(rays);
       item.insertAdjacentHTML('beforeend',`<span class="vip-rank1-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
+    item.insertAdjacentHTML('beforeend',`<span class="rank1-corner-glints" aria-hidden="true"><i class="tl"></i><i class="tr"></i><i class="br"></i><i class="bl"></i></span>`);
+    item.insertAdjacentHTML('beforeend',`<span class="vip-rank-label" aria-hidden="true">VIP</span>`);
+    item.insertAdjacentHTML('beforeend',`<span class="rank1-br-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
       wrap.insertBefore(item,wrap.firstChild);
     }
   }
