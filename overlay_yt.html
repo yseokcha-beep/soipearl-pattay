@@ -2033,6 +2033,638 @@
   display:none !important;
 }
 
+
+
+/* =========================================================
+   TOP 10 VIP RANK BORDER — DRINK NOTIFICATION ONLY
+   Adds only a rank-colored living border/glow. Existing layout/content untouched.
+   ========================================================= */
+@property --vip-rank-angle { syntax:'<angle>'; inherits:false; initial-value:0deg; }
+.recent-item .vip-rank-border{
+  position:absolute; inset:-1px; border-radius:8px; padding:2px; pointer-events:none; z-index:20;
+  background:conic-gradient(from var(--vip-rank-angle),
+    var(--vr-dark),var(--vr-main) 12%,#fff 18%,var(--vr-hi) 24%,var(--vr-main) 39%,
+    var(--vr-dark) 52%,var(--vr-main) 67%,#fff 73%,var(--vr-hi) 79%,var(--vr-main) 91%,var(--vr-dark));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  filter:drop-shadow(0 0 2px var(--vr-hi)) drop-shadow(0 0 6px var(--vr-glow));
+  animation:vipRankBorderSpin 3.8s linear infinite,vipRankBorderBreathe 2.2s ease-in-out infinite;
+}
+.recent-item.vip-rank-1 .vip-rank-border{
+  inset:-2px; padding:3px;
+  filter:drop-shadow(0 0 3px #fff9d8) drop-shadow(0 0 8px rgba(255,211,72,1)) drop-shadow(0 0 15px rgba(255,164,0,.72));
+  animation:vipRankBorderSpin 2.45s linear infinite,vipRank1RoyalBreathe 1.55s ease-in-out infinite;
+}
+.recent-item.vip-rank-1{box-shadow:0 13px 28px rgba(0,0,0,.58),0 4px 9px rgba(0,0,0,.48),0 0 12px rgba(255,194,38,.28),0 0 24px rgba(255,157,0,.16),inset 0 1px 0 rgba(255,255,255,.11),inset 0 -1px 0 rgba(212,168,67,.10),0 0 0 1px rgba(0,0,0,.58);}
+.recent-item.vip-rank-1 .vip-rank-border::before,.recent-item.vip-rank-1 .vip-rank-border::after{
+ content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 3px #fff,0 0 7px #fff3ad,0 0 11px rgba(255,191,31,.95);opacity:0;pointer-events:none;animation:vipRank1DiamondGlint 2.35s ease-in-out infinite;
+}
+.recent-item.vip-rank-1 .vip-rank-border::before{left:10px;top:2px;}
+.recent-item.vip-rank-1 .vip-rank-border::after{right:10px;bottom:2px;animation-delay:-1.15s;}
+@keyframes vipRank1RoyalBreathe{0%,100%{opacity:.82;filter:brightness(1)}50%{opacity:1;filter:brightness(1.34)}}
+@keyframes vipRank1DiamondGlint{0%,66%,100%{opacity:0;transform:scale(.25)}73%{opacity:1;transform:scale(1.35)}82%{opacity:.22;transform:scale(.55)}}
+@keyframes vipRankBorderSpin{to{--vip-rank-angle:360deg}}
+@keyframes vipRankBorderBreathe{0%,100%{opacity:.72}50%{opacity:1}}
+
+
+/* === VIP TOP 10 BORDER BRIGHTNESS BOOST — colors/rank logic unchanged === */
+.recent-item[class*="vip-rank-"] .vip-rank-border{
+  opacity:1 !important;
+  filter:
+    brightness(1.28)
+    saturate(1.18)
+    drop-shadow(0 0 3px rgba(255,255,255,.82))
+    drop-shadow(0 0 7px var(--vip-rank-glow,rgba(255,255,255,.48)))
+    drop-shadow(0 0 13px var(--vip-rank-glow,rgba(255,255,255,.30))) !important;
+}
+.recent-item[class*="vip-rank-"]{
+  box-shadow:
+    0 13px 28px rgba(0,0,0,.58),
+    0 4px 9px rgba(0,0,0,.48),
+    0 0 8px var(--vip-rank-glow,rgba(255,255,255,.24)),
+    0 0 17px var(--vip-rank-glow,rgba(255,255,255,.13)),
+    inset 0 1px 0 rgba(255,255,255,.11),
+    inset 0 -1px 0 rgba(212,168,67,.10),
+    0 0 0 1px rgba(0,0,0,.58) !important;
+}
+/* Rank 1 stays the strongest */
+.recent-item.vip-rank-1 .vip-rank-border{
+  filter:
+    brightness(1.42)
+    saturate(1.22)
+    drop-shadow(0 0 4px rgba(255,255,255,.98))
+    drop-shadow(0 0 9px rgba(255,211,72,1))
+    drop-shadow(0 0 17px rgba(255,164,0,.78)) !important;
+}
+
+
+/* === VIP TOP 10 LUMINOUS AURA ===
+   Adds only outward glow / breathing light. Existing rank colors and logic stay unchanged. */
+.recent-item[class*="vip-rank-"]{
+  --vip-aura: rgba(255,255,255,.38);
+  animation:vipAuraPulse 1.9s ease-in-out infinite;
+}
+.recent-item.vip-rank-1{--vip-aura:rgba(255,190,25,.68)}
+.recent-item.vip-rank-2{--vip-aura:rgba(214,232,255,.60)}
+.recent-item.vip-rank-3{--vip-aura:rgba(255,145,65,.58)}
+.recent-item.vip-rank-4{--vip-aura:rgba(191,104,255,.58)}
+.recent-item.vip-rank-5{--vip-aura:rgba(55,255,190,.55)}
+.recent-item.vip-rank-6{--vip-aura:rgba(255,82,160,.55)}
+.recent-item.vip-rank-7{--vip-aura:rgba(69,132,255,.57)}
+.recent-item.vip-rank-8{--vip-aura:rgba(83,225,255,.55)}
+.recent-item.vip-rank-9{--vip-aura:rgba(112,178,255,.52)}
+.recent-item.vip-rank-10{--vip-aura:rgba(224,232,244,.50)}
+
+.recent-item[class*="vip-rank-"]::after{
+  content:"";
+  position:absolute;
+  inset:-7px;
+  border-radius:16px;
+  pointer-events:none;
+  z-index:-1;
+  box-shadow:
+    0 0 8px var(--vip-aura),
+    0 0 17px var(--vip-aura),
+    0 0 29px var(--vip-aura);
+  opacity:.50;
+  animation:vipAuraHalo 1.9s ease-in-out infinite;
+}
+.recent-item.vip-rank-1::after{
+  inset:-9px;
+  box-shadow:
+    0 0 9px rgba(255,242,180,.90),
+    0 0 20px rgba(255,202,50,.82),
+    0 0 38px rgba(255,158,0,.66);
+  animation-duration:1.55s;
+}
+@keyframes vipAuraHalo{
+  0%,100%{opacity:.34;transform:scale(.995)}
+  50%{opacity:.82;transform:scale(1.018)}
+}
+@keyframes vipAuraPulse{
+  0%,100%{filter:brightness(1)}
+  50%{filter:brightness(1.08)}
+}
+
+
+/* === VIP SUNLIGHT SPARKLE ===
+   Warm/cool sun-ray flashes around the existing rank-colored border.
+   No layout/content/rank logic changes. */
+.recent-item[class*="vip-rank-"] .vip-rank-border::before,
+.recent-item[class*="vip-rank-"] .vip-rank-border::after{
+  content:"";
+  position:absolute;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  pointer-events:none;
+  opacity:0;
+  background:#fff;
+  box-shadow:
+    0 0 4px #fff,
+    0 0 9px var(--vip-aura),
+    0 0 17px var(--vip-aura);
+  z-index:5;
+}
+.recent-item[class*="vip-rank-"] .vip-rank-border::before{
+  left:13%;
+  top:-2px;
+  animation:vipSunSparkA 2.7s ease-in-out infinite;
+}
+.recent-item[class*="vip-rank-"] .vip-rank-border::after{
+  right:16%;
+  bottom:-2px;
+  animation:vipSunSparkB 3.15s ease-in-out infinite;
+  animation-delay:-1.45s;
+}
+@keyframes vipSunSparkA{
+  0%,57%,100%{opacity:0;transform:scale(.25)}
+  62%{opacity:1;transform:scale(1)}
+  65%{opacity:1;transform:scale(1.9)}
+  69%{opacity:.22;transform:scale(.65)}
+}
+@keyframes vipSunSparkB{
+  0%,64%,100%{opacity:0;transform:scale(.2)}
+  69%{opacity:.95;transform:scale(.9)}
+  72%{opacity:1;transform:scale(1.7)}
+  76%{opacity:.18;transform:scale(.55)}
+}
+/* visible sun-ray cross at the sparkle point */
+.recent-item[class*="vip-rank-"] .vip-rank-border{
+  overflow:visible !important;
+}
+.recent-item[class*="vip-rank-"]{
+  --sun-ray: rgba(255,255,255,.88);
+}
+/* Rank 1 gets a warmer, stronger royal-gold sunlight flash */
+.recent-item.vip-rank-1 .vip-rank-border::before,
+.recent-item.vip-rank-1 .vip-rank-border::after{
+  width:9px;height:9px;
+  background:#fffdf0;
+  box-shadow:
+    0 0 5px #fff,
+    0 0 11px #fff1a6,
+    0 0 22px rgba(255,202,48,.98),
+    0 0 34px rgba(255,155,0,.68);
+}
+.recent-item.vip-rank-1 .vip-rank-border::before{animation-duration:2.15s}
+.recent-item.vip-rank-1 .vip-rank-border::after{animation-duration:2.55s}
+
+
+/* === VIP STRONG SUNBURST ===
+   Clearly visible long sun-ray flashes. Existing content/rank/color logic unchanged. */
+.recent-item[class*="vip-rank-"] .vip-rank-border{
+  overflow:visible !important;
+}
+
+/* Turn the existing sparkle points into visible starbursts */
+.recent-item[class*="vip-rank-"] .vip-rank-border::before,
+.recent-item[class*="vip-rank-"] .vip-rank-border::after{
+  width:5px !important;
+  height:5px !important;
+  border-radius:50% !important;
+  background:#fff !important;
+  opacity:0;
+  box-shadow:
+    0 0 5px 3px #fff,
+    0 0 13px 6px var(--vip-aura),
+    0 0 27px 10px var(--vip-aura) !important;
+}
+
+/* Long horizontal + vertical rays are painted with gradients */
+.recent-item[class*="vip-rank-"] .vip-rank-border::before{
+  left:18% !important;
+  top:-2px !important;
+  background:
+    linear-gradient(90deg, transparent 0%, var(--vip-aura) 35%, #fff 49%, #fff 51%, var(--vip-aura) 65%, transparent 100%),
+    linear-gradient(0deg, transparent 0%, var(--vip-aura) 35%, #fff 49%, #fff 51%, var(--vip-aura) 65%, transparent 100%) !important;
+  width:54px !important;
+  height:54px !important;
+  margin-left:-27px;
+  margin-top:-27px;
+  border-radius:0 !important;
+  background-size:54px 4px,4px 54px !important;
+  background-position:center !important;
+  background-repeat:no-repeat !important;
+  box-shadow:0 0 15px 4px var(--vip-aura) !important;
+  animation:vipStrongSunburstA 2.35s ease-out infinite !important;
+}
+.recent-item[class*="vip-rank-"] .vip-rank-border::after{
+  right:13% !important;
+  bottom:-2px !important;
+  width:46px !important;
+  height:46px !important;
+  margin-right:-23px;
+  margin-bottom:-23px;
+  border-radius:0 !important;
+  background:
+    linear-gradient(90deg, transparent 0%, var(--vip-aura) 34%, #fff 49%, #fff 51%, var(--vip-aura) 66%, transparent 100%),
+    linear-gradient(0deg, transparent 0%, var(--vip-aura) 34%, #fff 49%, #fff 51%, var(--vip-aura) 66%, transparent 100%) !important;
+  background-size:46px 4px,4px 46px !important;
+  background-position:center !important;
+  background-repeat:no-repeat !important;
+  box-shadow:0 0 14px 4px var(--vip-aura) !important;
+  animation:vipStrongSunburstB 2.9s ease-out infinite !important;
+  animation-delay:-1.25s !important;
+}
+@keyframes vipStrongSunburstA{
+  0%,60%,100%{opacity:0;transform:scale(.28) rotate(0deg)}
+  65%{opacity:.75;transform:scale(.65) rotate(5deg)}
+  69%{opacity:1;transform:scale(1.22) rotate(12deg)}
+  75%{opacity:.35;transform:scale(.82) rotate(17deg)}
+}
+@keyframes vipStrongSunburstB{
+  0%,66%,100%{opacity:0;transform:scale(.25) rotate(0deg)}
+  71%{opacity:.8;transform:scale(.7) rotate(-5deg)}
+  75%{opacity:1;transform:scale(1.18) rotate(-12deg)}
+  81%{opacity:.28;transform:scale(.8) rotate(-17deg)}
+}
+
+/* Rank 1: unmistakable royal-gold sunlight */
+.recent-item.vip-rank-1 .vip-rank-border::before{
+  width:70px !important;height:70px !important;margin-left:-35px;margin-top:-35px;
+  background-size:70px 5px,5px 70px !important;
+  box-shadow:0 0 10px 5px #fff7c8,0 0 24px 9px rgba(255,211,55,.95),0 0 43px 13px rgba(255,155,0,.62) !important;
+  animation-duration:1.95s !important;
+}
+.recent-item.vip-rank-1 .vip-rank-border::after{
+  width:58px !important;height:58px !important;margin-right:-29px;margin-bottom:-29px;
+  background-size:58px 5px,5px 58px !important;
+  box-shadow:0 0 9px 4px #fff7c8,0 0 21px 8px rgba(255,205,48,.92),0 0 37px 11px rgba(255,150,0,.58) !important;
+  animation-duration:2.35s !important;
+}
+
+
+/* REAL DOM SUNRAYS — intentionally obvious on stream */
+.vip-sunray-layer{position:absolute;inset:0;overflow:visible;pointer-events:none;z-index:9999}
+.vip-sunray{position:absolute;width:72px;height:72px;opacity:0;pointer-events:none}
+.vip-sunray:before,.vip-sunray:after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:99px;box-shadow:0 0 8px #fff,0 0 18px var(--vr-main),0 0 34px var(--vr-glow)}
+.vip-sunray:before{width:72px;height:4px}.vip-sunray:after{width:4px;height:72px}
+.vip-sunray.s1{left:-35px;top:-35px;animation:sunPop 2.0s ease-out infinite}
+.vip-sunray.s2{right:-36px;top:20%;animation:sunPop 2.55s ease-out infinite -1.05s}
+.vip-sunray.s3{left:35%;bottom:-36px;animation:sunPop 2.9s ease-out infinite -1.8s}
+@keyframes sunPop{0%,55%,100%{opacity:0;transform:scale(.15) rotate(0)}62%{opacity:1;transform:scale(.7) rotate(8deg)}68%{opacity:1;transform:scale(1.35) rotate(15deg)}76%{opacity:.18;transform:scale(.7) rotate(21deg)}}
+.vip-rank-1 .vip-sunray{width:92px;height:92px}.vip-rank-1 .vip-sunray:before{width:92px;height:5px}.vip-rank-1 .vip-sunray:after{width:5px;height:92px}
+.vip-rank-1 .vip-sunray:before,.vip-rank-1 .vip-sunray:after{box-shadow:0 0 10px 2px #fff,0 0 22px 5px #ffe66d,0 0 42px 10px #ffad19}
+
+
+/* === BORDER FLASH — preserve the liked border, only relocate the light bursts ===
+   The star/light centers sit directly ON the border instead of floating outside it. */
+.vip-sunray-layer{
+  inset:0 !important;
+  overflow:visible !important;
+}
+
+/* Smaller than the prior sunrays, but still a clear '촤악' flash */
+.vip-sunray{
+  width:48px !important;
+  height:48px !important;
+}
+.vip-sunray::before{
+  width:48px !important;
+  height:3px !important;
+}
+.vip-sunray::after{
+  width:3px !important;
+  height:48px !important;
+}
+
+/* Centers of the flashes are exactly on the frame line */
+.vip-sunray.s1{
+  left:-24px !important;
+  top:-24px !important;
+  animation:borderFlashA 2.55s ease-out infinite !important;
+}
+.vip-sunray.s2{
+  right:-24px !important;
+  top:calc(50% - 24px) !important;
+  animation:borderFlashB 3.05s ease-out infinite -1.35s !important;
+}
+.vip-sunray.s3{
+  left:calc(58% - 24px) !important;
+  bottom:-24px !important;
+  animation:borderFlashC 3.45s ease-out infinite -2.15s !important;
+}
+
+@keyframes borderFlashA{
+  0%,61%,100%{opacity:0;transform:scale(.2) rotate(0deg)}
+  66%{opacity:.8;transform:scale(.65) rotate(5deg)}
+  70%{opacity:1;transform:scale(1.18) rotate(10deg)}
+  76%{opacity:.18;transform:scale(.7) rotate(15deg)}
+}
+@keyframes borderFlashB{
+  0%,65%,100%{opacity:0;transform:scale(.2) rotate(0deg)}
+  70%{opacity:.78;transform:scale(.65) rotate(-5deg)}
+  74%{opacity:1;transform:scale(1.15) rotate(-10deg)}
+  80%{opacity:.16;transform:scale(.7) rotate(-15deg)}
+}
+@keyframes borderFlashC{
+  0%,68%,100%{opacity:0;transform:scale(.2) rotate(0deg)}
+  73%{opacity:.76;transform:scale(.62) rotate(5deg)}
+  77%{opacity:1;transform:scale(1.12) rotate(10deg)}
+  83%{opacity:.15;transform:scale(.68) rotate(15deg)}
+}
+
+/* Rank 1: champagne/white-gold flash, visibly stronger without changing its border */
+.recent-item.vip-rank-1 .vip-sunray{
+  width:62px !important;
+  height:62px !important;
+}
+.recent-item.vip-rank-1 .vip-sunray::before{
+  width:62px !important;
+  height:4px !important;
+  background:#fffdf2 !important;
+  box-shadow:0 0 8px 2px #fff,0 0 17px 4px #ffe991,0 0 30px 7px rgba(255,184,32,.82) !important;
+}
+.recent-item.vip-rank-1 .vip-sunray::after{
+  width:4px !important;
+  height:62px !important;
+  background:#fffdf2 !important;
+  box-shadow:0 0 8px 2px #fff,0 0 17px 4px #ffe991,0 0 30px 7px rgba(255,184,32,.82) !important;
+}
+.recent-item.vip-rank-1 .vip-sunray.s1{
+  left:-31px !important;top:-31px !important;
+  animation-duration:1.95s !important;
+}
+.recent-item.vip-rank-1 .vip-sunray.s2{
+  right:-31px !important;top:calc(50% - 31px) !important;
+  animation-duration:2.35s !important;
+}
+.recent-item.vip-rank-1 .vip-sunray.s3{
+  left:calc(58% - 31px) !important;bottom:-31px !important;
+  animation-duration:2.75s !important;
+}
+
+
+/* === TUNING: MORE SPARKLE / SMALLER CROSS ===
+   Keep all existing VIP border colors and rank logic unchanged. */
+.vip-sunray{
+  width:34px !important;
+  height:34px !important;
+}
+.vip-sunray::before{
+  width:34px !important;
+  height:3px !important;
+}
+.vip-sunray::after{
+  width:3px !important;
+  height:34px !important;
+}
+
+/* More frequent flashes around the border */
+.vip-sunray.s1{
+  left:-17px !important;
+  top:-17px !important;
+  animation-duration:1.55s !important;
+}
+.vip-sunray.s2{
+  right:-17px !important;
+  top:calc(50% - 17px) !important;
+  animation-duration:1.85s !important;
+  animation-delay:-.72s !important;
+}
+.vip-sunray.s3{
+  left:calc(58% - 17px) !important;
+  bottom:-17px !important;
+  animation-duration:2.05s !important;
+  animation-delay:-1.28s !important;
+}
+
+/* Rank 1 remains richer/brighter, but its cross is also reduced */
+.recent-item.vip-rank-1 .vip-sunray{
+  width:42px !important;
+  height:42px !important;
+}
+.recent-item.vip-rank-1 .vip-sunray::before{
+  width:42px !important;
+  height:3px !important;
+}
+.recent-item.vip-rank-1 .vip-sunray::after{
+  width:3px !important;
+  height:42px !important;
+}
+.recent-item.vip-rank-1 .vip-sunray.s1{
+  left:-21px !important;
+  top:-21px !important;
+  animation-duration:1.25s !important;
+}
+.recent-item.vip-rank-1 .vip-sunray.s2{
+  right:-21px !important;
+  top:calc(50% - 21px) !important;
+  animation-duration:1.48s !important;
+  animation-delay:-.55s !important;
+}
+.recent-item.vip-rank-1 .vip-sunray.s3{
+  left:calc(58% - 21px) !important;
+  bottom:-21px !important;
+  animation-duration:1.72s !important;
+  animation-delay:-1.02s !important;
+}
+
+
+/* === FINAL TUNING: tiny elegant sparkles + rank-1 diamond === */
+
+/* Cross/star flashes: much smaller and finer */
+.vip-sunray{
+  width:20px !important;
+  height:20px !important;
+}
+.vip-sunray::before{
+  width:20px !important;
+  height:2px !important;
+}
+.vip-sunray::after{
+  width:2px !important;
+  height:20px !important;
+}
+.vip-sunray.s1{left:-10px !important;top:-10px !important;animation-duration:1.28s !important}
+.vip-sunray.s2{right:-10px !important;top:calc(50% - 10px) !important;animation-duration:1.53s !important;animation-delay:-.58s !important}
+.vip-sunray.s3{left:calc(58% - 10px) !important;bottom:-10px !important;animation-duration:1.76s !important;animation-delay:-1.06s !important}
+
+/* Make sparkle softer/more jewel-like instead of a large cross */
+.vip-sunray::before,.vip-sunray::after{
+  box-shadow:0 0 3px #fff,0 0 7px var(--vr-main),0 0 12px var(--vr-glow) !important;
+}
+
+/* Rank 1: still stronger, but not oversized */
+.recent-item.vip-rank-1 .vip-sunray{
+  width:24px !important;
+  height:24px !important;
+}
+.recent-item.vip-rank-1 .vip-sunray::before{
+  width:24px !important;height:2px !important;
+  box-shadow:0 0 4px #fff,0 0 8px #ffe98c,0 0 14px rgba(255,184,32,.88) !important;
+}
+.recent-item.vip-rank-1 .vip-sunray::after{
+  width:2px !important;height:24px !important;
+  box-shadow:0 0 4px #fff,0 0 8px #ffe98c,0 0 14px rgba(255,184,32,.88) !important;
+}
+.recent-item.vip-rank-1 .vip-sunray.s1{left:-12px !important;top:-12px !important;animation-duration:1.02s !important}
+.recent-item.vip-rank-1 .vip-sunray.s2{right:-12px !important;top:calc(50% - 12px) !important;animation-duration:1.22s !important}
+.recent-item.vip-rank-1 .vip-sunray.s3{left:calc(58% - 12px) !important;bottom:-12px !important;animation-duration:1.42s !important}
+
+/* Rank 1 diamond jewel attached to the top border */
+.recent-item.vip-rank-1::before{
+  content:"◆";
+  position:absolute;
+  top:-10px;
+  left:50%;
+  transform:translateX(-50%) rotate(45deg);
+  z-index:10001;
+  font-size:12px;
+  line-height:12px;
+  color:#fffdf1;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 5px #ffe98a,
+    0 0 9px #ffc52e,
+    0 0 14px rgba(255,164,0,.82);
+  animation:rank1DiamondTwinkle 1.35s ease-in-out infinite;
+}
+@keyframes rank1DiamondTwinkle{
+  0%,100%{opacity:.72;filter:brightness(1);transform:translateX(-50%) rotate(45deg) scale(.86)}
+  45%{opacity:1;filter:brightness(1.75);transform:translateX(-50%) rotate(45deg) scale(1.16)}
+  60%{opacity:.88;filter:brightness(1.25);transform:translateX(-50%) rotate(45deg) scale(.98)}
+}
+
+
+/* === DIAMOND SPARKLES — replaces cross-shaped flashes === */
+.vip-sunray{
+  width:14px !important;
+  height:14px !important;
+  border-radius:2px !important;
+  background:linear-gradient(135deg,#fff 0%,var(--vr-main) 42%,#fff 52%,var(--vr-glow) 100%) !important;
+  transform:rotate(45deg);
+  box-shadow:
+    0 0 3px #fff,
+    0 0 7px var(--vr-main),
+    0 0 13px var(--vr-glow) !important;
+}
+.vip-sunray::before,.vip-sunray::after{display:none !important}
+
+/* Jewel twinkle instead of cross expansion */
+.vip-sunray.s1{left:-7px !important;top:-7px !important;animation:diamondSparkA 1.42s ease-in-out infinite !important}
+.vip-sunray.s2{right:-7px !important;top:calc(50% - 7px) !important;animation:diamondSparkB 1.72s ease-in-out infinite -.65s !important}
+.vip-sunray.s3{left:calc(58% - 7px) !important;bottom:-7px !important;animation:diamondSparkC 1.98s ease-in-out infinite -1.15s !important}
+
+@keyframes diamondSparkA{
+  0%,56%,100%{opacity:0;transform:rotate(45deg) scale(.25)}
+  63%{opacity:.82;transform:rotate(45deg) scale(.75)}
+  69%{opacity:1;transform:rotate(45deg) scale(1.28)}
+  76%{opacity:.25;transform:rotate(45deg) scale(.68)}
+}
+@keyframes diamondSparkB{
+  0%,62%,100%{opacity:0;transform:rotate(45deg) scale(.22)}
+  68%{opacity:.85;transform:rotate(45deg) scale(.78)}
+  74%{opacity:1;transform:rotate(45deg) scale(1.2)}
+  81%{opacity:.2;transform:rotate(45deg) scale(.62)}
+}
+@keyframes diamondSparkC{
+  0%,66%,100%{opacity:0;transform:rotate(45deg) scale(.22)}
+  72%{opacity:.82;transform:rotate(45deg) scale(.74)}
+  78%{opacity:1;transform:rotate(45deg) scale(1.18)}
+  85%{opacity:.18;transform:rotate(45deg) scale(.6)}
+}
+
+/* Rank 1 — richer multi-facet white/champagne diamond sparkles */
+.recent-item.vip-rank-1 .vip-sunray{
+  width:18px !important;
+  height:18px !important;
+  border-radius:3px !important;
+  background:
+    linear-gradient(135deg,transparent 0 20%,rgba(255,255,255,.95) 21% 39%,transparent 40% 60%,#ffe584 61% 79%,transparent 80%),
+    linear-gradient(45deg,#fffdf2 0%,#fff 28%,#ffd44d 52%,#fff7c7 74%,#ffad19 100%) !important;
+  box-shadow:
+    0 0 4px 1px #fff,
+    0 0 9px 2px #ffe68a,
+    0 0 17px 4px rgba(255,185,32,.86) !important;
+}
+.recent-item.vip-rank-1 .vip-sunray.s1{left:-9px !important;top:-9px !important;animation-duration:1.05s !important}
+.recent-item.vip-rank-1 .vip-sunray.s2{right:-9px !important;top:calc(50% - 9px) !important;animation-duration:1.28s !important}
+.recent-item.vip-rank-1 .vip-sunray.s3{left:calc(58% - 9px) !important;bottom:-9px !important;animation-duration:1.5s !important}
+
+/* Make the fixed rank-1 jewel look like a faceted diamond rather than a text glyph */
+.recent-item.vip-rank-1::before{
+  content:"" !important;
+  width:13px !important;
+  height:13px !important;
+  top:-7px !important;
+  border-radius:2px !important;
+  background:
+    linear-gradient(135deg,transparent 0 20%,#fff 21% 38%,transparent 39% 60%,#ffe274 61% 79%,transparent 80%),
+    linear-gradient(45deg,#fffdf2,#fff 30%,#ffd64d 54%,#fff5bd 75%,#ffa914) !important;
+  box-shadow:0 0 4px #fff,0 0 9px #ffe580,0 0 15px rgba(255,174,18,.88) !important;
+  text-shadow:none !important;
+}
+
+
+/* === RANK 1 SMALL CROWN — decoration only === */
+.recent-item.vip-rank-1 .vip-sunray-layer::after{
+  content:"♛";
+  position:absolute;
+  right:-7px;
+  bottom:-8px;
+  z-index:10002;
+  font-size:15px;
+  line-height:15px;
+  color:#fff6c9;
+  transform:rotate(-7deg);
+  text-shadow:
+    0 0 2px #fff,
+    0 0 5px #ffe26b,
+    0 0 9px rgba(255,183,24,.95);
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.72));
+  animation:rank1CrownGlow 1.7s ease-in-out infinite;
+}
+@keyframes rank1CrownGlow{
+  0%,100%{opacity:.82;filter:brightness(1) drop-shadow(0 1px 1px rgba(0,0,0,.72))}
+  50%{opacity:1;filter:brightness(1.38) drop-shadow(0 0 4px rgba(255,201,52,.72))}
+}
+
+
+/* === RANK 1 OUTSIDE CROWN BADGE === */
+.vip-rank1-crown{
+  display:none;
+  position:absolute;
+  right:-11px;
+  top:-17px;
+  z-index:2147483000;
+  width:24px;
+  height:20px;
+  pointer-events:none;
+  overflow:visible;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.85)) drop-shadow(0 0 5px rgba(255,190,30,.75));
+}
+.recent-item.vip-rank-1 .vip-rank1-crown{display:block}
+.vip-rank1-crown svg{display:block;width:24px;height:20px;overflow:visible}
+.vip-rank1-crown{animation:rank1OutsideCrown 1.65s ease-in-out infinite}
+@keyframes rank1OutsideCrown{
+  0%,100%{transform:rotate(7deg) scale(.94);filter:brightness(1) drop-shadow(0 1px 1px rgba(0,0,0,.85)) drop-shadow(0 0 5px rgba(255,190,30,.72))}
+  50%{transform:rotate(7deg) scale(1.05);filter:brightness(1.28) drop-shadow(0 1px 1px rgba(0,0,0,.85)) drop-shadow(0 0 9px rgba(255,207,58,.95))}
+}
+
+
+/* === FORCE RANK-1 CROWN VISIBLE OUTSIDE CARD === */
+.recent-item.vip-rank-1{
+  overflow:visible !important;
+}
+.recent-item.vip-rank-1 .vip-rank1-crown{
+  display:block !important;
+  right:-13px !important;
+  top:-20px !important;
+  width:30px !important;
+  height:25px !important;
+  z-index:2147483647 !important;
+  opacity:1 !important;
+}
+.recent-item.vip-rank-1 .vip-rank1-crown svg{
+  width:30px !important;
+  height:25px !important;
+  display:block !important;
+  overflow:visible !important;
+}
+/* keep other alerts unchanged */
+
 </style>
 </head>
 <body>
@@ -2432,6 +3064,71 @@
 
   // ── THANK YOU KA (tyk-box: month top5, unchanged) ──
   var VIP_MIN_DRINKS = 300; // nickname 누적 300잔 이상 결제해야 OFFICIAL VIP 타이틀
+  // TOP 10 VIP rank map for drink-notification border only.
+  var VIP_RANK_MAP = {};
+  var VIP_RANK_COLORS = [
+    {dark:'#6f4208',main:'#f2b52a',hi:'#fff3a6',glow:'rgba(255,190,35,.92)'},
+    {dark:'#65717d',main:'#c8d2dc',hi:'#ffffff',glow:'rgba(205,225,242,.82)'},
+    {dark:'#71350d',main:'#c87536',hi:'#ffd1a6',glow:'rgba(210,104,43,.78)'},
+    {dark:'#3f176d',main:'#8b5cf6',hi:'#e9d5ff',glow:'rgba(139,92,246,.82)'},
+    {dark:'#075a49',main:'#22c7a9',hi:'#bfffee',glow:'rgba(34,199,169,.78)'},
+    {dark:'#761b49',main:'#ec4899',hi:'#ffd2e8',glow:'rgba(236,72,153,.78)'},
+    {dark:'#173f86',main:'#3b82f6',hi:'#dbeafe',glow:'rgba(59,130,246,.78)'},
+    {dark:'#155e75',main:'#38bdf8',hi:'#e0f7ff',glow:'rgba(56,189,248,.76)'},
+    {dark:'#344154',main:'#7c8da3',hi:'#e8eef5',glow:'rgba(124,141,163,.72)'},
+    {dark:'#4b5563',main:'#aeb8c5',hi:'#f8fafc',glow:'rgba(174,184,197,.68)'}
+  ];
+  function setVipRankMap(list){
+    VIP_RANK_MAP={};
+    (list||[]).forEach(function(p,i){ VIP_RANK_MAP[(p.name||'').trim().toLowerCase()]=i+1; });
+  }
+  function refreshVipRankMap(){
+    return fetch('/.netlify/functions/webhook?month=3')
+      .then(function(r){return r.json();})
+      .then(function(d){ setVipRankMap(topByDrinks(d.orders||[],10,VIP_MIN_DRINKS,true)); })
+      .catch(function(){});
+  }
+  function applyVipRankBorder(item,fromName){
+    // Existing special effects have absolute priority over Top-10 rank styling.
+    if ((data.tip_amount||0) >= 6000 || data.staff_name === 'Horn Pull') return;
+
+    var key=(fromName||'Anonymous').trim().toLowerCase();
+    var rank=VIP_RANK_MAP[key];
+    if(!rank || rank<1 || rank>10) return;
+    var c=VIP_RANK_COLORS[rank-1];
+    item.classList.add('vip-rank-'+rank);
+    item.style.setProperty('--vr-dark',c.dark); item.style.setProperty('--vr-main',c.main);
+    item.style.setProperty('--vr-hi',c.hi); item.style.setProperty('--vr-glow',c.glow);
+    var border=document.createElement('i'); border.className='vip-rank-border'; item.appendChild(border);
+    var rays=document.createElement('span'); rays.className='vip-sunray-layer';
+    rays.innerHTML='<i class="vip-sunray s1"></i><i class="vip-sunray s2"></i><i class="vip-sunray s3"></i>';
+    item.appendChild(rays);
+    item.insertAdjacentHTML('beforeend',`<span class="vip-rank1-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
+  }
+  // TEST ONLY: append ?testvipborder=all to preview all 10 rank border colors at once.
+  function showVipRankBorderTestAll(){
+    var wrap=document.getElementById('recent-wrap');
+    if(!wrap) return;
+    wrap.innerHTML='';
+    for(var rank=10; rank>=1; rank--){
+      var item=document.createElement('div');
+      item.className='recent-item drink-premium';
+      item.innerHTML='<div class="recent-icon">🍹</div><div class="recent-body"><div class="recent-name"><strong>RANK '+rank+'</strong> sent <strong>10</strong> drinks to <strong>Test Girl</strong></div><div class="recent-amt">฿2,100 · TEST</div></div>';
+      var c=VIP_RANK_COLORS[rank-1];
+      item.classList.add('vip-rank-'+rank);
+      item.style.setProperty('--vr-dark',c.dark);
+      item.style.setProperty('--vr-main',c.main);
+      item.style.setProperty('--vr-hi',c.hi);
+      item.style.setProperty('--vr-glow',c.glow);
+      var border=document.createElement('i'); border.className='vip-rank-border'; item.appendChild(border);
+      var rays=document.createElement('span'); rays.className='vip-sunray-layer';
+      rays.innerHTML='<i class="vip-sunray s1"></i><i class="vip-sunray s2"></i><i class="vip-sunray s3"></i>';
+      item.appendChild(rays);
+      item.insertAdjacentHTML('beforeend',`<span class="vip-rank1-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
+      wrap.insertBefore(item,wrap.firstChild);
+    }
+  }
+
   function topByDrinks(orders, n, minDrinks, excludeAnonymous){
     var counts={}, display={};
     (orders||[]).forEach(function(o){
@@ -2580,6 +3277,12 @@ var VIP_BADGE_IMAGES = [
       })
       .catch(function(){});
   }
+  refreshVipRankMap();
+  setInterval(refreshVipRankMap, 10*60*1000);
+  if(new URLSearchParams(window.location.search).get('testvipborder')==='all'){
+    setTimeout(showVipRankBorderTestAll,500);
+  }
+
   // Start the existing live-data sequence on load; keep preview modes separate.
   if (!window.location.search.includes('testvip=') && !window.location.search.includes('test=')) {
     runMonthlyCycle();
@@ -2657,6 +3360,7 @@ var VIP_BADGE_IMAGES = [
         nameLine+
         '<div class="recent-amt" style="'+(isVip?'color:#a78bfa;':'')+'">฿'+(data.tip_amount||0).toLocaleString()+' · '+(data.bar||'')+'</div>'+
       '</div>';
+    applyVipRankBorder(item,data.from||'Anonymous');
     wrap.insertBefore(item,wrap.firstChild);
     if(isVip){
       setTimeout(function(){
