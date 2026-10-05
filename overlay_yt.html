@@ -3470,9 +3470,9 @@
       .then(function(d){ setVipRankMap(topByDrinks(d.orders||[],10,VIP_MIN_DRINKS,true)); })
       .catch(function(){});
   }
-  function applyVipRankBorder(item,fromName){
+  function applyVipRankBorder(item,fromName,data){
     // Existing special effects have absolute priority over Top-10 rank styling.
-    if ((data.tip_amount||0) >= 6000 || data.staff_name === 'Horn Pull') return;
+    if (data && (((data.tip_amount||0) >= 6000) || data.staff_name === 'Horn Pull')) return;
 
     var key=(fromName||'Anonymous').trim().toLowerCase();
     var rank=VIP_RANK_MAP[key];
@@ -3748,7 +3748,7 @@ var VIP_BADGE_IMAGES = [
         nameLine+
         '<div class="recent-amt" style="'+(isVip?'color:#a78bfa;':'')+'">฿'+(data.tip_amount||0).toLocaleString()+' · '+(data.bar||'')+'</div>'+
       '</div>';
-    applyVipRankBorder(item,data.from||'Anonymous');
+    applyVipRankBorder(item,data.from||'Anonymous',data);
     wrap.insertBefore(item,wrap.firstChild);
     if(isVip){
       setTimeout(function(){
