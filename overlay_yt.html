@@ -3047,6 +3047,15 @@
   text-shadow:0 0 4px rgba(255,202,155,.75),0 0 6px rgba(181,68,26,.42);
 }
 
+
+/* AUDIT FIX: sparkle must not replace the original alert entrance/exit. */
+#recent-wrap .recent-item[class*="vip-rank-"]{
+  animation:slideInRight .4s cubic-bezier(.175,.885,.32,1.275) both, vipAuraPulse 1.9s ease-in-out infinite;
+}
+#recent-wrap .recent-item[class*="vip-rank-"].hide{
+  animation:slideOutRight .35s ease forwards;
+}
+
 </style>
 </head>
 <body>
@@ -3074,25 +3083,90 @@
   <div class="tyk-cover"></div>
   <div class="tyk-text">Thank You Ka 🙏</div>
 </div></div>
-<div id="top7-wrap"><div id="top7-box">
-  <div class="t7-scene">
-    <div class="t7-bg"></div>
-    <div class="t7-bg-fade"></div>
-    <div class="t7-header">
-      <div class="t7-the">The Legend of</div>
-      <div class="t7-title">SUPPORTERS</div>
-      <div class="t7-wild">Breath of the Month</div>
-    </div>
-  </div>
-  <div class="t7-panel">
-    <div class="t7-thanks">" Thank you, brave adventurers — your kindness lights up this world "</div>
-    <div class="t7-rows" id="t7-rows"></div>
-    <div class="t7-footer">✦ &nbsp; pattayasoipearl.com &nbsp; ✦</div>
-  </div>
-</div></div>
 
 <script>
   
+
+  // AUDITED 2026-10-05: delivery and preview safety; visual assets retained.
+  var OVERLAY_PARAMS = new URLSearchParams(window.location.search);
+  var OVERLAY_PREVIEW = ['test', 'testvip', 'testvipborder', 'testalerts'].some(function(k){ return OVERLAY_PARAMS.has(k); });
+  var OVERLAY_DIAGNOSTICS = window.__overlayDiagnostics = {
+    version:'2026-10-05-audited-1', preview:OVERLAY_PREVIEW,
+    pollSuccesses:0, shownOrders:0, duplicateIgnored:0, malformedSkipped:0,
+    errors:0, lastError:null, lastPollAt:null, lastVipRefreshAt:null, serverVipUpdatedAt:null
+  };
+  function reportOverlayError(where, err){
+    OVERLAY_DIAGNOSTICS.errors++;
+    OVERLAY_DIAGNOSTICS.lastError={where:where, message:String(err && err.message || err), at:new Date().toISOString()};
+    console.warn('[overlay] '+where+': '+OVERLAY_DIAGNOSTICS.lastError.message);
+  }
+  function textValue(v, fallback){
+    return typeof v==='string' || typeof v==='number' ? String(v) : (fallback || '');
+  }
+  function payerName(v){ return textValue(v,'Anonymous').trim() || 'Anonymous'; }
+  function payerKey(v){ return payerName(v).toLowerCase(); }
+  function escapeHtml(v){
+    return textValue(v,'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});
+  }
+  function normalizeOrder(o){
+    if(!o || typeof o!=='object' || Array.isArray(o)) return null;
+    var amount = o.tip_amount==null ? 0 : Number(o.tip_amount);
+    if(!Number.isFinite(amount) || amount<0) return null;
+    return Object.assign({},o,{
+      from:payerName(o.from), tip_amount:amount,
+      staff_name:textValue(o.staff_name,''), staff_no:textValue(o.staff_no,''),
+      bar:textValue(o.bar,''), message:textValue(o.message,'')
+    });
+  }
+  function paymentKey(o){
+    var pi=textValue(o.payment_intent,'').trim();
+    var id=textValue(o.id,'').trim();
+    // Current server supplies the same Stripe PaymentIntent as id/payment_intent.
+    return pi ? 'payment:'+pi : id ? (id.indexOf('pi_')===0 ? 'payment:'+id : 'id:'+id) : '';
+  }
+  function fingerprint(o){
+    return JSON.stringify([o.from||'',o.staff_name||'',o.staff_no||'',o.tip_amount||0,o.bar||'',o.message||'']);
+  }
+  function deliveryKey(o){
+    return paymentKey(o) || (o.time ? 'time:'+textValue(o.time,'')+'|'+fingerprint(o) : 'content:'+fingerprint(o));
+  }
+  var ORDER_REQUESTS=Object.create(null);
+  function fetchOrderData(path){
+    if(ORDER_REQUESTS[path]) return ORDER_REQUESTS[path];
+    var controller=typeof AbortController==='function' ? new AbortController() : null;
+    var options={cache:'no-store'};
+    if(controller) options.signal=controller.signal;
+    var timer;
+    var maxMs=path.indexOf('month=1')>=0 ? 55000 : 25000;
+    var timeout=new Promise(function(resolve,reject){
+      timer=setTimeout(function(){
+        reject(new Error('Order request timed out'));
+        if(controller) controller.abort();
+      },maxMs);
+    });
+    var request=Promise.resolve().then(function(){
+      return fetch(path+(path.indexOf('?')>=0?'&':'?')+'_='+Date.now(),options);
+    }).then(function(r){
+      if(!r.ok) throw new Error('Order request HTTP '+r.status);
+      return r.json();
+    }).then(function(d){
+      if(!d || !Array.isArray(d.orders)) throw new Error('Invalid orders response');
+      var clean=d.orders.map(normalizeOrder).filter(function(o){return o!==null;});
+      if(clean.length!==d.orders.length){
+        OVERLAY_DIAGNOSTICS.malformedSkipped+=d.orders.length-clean.length;
+        if(!clean.length && d.orders.length) throw new Error('All returned order records are invalid');
+      }
+      return Object.assign({},d,{orders:clean});
+    });
+    var pending=Promise.race([request,timeout]).then(function(d){
+      clearTimeout(timer);delete ORDER_REQUESTS[path];return d;
+    },function(err){
+      clearTimeout(timer);delete ORDER_REQUESTS[path];throw err;
+    });
+    ORDER_REQUESTS[path]=pending;
+    return pending;
+  }
+
   var lastSeenId = null;
   var POPUP_DURATION = 30 * 1000;
   var MSG_DURATION = 90 * 1000; // 1분30초
@@ -3263,14 +3337,14 @@
   // ── TOP7 ──
   var top7Timer=null;
   function showTop7(orders){
-    var counts={};
+    var counts=Object.create(null);
     orders.forEach(function(o){var n=o.from||'Anonymous';var d=Math.round((o.tip_amount||0)/210);counts[n]=(counts[n]||0)+d;});
     var sorted=Object.keys(counts).map(function(n){return{name:n,drinks:counts[n]};}).sort(function(a,b){return b.drinks-a.drinks;}).slice(0,7);
     if(!sorted.length) return;
     var h='';
     sorted.forEach(function(p,i){
-      if(i===0){h+='<div class="t7-r1"><div class="t7-badge t7b1 t7b1lg">I</div><div class="t7n">'+p.name+'</div><div class="t7s">🍹 '+p.drinks+'</div></div>';}
-      else{var bc=i===1?'t7b2':i===2?'t7b3':'t7bo';var rom=['','I','II','III','IV','V','VI','VII'][i+1];var cls='t7-row'+(i<5?' vis':' ghost');if(i===5)h+='<div class="t7-sep"></div>';h+='<div class="'+cls+'"><div class="t7-badge '+bc+'">'+rom+'</div><div class="t7n">'+p.name+'</div><div class="t7s">🍹 '+p.drinks+'</div></div>';}
+      if(i===0){h+='<div class="t7-r1"><div class="t7-badge t7b1 t7b1lg">I</div><div class="t7n">'+escapeHtml(p.name)+'</div><div class="t7s">🍹 '+p.drinks+'</div></div>';}
+      else{var bc=i===1?'t7b2':i===2?'t7b3':'t7bo';var rom=['','I','II','III','IV','V','VI','VII'][i+1];var cls='t7-row'+(i<5?' vis':' ghost');if(i===5)h+='<div class="t7-sep"></div>';h+='<div class="'+cls+'"><div class="t7-badge '+bc+'">'+rom+'</div><div class="t7n">'+escapeHtml(p.name)+'</div><div class="t7s">🍹 '+p.drinks+'</div></div>';}
     });
     document.getElementById('t7-rows').innerHTML=h;
     var wrap=document.getElementById('top7-wrap'),box=document.getElementById('top7-box');
@@ -3447,7 +3521,9 @@
   // ── THANK YOU KA (tyk-box: month top5, unchanged) ──
   var VIP_MIN_DRINKS = 300; // nickname 누적 300잔 이상 결제해야 OFFICIAL VIP 타이틀
   // TOP 10 VIP rank map for drink-notification border only.
-  var VIP_RANK_MAP = {};
+  var VIP_RANK_MAP = Object.create(null);
+  var VIP_RANK_LIST = [];
+  var VIP_RANK_LOADING = null;
   var VIP_RANK_COLORS = [
     {dark:'#6f4208',main:'#f2b52a',hi:'#fff3a6',glow:'rgba(255,190,35,.92)'},
     {dark:'#65717d',main:'#c8d2dc',hi:'#ffffff',glow:'rgba(205,225,242,.82)'},
@@ -3461,22 +3537,52 @@
     {dark:'#4b5563',main:'#aeb8c5',hi:'#f8fafc',glow:'rgba(174,184,197,.68)'}
   ];
   function setVipRankMap(list){
-    VIP_RANK_MAP={};
-    (list||[]).forEach(function(p,i){ VIP_RANK_MAP[(p.name||'').trim().toLowerCase()]=i+1; });
+    var next=Object.create(null);
+    VIP_RANK_LIST=(list||[]).slice(0,10);
+    VIP_RANK_LIST.forEach(function(p,i){
+      var key=payerKey(p.name);
+      if(key!=='anonymous') next[key]=i+1;
+    });
+    VIP_RANK_MAP=next;
+    // Also repair an alert created while the first rank lookup was loading.
+    document.querySelectorAll('#recent-wrap .recent-item').forEach(function(item){
+      if(item._vipOrderData && !item.classList.contains('hide')){
+        try { applyVipRankBorder(item,item._vipOrderData.from,item._vipOrderData); }
+        catch(err){ clearVipRankDecoration(item);reportOverlayError('rank decoration',err); }
+      }
+    });
   }
   function refreshVipRankMap(){
-    return fetch('/.netlify/functions/webhook?month=3')
-      .then(function(r){return r.json();})
-      .then(function(d){ setVipRankMap(topByDrinks(d.orders||[],10,VIP_MIN_DRINKS,true)); })
-      .catch(function(){});
+    if(OVERLAY_PREVIEW) return Promise.resolve(VIP_RANK_LIST);
+    if(VIP_RANK_LOADING) return VIP_RANK_LOADING;
+    VIP_RANK_LOADING=fetchOrderData('/.netlify/functions/webhook?month=3').then(function(d){
+      var list=topByDrinks(d.orders,10,VIP_MIN_DRINKS,true);
+      setVipRankMap(list);
+      OVERLAY_DIAGNOSTICS.lastVipRefreshAt=new Date().toISOString();
+      OVERLAY_DIAGNOSTICS.serverVipUpdatedAt=d.updatedAt || null;
+      return VIP_RANK_LIST;
+    }).catch(function(err){
+      // Failed HTTP/schema responses must not replace the last good VIP list with [].
+      reportOverlayError('VIP refresh',err);
+      return VIP_RANK_LIST;
+    }).then(function(list){VIP_RANK_LOADING=null;return list;});
+    return VIP_RANK_LOADING;
+  }
+  function clearVipRankDecoration(item){
+    for(var n=1;n<=10;n++) item.classList.remove('vip-rank-'+n);
+    ['--vr-dark','--vr-main','--vr-hi','--vr-glow'].forEach(function(k){item.style.removeProperty(k);});
+    item.querySelectorAll('.vip-rank-border,.vip-sunray-layer,.vip-rank1-crown,.rank1-corner-glints,.vip-rank-label,.rank1-br-crown').forEach(function(el){el.remove();});
+    delete item.dataset.vipRank;
   }
   function applyVipRankBorder(item,fromName,data){
-    // Existing special effects have absolute priority over Top-10 rank styling.
-    if (data && (((data.tip_amount||0) >= 6000) || data.staff_name === 'Horn Pull')) return;
-
-    var key=(fromName||'Anonymous').trim().toLowerCase();
-    var rank=VIP_RANK_MAP[key];
-    if(!rank || rank<1 || rank>10) return;
+    // Existing special effects always win; optional decoration never gates delivery.
+    var key=payerKey(fromName);
+    var special=data && (Number(data.tip_amount)>=6000 || data.staff_name==='Horn Pull');
+    var rank=!special && key!=='anonymous' ? VIP_RANK_MAP[key] : 0;
+    if(!Number.isInteger(rank) || rank<1 || rank>10){clearVipRankDecoration(item);return;}
+    if(item.dataset.vipRank===String(rank) && item.querySelector('.vip-rank-label')) return;
+    clearVipRankDecoration(item);
+    item.dataset.vipRank=String(rank);
     var c=VIP_RANK_COLORS[rank-1];
     item.classList.add('vip-rank-'+rank);
     item.style.setProperty('--vr-dark',c.dark); item.style.setProperty('--vr-main',c.main);
@@ -3492,42 +3598,44 @@
   }
   // TEST ONLY: append ?testvipborder=all to preview all 10 rank border colors at once.
   function showVipRankBorderTestAll(){
+    if(!OVERLAY_PREVIEW) return;
     var wrap=document.getElementById('recent-wrap');
-    if(!wrap) return;
     wrap.innerHTML='';
-    for(var rank=10; rank>=1; rank--){
-      var item=document.createElement('div');
-      item.className='recent-item drink-premium';
-      item.innerHTML='<div class="recent-icon">🍹</div><div class="recent-body"><div class="recent-name"><strong>RANK '+rank+'</strong> sent <strong>10</strong> drinks to <strong>Test Girl</strong></div><div class="recent-amt">฿2,100 · TEST</div></div>';
-      var c=VIP_RANK_COLORS[rank-1];
-      item.classList.add('vip-rank-'+rank);
-      item.style.setProperty('--vr-dark',c.dark);
-      item.style.setProperty('--vr-main',c.main);
-      item.style.setProperty('--vr-hi',c.hi);
-      item.style.setProperty('--vr-glow',c.glow);
-      var border=document.createElement('i'); border.className='vip-rank-border'; item.appendChild(border);
-      var rays=document.createElement('span'); rays.className='vip-sunray-layer';
-      rays.innerHTML='<i class="vip-sunray s1"></i><i class="vip-sunray s2"></i><i class="vip-sunray s3"></i>';
-      item.appendChild(rays);
-      item.insertAdjacentHTML('beforeend',`<span class="vip-rank1-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
-    item.insertAdjacentHTML('beforeend',`<span class="rank1-corner-glints" aria-hidden="true"><i class="tl"></i><i class="tr"></i><i class="br"></i><i class="bl"></i></span>`);
-    item.insertAdjacentHTML('beforeend',`<span class="vip-rank-label" aria-hidden="true">VIP</span>`);
-    item.insertAdjacentHTML('beforeend',`<span class="rank1-br-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
-      wrap.insertBefore(item,wrap.firstChild);
+    var list=[];
+    for(var i=1;i<=10;i++) list.push({name:'RANK '+i,drinks:1500-i*30});
+    setVipRankMap(list);
+    for(var rank=10;rank>=1;rank--){
+      addRecent({from:'RANK '+rank,tip_amount:2100,staff_name:'Test Girl',bar:'TEST'},true);
     }
   }
+  function showAlertRegressionPreview(){
+    if(!OVERLAY_PREVIEW) return;
+    setVipRankMap([{name:'TEST Rank 1',drinks:900},{name:'TEST Rank 2',drinks:600}]);
+    var examples=[
+      {from:'TEST Regular',tip_amount:840,staff_name:'Test Girl',bar:'TEST'},
+      {from:'TEST Rank 1',tip_amount:2100,staff_name:'Test Girl',bar:'TEST'},
+      {from:'TEST Rank 2',tip_amount:2100,staff_name:'Test Girl',bar:'TEST'},
+      {from:'TEST Rank 1',tip_amount:6300,staff_name:'Test Girl',bar:'TEST'},
+      {from:'TEST Regular',tip_amount:6000,staff_name:'Test Girl',bar:'TEST'},
+      {from:'TEST Rank 2',tip_amount:5250,staff_name:'Horn Pull',bar:'TEST'}
+    ];
+    examples.reverse().forEach(function(o){showPopup(o);addRecent(o);});
+    fireHornPullConfetti();
+  }
 
-  function topByDrinks(orders, n, minDrinks, excludeAnonymous){
-    var counts={}, display={};
-    (orders||[]).forEach(function(o){
-      var raw=(o.from||'Anonymous').trim();
-      var key=raw.toLowerCase();
-      var d=Math.round((o.tip_amount||0)/210);
-      counts[key]=(counts[key]||0)+d;
-      if(!display[key]) display[key]=raw;
+  function topByDrinks(orders,n,minDrinks,excludeAnonymous){
+    var counts=Object.create(null),display=Object.create(null),seen=Object.create(null);
+    (orders||[]).forEach(function(raw){
+      var o=normalizeOrder(raw);if(!o) return;
+      var payment=paymentKey(o);
+      if(payment && seen[payment]) return;
+      if(payment) seen[payment]=true;
+      var key=payerKey(o.from);
+      counts[key]=(counts[key]||0)+Math.round(o.tip_amount/210);
+      if(!display[key]) display[key]=payerName(o.from);
     });
-    var arr=Object.keys(counts).map(function(key){return{name:display[key],drinks:counts[key]};});
-    if(excludeAnonymous) arr=arr.filter(function(p){return p.name.toLowerCase()!=='anonymous';});
+    var arr=Object.keys(counts).map(function(key){return {name:display[key],drinks:counts[key]};});
+    if(excludeAnonymous) arr=arr.filter(function(p){return payerKey(p.name)!=='anonymous';});
     if(minDrinks!=null) arr=arr.filter(function(p){return p.drinks>=minDrinks;});
     return arr.sort(function(a,b){return b.drinks-a.drinks;}).slice(0,n);
   }
@@ -3546,6 +3654,7 @@ var VIP_BADGE_IMAGES = [
   function renderTykContent(list, mode, vipDurationMs){
     var box=document.getElementById('tyk-box'), listEl=document.getElementById('tyk-list');
     if(mode==='vip'){
+      if(!OVERLAY_PREVIEW) setVipRankMap(list);
       box.classList.add('vip-mode');
       if(!box.querySelector('.vip-luxe-gold')){
         var goldAurora=document.createElement('div');
@@ -3619,7 +3728,7 @@ var VIP_BADGE_IMAGES = [
             '<span class="vip-rank">'+(i+1)+'</span>'+
             '<i class="vip-metal-pin p1"></i><i class="vip-metal-pin p2"></i><i class="vip-metal-pin p3"></i><i class="vip-metal-pin p4"></i>'+
           '</div>';
-          html+='<div class="vipcard-item"><div class="vipcard-badge" data-rank="'+(i+1)+'" data-drinks="'+p.drinks+'" style="'+style+'">'+medal+'</div><div class="vipcard-name '+nameCls+'">'+p.name+'</div></div>';
+          html+='<div class="vipcard-item"><div class="vipcard-badge" data-rank="'+(i+1)+'" data-drinks="'+p.drinks+'" style="'+style+'">'+medal+'</div><div class="vipcard-name '+nameCls+'">'+escapeHtml(p.name)+'</div></div>';
         });
         html+='</div>';
       });
@@ -3629,7 +3738,7 @@ var VIP_BADGE_IMAGES = [
       document.getElementById('tyk-label').textContent='🌸 Top Supporters of the Month';
       var bc2=['tyk-b1','tyk-b2','tyk-b3','tyk-b4','tyk-b5'],nc2=['tyk-n1','tyk-n2','tyk-n3','',''];
       listEl.innerHTML=list.map(function(p,i){
-        return '<div class="tyk-item"><div class="tyk-badge '+bc2[i]+'">'+(i+1)+'</div><div class="tyk-name '+nc2[i]+'">'+p.name+'</div><div class="tyk-cnt'+(i===0?' tyk-cnt1':'')+'">🍹 '+p.drinks+'</div></div>';
+        return '<div class="tyk-item"><div class="tyk-badge '+bc2[i]+'">'+(i+1)+'</div><div class="tyk-name '+nc2[i]+'">'+escapeHtml(p.name)+'</div><div class="tyk-cnt'+(i===0?' tyk-cnt1':'')+'">🍹 '+p.drinks+'</div></div>';
       }).join('');
     }
   }
@@ -3644,47 +3753,48 @@ var VIP_BADGE_IMAGES = [
   }
 
   // 10분마다: 같은 tyk 박스에서 이번달 Top Supporters(20초, 사진 있음) → 사진 없애고 내용만 OFFICIAL VIP로 스위치(20초, 10명 풀이펙트) → 박스 숨김
+  var monthlyCyclePending=null;
   function runMonthlyCycle(){
-    fetch('/.netlify/functions/webhook?month=1')
-      .then(function(r){return r.json();})
-      .then(function(d){
-        var top5=topByDrinks(d.orders||[], 5, null);
-        if(!top5.length) return;
-        renderTykContent(top5,'month');
-        showTykBox();
-        setTimeout(function(){
-          fetch('/.netlify/functions/webhook?month=3')
-            .then(function(r){return r.json();})
-            .then(function(d2){
-              var vipList=topByDrinks(d2.orders||[], 10, VIP_MIN_DRINKS, true);
-              if(vipList.length) renderTykContent(vipList,'vip',20000);
-            })
-            .catch(function(){});
-          setTimeout(hideTykBox, 20000);
-        }, 20000);
-      })
-      .catch(function(){});
+    if(OVERLAY_PREVIEW) return Promise.resolve();
+    if(monthlyCyclePending) return monthlyCyclePending;
+    // Fetch season once per cycle. The same successful snapshot feeds alerts and the panel.
+    var seasonReady=refreshVipRankMap();
+    monthlyCyclePending=new Promise(function(resolve){
+      function finish(){
+        hideTykBox();
+        setTimeout(function(){monthlyCyclePending=null;resolve();},450);
+      }
+      function showSeason(){
+        seasonReady.then(function(){
+          var list=VIP_RANK_LIST.slice();
+          if(!list.length){finish();return;}
+          renderTykContent(list,'vip',20000);
+          showTykBox();
+          // The 20 seconds begin AFTER data is available and the VIP panel is rendered.
+          setTimeout(finish,20000);
+        }).catch(function(err){reportOverlayError('VIP display',err);finish();});
+      }
+      fetchOrderData('/.netlify/functions/webhook?month=1').then(function(d){
+        var top5=topByDrinks(d.orders,5,null);
+        if(!top5.length){showSeason();return;}
+        renderTykContent(top5,'month');showTykBox();
+        setTimeout(showSeason,20000);
+      }).catch(function(err){
+        reportOverlayError('monthly supporters',err);
+        showSeason(); // Empty/failed current month must never block cumulative VIP.
+      });
+    });
+    return monthlyCyclePending;
   }
-  refreshVipRankMap();
-  setInterval(refreshVipRankMap, 10*60*1000);
-  if(new URLSearchParams(window.location.search).get('testvipborder')==='all'){
-    setTimeout(showVipRankBorderTestAll,500);
-  }
-
-  // Start the existing live-data sequence on load; keep preview modes separate.
-  if (!window.location.search.includes('testvip=') && !window.location.search.includes('test=')) {
-    runMonthlyCycle();
-  }
-  setInterval(runMonthlyCycle, 10*60*1000);
 
   function fetchAndShowTop7(){
-    fetch('/.netlify/functions/webhook?month=1')
-      .then(function(r){return r.json();})
-      .then(function(d){showTop7(d.orders||[]);})
-      .catch(function(){});
+    return fetchOrderData('/.netlify/functions/webhook?month=1')
+      .then(function(d){showTop7(d.orders);})
+      .catch(function(err){reportOverlayError('Top 7',err);});
   }
 
   function showPopup(data) {
+    data=normalizeOrder(data);if(!data) return null;
     var isHornPullPopup=(data.staff_name==='Horn Pull');
     var staff=isHornPullPopup?'All Staff':(data.staff_name||'—')+(data.staff_no?' #'+data.staff_no:'');
     var isVip=(data.tip_amount||0)>=6000;
@@ -3696,10 +3806,10 @@ var VIP_BADGE_IMAGES = [
         '<p class="receipt-site">pattayasoipearl.com</p>'+
         (isVip?'':'<p class="receipt-confirmed'+(isHornPullPopup?' horn-confirmed-pop':'')+'">'+(isHornPullPopup?'✦ Horn Pulled ✦':'✦ Drink Confirmed ✦')+'</p>')+
         '<hr class="receipt-line">'+
-        '<div class="receipt-row"><span class="receipt-label">Bar</span><span class="receipt-value">'+(data.bar||'—')+'</span></div>'+
-        '<div class="receipt-row"><span class="receipt-label">Staff</span><span class="receipt-value">'+staff+'</span></div>'+
-        '<div class="receipt-row"><span class="receipt-label">From</span><span class="receipt-value">'+(data.from||'Anonymous')+'</span></div>'+
-        (data.message?'<div class="receipt-row"><span class="receipt-label">Msg</span><span class="receipt-value">\"'+data.message+'\"</span></div>':'')+
+        '<div class="receipt-row"><span class="receipt-label">Bar</span><span class="receipt-value">'+escapeHtml(data.bar||'—')+'</span></div>'+
+        '<div class="receipt-row"><span class="receipt-label">Staff</span><span class="receipt-value">'+escapeHtml(staff)+'</span></div>'+
+        '<div class="receipt-row"><span class="receipt-label">From</span><span class="receipt-value">'+escapeHtml(data.from||'Anonymous')+'</span></div>'+
+        (data.message?'<div class="receipt-row"><span class="receipt-label">Msg</span><span class="receipt-value">\"'+escapeHtml(data.message)+'\"</span></div>':'')+
         '<hr class="receipt-line">'+
         '<div class="receipt-total-row"><span class="receipt-total-label">Drink Amount</span><span class="receipt-total-val">฿'+(data.tip_amount||0).toLocaleString()+'</span></div>'+
       '</div>';
@@ -3719,9 +3829,11 @@ var VIP_BADGE_IMAGES = [
       },60);
     }
     setTimeout(function(){popup.classList.add('hide');setTimeout(function(){popup.remove();},400);},popDur);
+    return popup;
   }
 
-  function addRecent(data) {
+  function addRecent(data,keepPreviewVisible) {
+    data=normalizeOrder(data);if(!data) return null;
     var staff=(data.staff_name||'Staff')+(data.staff_no?' #'+data.staff_no:'');
     var isVip=(data.tip_amount||0)>=6000;
     var isHornPull=(data.staff_name==='Horn Pull');
@@ -3740,16 +3852,19 @@ var VIP_BADGE_IMAGES = [
     }
     var drinkCount = Math.round((data.tip_amount||0)/210);
     var nameLine = isHornPull
-      ? '<div class="recent-name"><strong style="'+(isVip?'color:#a78bfa;':'')+'">'+(data.from||'Anonymous')+'</strong> <strong style="color:#d4a843;">pulled the Horn</strong></div>'
-      : '<div class="recent-name"><strong style="'+(isVip?'color:#a78bfa;':'')+'">'+(data.from||'Anonymous')+'</strong> sent <strong style="'+(isVip?'color:#06b6d4;':'')+'">'+drinkCount+'</strong> drink'+(drinkCount===1?'':'s')+' to <strong style="'+(isVip?'color:#06b6d4;':'')+'">'+staff+'</strong></div>';
+      ? '<div class="recent-name"><strong style="'+(isVip?'color:#a78bfa;':'')+'">'+escapeHtml(data.from||'Anonymous')+'</strong> <strong style="color:#d4a843;">pulled the Horn</strong></div>'
+      : '<div class="recent-name"><strong style="'+(isVip?'color:#a78bfa;':'')+'">'+escapeHtml(data.from||'Anonymous')+'</strong> sent <strong style="'+(isVip?'color:#06b6d4;':'')+'">'+drinkCount+'</strong> drink'+(drinkCount===1?'':'s')+' to <strong style="'+(isVip?'color:#06b6d4;':'')+'">'+escapeHtml(staff)+'</strong></div>';
     item.innerHTML=
       '<div class="recent-icon">'+(isVip?'<canvas class="vip-notif-canvas" width="36" height="36" style="display:block;"></canvas>':(isHornPull?'<canvas class="horn-bell-canvas" width="36" height="36" style="display:block;"></canvas>':'🍹'))+'</div>'+
       '<div class="recent-body">'+
         nameLine+
-        '<div class="recent-amt" style="'+(isVip?'color:#a78bfa;':'')+'">฿'+(data.tip_amount||0).toLocaleString()+' · '+(data.bar||'')+'</div>'+
+        '<div class="recent-amt" style="'+(isVip?'color:#a78bfa;':'')+'">฿'+(data.tip_amount||0).toLocaleString()+' · '+escapeHtml(data.bar||'')+'</div>'+
       '</div>';
-    applyVipRankBorder(item,data.from||'Anonymous',data);
+    // Insert the base notification first. Decoration failures cannot hide an order.
     wrap.insertBefore(item,wrap.firstChild);
+    item._vipOrderData=data;
+    try { applyVipRankBorder(item,data.from,data); }
+    catch(err){clearVipRankDecoration(item);reportOverlayError('rank decoration',err);}
     if(isVip){
       setTimeout(function(){
         startAuroraBorder(item,msgDur);
@@ -3763,79 +3878,84 @@ var VIP_BADGE_IMAGES = [
         if(hc) startHornBellIcon(hc,msgDur);
       },60);
     }
-    setTimeout(function(){item.classList.remove('horn-led');item.classList.add('hide');setTimeout(function(){item.remove();},400);},msgDur);
+    if(!(OVERLAY_PREVIEW && keepPreviewVisible)){
+      setTimeout(function(){item.classList.remove('horn-led');item.classList.add('hide');setTimeout(function(){item.remove();},400);},msgDur);
+    }
+    return item;
   }
 
-  var initialized = false;
-  var shownOrderIds = {};
-  var shownOrderIdList = [];
-
-  function markShown(id) {
-    if (shownOrderIds[id]) return;
-    shownOrderIds[id] = true;
-    shownOrderIdList.push(id);
-    if (shownOrderIdList.length > 300) {
-      var old = shownOrderIdList.shift();
-      delete shownOrderIds[old];
+  var initialized=false;
+  var shownOrderIds=Object.create(null),shownOrderIdList=[];
+  var shownFingerprints=Object.create(null),shownFingerprintList=[];
+  var partialDeliveries=Object.create(null);
+  var FP_DEDUP_WINDOW=20000;
+  var pollPending=null;
+  function markShown(key){
+    if(shownOrderIds[key]) return;
+    shownOrderIds[key]=true;shownOrderIdList.push(key);
+    if(shownOrderIdList.length>2000) delete shownOrderIds[shownOrderIdList.shift()];
+  }
+  function isDuplicateContent(o){
+    // Distinct payment IDs are distinct orders, even with identical name/amount/message.
+    if(paymentKey(o) || o.time) return false;
+    var stamp=shownFingerprints[fingerprint(o)];
+    return stamp!=null && Date.now()-stamp<FP_DEDUP_WINDOW;
+  }
+  function markShownFp(o){
+    if(paymentKey(o) || o.time) return;
+    var fp=fingerprint(o),stamp=Date.now();
+    shownFingerprints[fp]=stamp;shownFingerprintList.push({fp:fp,stamp:stamp});
+    if(shownFingerprintList.length>300){
+      var old=shownFingerprintList.shift();
+      if(shownFingerprints[old.fp]===old.stamp) delete shownFingerprints[old.fp];
     }
   }
-
-  // ID값이 매 호출마다 안정적이지 않을 경우를 대비한 2차 방어: 주문 내용 기반 지문
-  var shownFingerprints = {};
-  var shownFingerprintList = [];
-  var FP_DEDUP_WINDOW = 20000; // 같은 내용의 주문이 20초 내 다시 오면 중복으로 간주
-  function fingerprint(o) {
-    return (o.from||'')+'|'+(o.staff_name||'')+'|'+(o.staff_no||'')+'|'+(o.tip_amount||0)+'|'+(o.bar||'')+'|'+(o.message||'');
+  function orderAlreadyShown(o){
+    return paymentKey(o) || o.time ? !!shownOrderIds[deliveryKey(o)] : isDuplicateContent(o);
   }
-  function isDuplicateContent(o) {
-    var fp = fingerprint(o);
-    var last = shownFingerprints[fp];
-    return last && (Date.now() - last) < FP_DEDUP_WINDOW;
+  function markOrderShown(o){
+    if(paymentKey(o) || o.time) markShown(deliveryKey(o));
+    else markShownFp(o);
   }
-  function markShownFp(o) {
-    var fp = fingerprint(o);
-    shownFingerprints[fp] = Date.now();
-    shownFingerprintList.push(fp);
-    if (shownFingerprintList.length > 300) {
-      delete shownFingerprints[shownFingerprintList.shift()];
+  function deliverOrder(o){
+    var key=deliveryKey(o);
+    var state=partialDeliveries[key] || {left:false,right:false,confetti:false};
+    partialDeliveries[key]=state;
+    // One component failing must not prevent the other or other orders in the batch.
+    if(!state.left){try{state.left=!!showPopup(o);}catch(err){reportOverlayError('left alert',err);}}
+    if(!state.right){try{state.right=!!addRecent(o);}catch(err){reportOverlayError('right alert',err);}}
+    if(o.staff_name==='Horn Pull' && !state.confetti){
+      try{fireHornPullConfetti();state.confetti=true;}catch(err){reportOverlayError('Horn confetti',err);}
     }
+    if(state.left && state.right){
+      markOrderShown(o);delete partialDeliveries[key];OVERLAY_DIAGNOSTICS.shownOrders++;return true;
+    }
+    return false;
   }
-
-  function poll() {
-    fetch('/.netlify/functions/webhook')
-      .then(function(r){ return r.json(); })
-      .then(function(data) {
-        var orders = data.orders || [];
-        // 처음 켤 때는 기존 주문 무시하고 최신 ID만 저장
-        if (!initialized) {
-          initialized = true;
-          if (orders.length > 0) {
-            lastSeenId = orders[0].id;
-            orders.forEach(function(o){ markShown(o.id); markShownFp(o); });
-          }
-          return;
-        }
-        if (orders.length === 0) return;
-        var newest = orders[0];
-        if (newest.id !== lastSeenId) {
-          var newOnes = [];
-          for (var i = 0; i < orders.length; i++) {
-            if (orders[i].id === lastSeenId) break;
-            newOnes.push(orders[i]);
-          }
-          // ID 비교가 실패해도(중복/불안정 ID) 같은 주문이 두 번 뜨지 않도록 최종 방어
-          newOnes = newOnes.filter(function(o){ return !shownOrderIds[o.id] && !isDuplicateContent(o); });
-          newOnes.reverse().forEach(function(o) {
-            markShown(o.id);
-            markShownFp(o);
-            showPopup(o); addRecent(o);
-            if (o.staff_name === 'Horn Pull') fireHornPullConfetti();
-          });
-          fetchAndShowTop7();
-          lastSeenId = newest.id;
-        }
-      })
-      .catch(function(){});
+  function poll(){
+    if(OVERLAY_PREVIEW) return Promise.resolve();
+    if(pollPending) return pollPending;
+    pollPending=fetchOrderData('/.netlify/functions/webhook').then(function(d){
+      var orders=d.orders;
+      OVERLAY_DIAGNOSTICS.pollSuccesses++;
+      OVERLAY_DIAGNOSTICS.lastPollAt=new Date().toISOString();
+      if(!initialized){
+        initialized=true;
+        orders.forEach(markOrderShown); // no replay of old orders on startup, as before
+        if(orders.length) lastSeenId=orders[0].id;
+        return;
+      }
+      var delivered=false;
+      // Check every returned ID: a late-completed payment can have an older created timestamp.
+      orders.slice().reverse().forEach(function(o){
+        if(orderAlreadyShown(o)){OVERLAY_DIAGNOSTICS.duplicateIgnored++;return;}
+        if(deliverOrder(o)) delivered=true;
+      });
+      if(orders.length) lastSeenId=orders[0].id;
+      if(delivered) fetchAndShowTop7();
+    }).catch(function(err){reportOverlayError('order polling',err);})
+      .then(function(){pollPending=null;});
+    return pollPending;
   }
 
   if (window.location.search.includes('test=')) {
@@ -3887,8 +4007,15 @@ var VIP_BADGE_IMAGES = [
     }, 800);
   }
 
-  poll();
-  setInterval(poll, 5000);
+  // Preview modes use only local fixtures; they never poll production endpoints.
+  if(OVERLAY_PARAMS.get('testvipborder')==='all') setTimeout(showVipRankBorderTestAll,500);
+  if(OVERLAY_PARAMS.get('testalerts')==='all') setTimeout(showAlertRegressionPreview,500);
+  if(!OVERLAY_PREVIEW){
+    runMonthlyCycle();
+    setInterval(runMonthlyCycle,10*60*1000);
+    poll();
+    setInterval(poll,5000);
+  }
 </script>
 
 <script>
