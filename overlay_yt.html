@@ -3056,6 +3056,177 @@
   animation:slideOutRight .35s ease forwards;
 }
 
+
+
+/* === LEFT POPUP: TOP10 VIP BORDER MATCH ===
+   For non-6000 / non-Horn-Pull drink alerts on the left,
+   mirror the right-side VIP rank border + sparkle strength.
+   Crown is intentionally omitted; VIP badge stays. */
+.receipt-box.vip-rank-surface{
+  position:relative;
+  overflow:visible !important;
+  isolation:isolate;
+  --vip-aura: rgba(255,255,255,.38);
+  box-shadow:
+    0 13px 28px rgba(0,0,0,.58),
+    0 4px 9px rgba(0,0,0,.48),
+    0 0 8px var(--vr-glow,rgba(255,255,255,.24)),
+    0 0 17px var(--vr-glow,rgba(255,255,255,.13)),
+    inset 0 1px 0 rgba(255,255,255,.11),
+    inset 0 -1px 0 rgba(212,168,67,.10),
+    0 0 0 1px rgba(0,0,0,.58) !important;
+  animation:vipAuraPulse 1.9s ease-in-out infinite;
+}
+.receipt-box.vip-rank-surface::after{
+  content:"";
+  position:absolute;
+  inset:-8px;
+  border-radius:20px;
+  pointer-events:none;
+  z-index:-1;
+  box-shadow:
+    0 0 8px var(--vip-aura),
+    0 0 17px var(--vip-aura),
+    0 0 29px var(--vip-aura);
+  opacity:.50;
+  animation:vipAuraHalo 1.9s ease-in-out infinite;
+}
+.receipt-box.vip-rank-surface.vip-rank-1{--vip-aura:rgba(255,190,25,.68)}
+.receipt-box.vip-rank-surface.vip-rank-2{--vip-aura:rgba(214,232,255,.60)}
+.receipt-box.vip-rank-surface.vip-rank-3{--vip-aura:rgba(255,145,65,.58)}
+.receipt-box.vip-rank-surface.vip-rank-4{--vip-aura:rgba(191,104,255,.58)}
+.receipt-box.vip-rank-surface.vip-rank-5{--vip-aura:rgba(55,255,190,.55)}
+.receipt-box.vip-rank-surface.vip-rank-6{--vip-aura:rgba(255,82,160,.55)}
+.receipt-box.vip-rank-surface.vip-rank-7{--vip-aura:rgba(69,132,255,.57)}
+.receipt-box.vip-rank-surface.vip-rank-8{--vip-aura:rgba(83,225,255,.55)}
+.receipt-box.vip-rank-surface.vip-rank-9{--vip-aura:rgba(112,178,255,.52)}
+.receipt-box.vip-rank-surface.vip-rank-10{--vip-aura:rgba(224,232,244,.50)}
+.receipt-box.vip-rank-surface.vip-rank-1::after{
+  inset:-9px;
+  box-shadow:
+    0 0 9px rgba(255,242,180,.90),
+    0 0 20px rgba(255,202,50,.82),
+    0 0 38px rgba(255,158,0,.66);
+  animation-duration:1.55s;
+}
+.receipt-box.vip-rank-surface .vip-rank-border{
+  position:absolute; inset:-1px; border-radius:14px; padding:2px; pointer-events:none; z-index:20;
+  background:conic-gradient(from var(--vip-rank-angle),
+    var(--vr-dark),var(--vr-main) 12%,#fff 18%,var(--vr-hi) 24%,var(--vr-main) 39%,
+    var(--vr-dark) 52%,var(--vr-main) 67%,#fff 73%,var(--vr-hi) 79%,var(--vr-main) 91%,var(--vr-dark));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  opacity:1 !important;
+  filter:
+    brightness(1.28)
+    saturate(1.18)
+    drop-shadow(0 0 3px rgba(255,255,255,.82))
+    drop-shadow(0 0 7px var(--vr-glow,rgba(255,255,255,.48)))
+    drop-shadow(0 0 13px var(--vr-glow,rgba(255,255,255,.30))) !important;
+  animation:vipRankBorderSpin 3.8s linear infinite,vipRankBorderBreathe 2.2s ease-in-out infinite;
+  overflow:visible !important;
+}
+.receipt-box.vip-rank-surface.vip-rank-1 .vip-rank-border{
+  inset:-2px; padding:3px;
+  background:conic-gradient(
+    from var(--vip-rank-angle),
+    #b87800 0%,#ffd02d 12%,#fff2a3 22%,#fffdf0 29%,
+    #ffc21c 39%,#ffe46c 51%,#fff8c7 60%,#f2a800 70%,
+    #ffd84a 82%,#fff1a0 91%,#b87800 100%
+  )!important;
+  filter:
+    brightness(1.42)
+    saturate(1.22)
+    drop-shadow(0 0 4px rgba(255,255,255,.98))
+    drop-shadow(0 0 9px rgba(255,211,72,1))
+    drop-shadow(0 0 17px rgba(255,164,0,.78)) !important;
+  animation:vipRankBorderSpin 2.45s linear infinite,vipRank1RoyalBreathe 1.55s ease-in-out infinite;
+}
+.receipt-box.vip-rank-surface.vip-rank-2{
+  --vr-main:#aeb9c5!important;
+  --vr-glow:rgba(103,194,235,.82)!important;
+}
+.receipt-box.vip-rank-surface.vip-rank-2 .vip-rank-border{
+  padding:3.7px!important;
+  background:conic-gradient(
+    from var(--vip-rank-angle),
+    #66727e 0%,#9ba7b3 9%,#d0d8df 18%,
+    #75c9ee 26%,#bcecff 34%,#87939f 43%,
+    #e9eef2 51%,#8e9ba7 59%,#67c7ef 68%,
+    #a7dff7 75%,#c99fe5 79%,#efb5d7 82%,
+    #f5f8fa 85%,#9aa6b1 91%,#66727e 100%
+  )!important;
+  filter:
+    brightness(1.24) saturate(1.13)
+    drop-shadow(0 0 3px rgba(241,249,255,.86))
+    drop-shadow(0 0 8px rgba(88,192,235,.68))
+    drop-shadow(0 0 13px rgba(70,105,130,.34))!important;
+  animation:vipRankBorderSpin 2.05s linear infinite,vipRank2MetalPulse 1.5s ease-in-out infinite!important;
+}
+.receipt-box.vip-rank-surface.vip-rank-3{
+  --vr-main:#d86d27!important;
+  --vr-glow:rgba(191,72,27,.78)!important;
+}
+.receipt-box.vip-rank-surface.vip-rank-3 .vip-rank-border{
+  background:conic-gradient(
+    from var(--vip-rank-angle),
+    #6f2c18 0%,#a84420 11%,#d96828 22%,#f59a45 31%,
+    #ffd09a 39%,#b94f24 48%,#7d301a 57%,#d4632c 67%,
+    #e9a07d 73%,#c86b55 78%,#f0b083 84%,#9a3d1f 91%,#6f2c18 100%
+  )!important;
+  filter:brightness(1.18) saturate(1.24)
+    drop-shadow(0 0 3px rgba(255,215,177,.72))
+    drop-shadow(0 0 7px rgba(222,104,43,.66))
+    drop-shadow(0 0 11px rgba(135,48,23,.38))!important;
+}
+.receipt-box.vip-rank-surface .vip-sunray-layer{position:absolute;inset:0;overflow:visible;pointer-events:none;z-index:9999}
+.receipt-box.vip-rank-surface .vip-sunray{
+  width:11px!important;height:11px!important;opacity:0;
+  box-shadow:0 0 2px rgba(255,255,255,.82),0 0 5px var(--vr-main),0 0 8px var(--vr-glow)!important;
+}
+.receipt-box.vip-rank-surface.vip-rank-1 .vip-sunray{
+  width:13px!important;height:13px!important;
+  box-shadow:0 0 2px #fff,0 0 6px #ffe58a,0 0 10px rgba(255,184,32,.62)!important;
+}
+.receipt-box.vip-rank-surface.vip-rank-2 .vip-sunray{
+  width:16px!important;height:16px!important;
+  background:
+    linear-gradient(135deg,transparent 0 18%,#f9fdff 19% 38%,transparent 39% 59%,#80d8f8 60% 79%,transparent 80%),
+    linear-gradient(45deg,#8996a2 0%,#dbe3e9 27%,#7bcff0 48%,#f5f8fa 66%,#9aa6b2 100%)!important;
+  box-shadow:
+    0 0 3px rgba(255,255,255,.92),
+    0 0 8px rgba(90,203,244,.82),
+    0 0 13px rgba(91,139,168,.46)!important;
+}
+.receipt-box.vip-rank-surface.vip-rank-2 .vip-sunray.s2{
+  background:
+    linear-gradient(135deg,transparent 0 18%,#fff 19% 38%,transparent 39% 59%,#83d8f7 60% 79%,transparent 80%),
+    linear-gradient(45deg,#8795a1 0%,#dce5eb 30%,#72cceb 46%,#c796df 54%,#e9a9cf 59%,#eef8fc 66%,#8f9ca8 100%)!important;
+}
+.receipt-box.vip-rank-surface.vip-rank-3 .vip-sunray{
+  background:
+    linear-gradient(135deg,transparent 0 20%,#ffe1c5 21% 39%,transparent 40% 60%,#d98570 61% 79%,transparent 80%),
+    linear-gradient(45deg,#8d351d 0%,#d76631 31%,#e8a080 53%,#f1bc91 72%,#8a321b 100%)!important;
+  box-shadow:0 0 2px rgba(255,224,194,.78),0 0 5px rgba(213,103,67,.66),0 0 8px rgba(139,50,27,.38)!important;
+}
+.receipt-box.vip-rank-surface .vip-rank-label{display:block;top:8px;right:10px;z-index:10020}
+.receipt-box.vip-rank-surface.vip-rank-1 .vip-rank-label{
+  color:#ffe47a;border-color:#ffd34b;
+  text-shadow:0 0 4px #fff1a5,0 0 7px rgba(255,186,25,.62);
+  box-shadow:inset 0 0 5px rgba(255,244,180,.10),0 0 5px rgba(255,187,24,.40);
+}
+.receipt-box.vip-rank-surface.vip-rank-2 .vip-rank-label{
+  color:#d3dce4;border-color:#aeb9c5;
+  text-shadow:0 0 4px #eaf9ff,0 0 6px rgba(103,194,235,.45);
+}
+.receipt-box.vip-rank-surface.vip-rank-3 .vip-rank-label{
+  color:#e79258;border-color:#c55e2d;
+  text-shadow:0 0 4px rgba(255,202,155,.75),0 0 6px rgba(181,68,26,.42);
+}
+.receipt-box.vip-rank-surface .vip-rank1-crown,
+.receipt-box.vip-rank-surface .rank1-corner-glints,
+.receipt-box.vip-rank-surface .rank1-br-crown{display:none!important}
+
 </style>
 </head>
 <body>
@@ -3596,6 +3767,35 @@
     item.insertAdjacentHTML('beforeend',`<span class="vip-rank-label" aria-hidden="true">VIP</span>`);
     item.insertAdjacentHTML('beforeend',`<span class="rank1-br-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
   }
+
+  function clearVipRankPopupDecoration(box){
+    if(!box) return;
+    box.classList.remove('vip-rank-surface');
+    for(var n=1;n<=10;n++) box.classList.remove('vip-rank-'+n);
+    ['--vr-dark','--vr-main','--vr-hi','--vr-glow'].forEach(function(k){box.style.removeProperty(k);});
+    box.querySelectorAll('.vip-rank-border,.vip-sunray-layer,.vip-rank-label,.vip-rank1-crown,.rank1-corner-glints,.rank1-br-crown').forEach(function(el){el.remove();});
+    delete box.dataset.vipRank;
+  }
+  function applyVipRankPopupDecoration(box,fromName,data){
+    if(!box) return;
+    var key=payerKey(fromName);
+    var special=data && (Number(data.tip_amount)>=6000 || data.staff_name==='Horn Pull');
+    var rank=!special && key!=='anonymous' ? VIP_RANK_MAP[key] : 0;
+    if(!Number.isInteger(rank) || rank<1 || rank>10){clearVipRankPopupDecoration(box);return;}
+    if(box.dataset.vipRank===String(rank) && box.querySelector('.vip-rank-label')) return;
+    clearVipRankPopupDecoration(box);
+    box.dataset.vipRank=String(rank);
+    var c=VIP_RANK_COLORS[rank-1];
+    box.classList.add('vip-rank-surface','vip-rank-'+rank);
+    box.style.setProperty('--vr-dark',c.dark); box.style.setProperty('--vr-main',c.main);
+    box.style.setProperty('--vr-hi',c.hi); box.style.setProperty('--vr-glow',c.glow);
+    var border=document.createElement('i'); border.className='vip-rank-border'; box.appendChild(border);
+    var rays=document.createElement('span'); rays.className='vip-sunray-layer';
+    rays.innerHTML='<i class="vip-sunray s1"></i><i class="vip-sunray s2"></i><i class="vip-sunray s3"></i>';
+    box.appendChild(rays);
+    box.insertAdjacentHTML('beforeend','<span class="vip-rank-label" aria-hidden="true">VIP</span>');
+  }
+
   // TEST ONLY: append ?testvipborder=all to preview all 10 rank border colors at once.
   function showVipRankBorderTestAll(){
     if(!OVERLAY_PREVIEW) return;
@@ -3814,6 +4014,9 @@ var VIP_BADGE_IMAGES = [
         '<div class="receipt-total-row"><span class="receipt-total-label">Drink Amount</span><span class="receipt-total-val">฿'+(data.tip_amount||0).toLocaleString()+'</span></div>'+
       '</div>';
     document.getElementById('popup-wrap').appendChild(popup);
+    var receiptBox=popup.querySelector('.receipt-box');
+    try { applyVipRankPopupDecoration(receiptBox,data.from,data); }
+    catch(err){ clearVipRankPopupDecoration(receiptBox); reportOverlayError('left rank decoration',err); }
     var popDur = (isVip || isHornPullPopup) ? VIP_POPUP_DURATION : POPUP_DURATION;
     if(isVip){
       setTimeout(function(){
