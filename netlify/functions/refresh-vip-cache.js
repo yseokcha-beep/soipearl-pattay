@@ -9,10 +9,14 @@ const { getStore } = require('@netlify/blobs');
 // 2026: May 1-Dec 31
 // 2027+: Jan 1-Dec 31 automatically
 //
-// Completed months are fetched once and stored.
-// Current month refreshes every 10 minutes.
-// During first migration, only ONE missing completed month is backfilled per run.
-// Existing month-3 is not overwritten until all completed months exist.
+// Past months are finalized once AFTER the month has ended.
+// A cached month with completed:false is not a finalized month.
+// Current month refreshes every 10 minutes after any pending repairs finish.
+// Only ONE missing/unfinalized past month is rebuilt per run, as before.
+// Keep the last published month-3 until all past months are finalized.
+// Read validated monthly snapshots once; merge freshly fetched current orders
+// directly, without an immediate read-after-write that could return old data.
+// Keep the existing 10-minute schedule in netlify.toml as well.
 
 function thailandParts(date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -74,10 +78,17 @@ async function fetchStripeMonth(year, month) {
     if (lastId) params.starting_after = lastId;
 
     const page = await stripe.paymentIntents.list(params);
+    if (!page || !Array.isArray(page.data) || typeof page.has_more !== 'boolean') {
+      throw new Error(`Invalid Stripe page for ${monthKey(year, month)}; cache not replaced.`);
+    }
     allData = allData.concat(page.data);
 
     if (!page.has_more) break;
-    lastId = page.data[page.data.length - 1].id;
+    const nextId = page.data.length ? page.data[page.data.length - 1].id : null;
+    if (!nextId || nextId === lastId) {
+      throw new Error(`Stripe pagination did not advance for ${monthKey(year, month)}; cache not replaced.`);
+    }
+    lastId = nextId;
   }
 
   return allData
@@ -101,27 +112,29 @@ async function fetchStripeMonth(year, month) {
 }
 
 async function getJson(store, key) {
-  return await store.get(key, { type: 'json' });
+  return await store.get(key, { type: 'json', consistency: 'strong' });
 }
 
 exports.handler = async () => {
-  const store = getStore({
-    name: 'vip-cache',
-    siteID: process.env.BLOBS_SITE_ID,
-    token: process.env.BLOBS_TOKEN,
-  });
-
   try {
+    const store = getStore({
+      name: 'vip-cache',
+      siteID: process.env.BLOBS_SITE_ID,
+      token: process.env.BLOBS_TOKEN,
+    });
     const { seasonYear, currentMonth, months } = seasonMonths();
+    const monthSnapshots = new Map();
 
-    // Backfill only one missing completed month per invocation.
+    // Repair only one missing OR unfinalized past month per invocation.
+    // This also repairs older completed:false months left by the previous code.
     for (const item of months) {
       if (item.month === currentMonth) continue;
 
       const key = monthKey(item.year, item.month);
       const cached = await getJson(store, key);
 
-      if (!cached || !Array.isArray(cached.orders)) {
+      if (!cached || !Array.isArray(cached.orders) || cached.completed !== true) {
+        const action = cached && Array.isArray(cached.orders) ? 'finalized' : 'backfilled';
         const orders = await fetchStripeMonth(item.year, item.month);
 
         await store.setJSON(key, {
@@ -137,7 +150,8 @@ exports.handler = async () => {
           season: seasonYear,
           saved: key,
           orders: orders.length,
-          message: 'One completed month cached. Run again or wait for next scheduled run.',
+          action,
+          message: 'One past month rebuilt and finalized. Previous month-3 kept. Wait for the next scheduled run.',
         };
 
         console.log('refresh-vip-cache:', JSON.stringify(result));
@@ -147,28 +161,36 @@ exports.handler = async () => {
           body: JSON.stringify(result),
         };
       }
+
+      monthSnapshots.set(key, cached);
     }
 
-    // All completed months are ready: refresh current month only.
+    // All past months are finalized: refresh current month only.
     const currentKey = monthKey(seasonYear, currentMonth);
     const currentOrders = await fetchStripeMonth(seasonYear, currentMonth);
 
-    await store.setJSON(currentKey, {
+    const currentSnapshot = {
       orders: currentOrders,
       year: seasonYear,
       month: currentMonth,
       completed: false,
       updatedAt: new Date().toISOString(),
-    });
+    };
+    await store.setJSON(currentKey, currentSnapshot);
+    monthSnapshots.set(currentKey, currentSnapshot);
 
-    // Merge all monthly caches.
+    // Merge the verified snapshots, including the new current-month result.
+    // Never silently substitute an empty month for an unavailable snapshot.
     let mergedOrders = [];
     const monthSummary = {};
 
     for (const item of months) {
       const key = monthKey(item.year, item.month);
-      const cached = await getJson(store, key);
-      const orders = cached && Array.isArray(cached.orders) ? cached.orders : [];
+      const cached = monthSnapshots.get(key);
+      if (!cached || !Array.isArray(cached.orders)) {
+        throw new Error(`Missing monthly snapshot: ${key}; month-3 not replaced.`);
+      }
+      const orders = cached.orders;
 
       mergedOrders = mergedOrders.concat(orders);
       monthSummary[key] = orders.length;
@@ -213,7 +235,7 @@ exports.handler = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         status: 'failed',
-        error: err.message,
+        error: err instanceof Error ? err.message : String(err),
       }),
     };
   }
