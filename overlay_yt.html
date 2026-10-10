@@ -3002,6 +3002,88 @@
 }
 
 
+
+
+/* === RANK CORNER JEWELS ===
+   Rank 1 keeps a gold-diamond crown.
+   Ranks 2~10 get their own jewel at the same corner position.
+   VIP badge on the top-right stays intact.
+*/
+.rank-corner-token{
+  display:none;
+  position:absolute;
+  right:-8px;
+  bottom:-9px;
+  width:24px;
+  height:24px;
+  z-index:2147483647;
+  pointer-events:none;
+  overflow:visible;
+  transform:rotate(-7deg);
+  filter:
+    drop-shadow(0 1px 1px rgba(0,0,0,.82))
+    drop-shadow(0 0 4px rgba(255,255,255,.28));
+}
+.recent-item[class*="vip-rank-"] .rank-corner-token,
+.receipt-box.vip-rank-surface[class*="vip-rank-"] .rank-corner-token{display:block}
+.rank-corner-token svg{display:block;width:100%;height:100%;overflow:visible}
+.rank-corner-token.rank-corner-crown{width:24px;height:20px}
+.recent-item.vip-rank-1 .rank-corner-token.rank-corner-crown,
+.receipt-box.vip-rank-surface.vip-rank-1 .rank-corner-token.rank-corner-crown{
+  filter:
+    drop-shadow(0 1px 1px rgba(0,0,0,.82))
+    drop-shadow(0 0 4px rgba(255,242,155,.96))
+    drop-shadow(0 0 8px rgba(255,190,25,.82));
+  animation:rank1BRCrownGlow 1.7s ease-in-out infinite;
+}
+.rank-corner-token.rank-corner-gem{
+  width:var(--rc-size,22px);
+  height:var(--rc-size,22px);
+  filter:
+    brightness(var(--rc-bright,1.04))
+    saturate(var(--rc-sat,1.08))
+    drop-shadow(0 1px 1px rgba(0,0,0,.82))
+    drop-shadow(0 0 var(--rc-blur1,3px) var(--rc-glow, rgba(255,255,255,.35)))
+    drop-shadow(0 0 var(--rc-blur2,6px) var(--rc-glow2, rgba(255,255,255,.22)));
+  animation:rankCornerGemPulse var(--rc-speed,2.2s) ease-in-out infinite;
+}
+@keyframes rankCornerGemPulse{
+  0%,100%{opacity:.93;transform:rotate(-7deg) scale(.97)}
+  50%{opacity:1;transform:rotate(-7deg) scale(1.06)}
+}
+
+/* Tone down top3 drink / flower icon glow so the icon color reads more clearly. */
+.recent-item.vip-rank-1 .recent-icon.rank-top3-glow,
+.receipt-box.vip-rank-surface.vip-rank-1 .receipt-icon.rank-top3-glow{
+  text-shadow:
+    0 0 3px rgba(255,255,255,.84),
+    0 0 7px rgba(255,223,115,.78),
+    0 0 12px rgba(255,186,45,.48),
+    0 0 18px rgba(255,166,18,.22);
+  filter:saturate(1.03) brightness(1.03);
+}
+.recent-item.vip-rank-2 .recent-icon.rank-top3-glow,
+.receipt-box.vip-rank-surface.vip-rank-2 .receipt-icon.rank-top3-glow{
+  text-shadow:
+    0 0 3px rgba(255,255,255,.82),
+    0 0 7px rgba(169,228,255,.76),
+    0 0 12px rgba(137,202,238,.46),
+    0 0 17px rgba(213,176,245,.14);
+  filter:saturate(1.03) brightness(1.02);
+}
+.recent-item.vip-rank-3 .recent-icon.rank-top3-glow,
+.receipt-box.vip-rank-surface.vip-rank-3 .receipt-icon.rank-top3-glow{
+  text-shadow:
+    0 0 3px rgba(255,246,232,.82),
+    0 0 7px rgba(255,189,128,.76),
+    0 0 12px rgba(220,126,59,.44),
+    0 0 16px rgba(176,89,43,.15);
+  filter:saturate(1.03) brightness(1.02);
+}
+@keyframes top3IconGlow1{0%,100%{transform:scale(1);opacity:.98}50%{transform:scale(1.03);opacity:1}}
+@keyframes top3IconGlow2{0%,100%{transform:scale(1);opacity:.97}50%{transform:scale(1.028);opacity:1}}
+@keyframes top3IconGlow3{0%,100%{transform:scale(1);opacity:.96}50%{transform:scale(1.024);opacity:1}}
+
 /* === TOP 10 VIP LABEL ===
    Small compact VIP badge inside the top-right corner; rank-colored metallic text. */
 .vip-rank-label{
@@ -3227,6 +3309,160 @@
 .receipt-box.vip-rank-surface .rank1-corner-glints,
 .receipt-box.vip-rank-surface .rank1-br-crown{display:none!important}
 
+
+
+/* === Restore classic look + keep existing gem effects; only top3 original icons get colored glow === */
+.recent-item .recent-icon.rank-top3-glow,
+.receipt-box .receipt-icon.rank-top3-glow{
+  position:relative;
+  display:block;
+}
+.recent-item.vip-rank-1 .recent-icon.rank-top3-glow,
+.receipt-box.vip-rank-surface.vip-rank-1 .receipt-icon.rank-top3-glow{
+  text-shadow:
+    0 0 5px rgba(255,255,255,.95),
+    0 0 10px rgba(255,223,115,.98),
+    0 0 18px rgba(255,186,45,.82),
+    0 0 26px rgba(255,166,18,.42);
+  filter:saturate(1.08) brightness(1.08);
+  animation:top3IconGlow1 .95s ease-in-out infinite;
+}
+.recent-item.vip-rank-2 .recent-icon.rank-top3-glow,
+.receipt-box.vip-rank-surface.vip-rank-2 .receipt-icon.rank-top3-glow{
+  text-shadow:
+    0 0 5px rgba(255,255,255,.92),
+    0 0 10px rgba(169,228,255,.92),
+    0 0 17px rgba(137,202,238,.68),
+    0 0 22px rgba(213,176,245,.28);
+  filter:saturate(1.05) brightness(1.04);
+  animation:top3IconGlow2 1.15s ease-in-out infinite;
+}
+.recent-item.vip-rank-3 .recent-icon.rank-top3-glow,
+.receipt-box.vip-rank-surface.vip-rank-3 .receipt-icon.rank-top3-glow{
+  text-shadow:
+    0 0 4px rgba(255,246,232,.90),
+    0 0 9px rgba(255,189,128,.88),
+    0 0 15px rgba(220,126,59,.62),
+    0 0 20px rgba(176,89,43,.26);
+  filter:saturate(1.06) brightness(1.03);
+  animation:top3IconGlow3 1.28s ease-in-out infinite;
+}
+.receipt-box.vip-rank-surface .receipt-icon.rank-top3-glow{font-size:1.02rem}
+@keyframes top3IconGlow1{0%,100%{transform:scale(1);opacity:.98}50%{transform:scale(1.055);opacity:1}}
+@keyframes top3IconGlow2{0%,100%{transform:scale(1);opacity:.97}50%{transform:scale(1.045);opacity:1}}
+@keyframes top3IconGlow3{0%,100%{transform:scale(1);opacity:.96}50%{transform:scale(1.035);opacity:1}}
+
+
+
+/* === true top3 colored silhouette icons === */
+.rank-top3-svg-wrap{display:block;width:100%;height:100%;line-height:0}
+.recent-icon .rank-top3-svg-wrap{width:36px;height:36px}
+.receipt-icon .rank-top3-svg-wrap{width:24px;height:24px;margin:0 auto}
+.rank-top3-svg{display:block;width:100%;height:100%;overflow:visible}
+.rank-top3-svg .sil-fill{fill:var(--rt-main,#f0c24e)}
+.rank-top3-svg .sil-hi{fill:var(--rt-hi,#fff4bf);opacity:.95}
+.rank-top3-svg .sil-stroke{stroke:var(--rt-dark,#6e4508);stroke-width:1.4;fill:none;opacity:.95}
+.rank-top3-svg .sil-spark{fill:#fff;opacity:.95}
+.recent-icon.rank-top3-glow,.receipt-icon.rank-top3-glow{font-size:0 !important}
+.recent-item.vip-rank-1 .recent-icon.rank-top3-glow .rank-top3-svg-wrap,
+.receipt-box.vip-rank-surface.vip-rank-1 .receipt-icon.rank-top3-glow .rank-top3-svg-wrap{animation:top3IconPulse1 .95s ease-in-out infinite}
+.recent-item.vip-rank-2 .recent-icon.rank-top3-glow .rank-top3-svg-wrap,
+.receipt-box.vip-rank-surface.vip-rank-2 .receipt-icon.rank-top3-glow .rank-top3-svg-wrap{animation:top3IconPulse2 1.15s ease-in-out infinite}
+.recent-item.vip-rank-3 .recent-icon.rank-top3-glow .rank-top3-svg-wrap,
+.receipt-box.vip-rank-surface.vip-rank-3 .receipt-icon.rank-top3-glow .rank-top3-svg-wrap{animation:top3IconPulse3 1.28s ease-in-out infinite}
+
+
+
+/* FINAL VERIFIED TUNE — 1~3 exact original emoji silhouette in rank color */
+.rank-top3-glow .rank-original-emoji{
+  display:inline-block;
+  font:inherit;
+  line-height:inherit;
+  vertical-align:baseline;
+  transform-origin:center;
+}
+/* The previous SVG experiment forced font-size:0. Restore original emoji height. */
+.recent-item.vip-rank-1 .recent-icon.rank-top3-glow,
+.recent-item.vip-rank-2 .recent-icon.rank-top3-glow,
+.recent-item.vip-rank-3 .recent-icon.rank-top3-glow{
+  font-size:1.4rem !important;
+  line-height:1.2 !important;
+}
+/* Outer glow controlled (avoid a white haze that hides the colored 🍹 glyph). */
+.recent-item.vip-rank-1 .recent-icon.rank-top3-glow,
+.recent-item.vip-rank-2 .recent-icon.rank-top3-glow,
+.recent-item.vip-rank-3 .recent-icon.rank-top3-glow{
+  text-shadow:none !important;
+  filter:none !important;
+  animation:none !important;
+}
+.recent-item.vip-rank-1 .rank-original-emoji{
+  filter:grayscale(1) sepia(1) saturate(6.3) hue-rotate(348deg) brightness(1.21) contrast(1.20)
+         drop-shadow(0 0 2px rgba(255,247,180,.82))
+         drop-shadow(0 0 5px rgba(255,190,38,.65)) !important;
+  animation:rankOriginalDrinkPulse 2s ease-in-out infinite;
+}
+.recent-item.vip-rank-2 .rank-original-emoji{
+  filter:grayscale(1) sepia(.50) saturate(2.8) hue-rotate(166deg) brightness(1.46) contrast(1.16)
+         drop-shadow(0 0 2px rgba(240,249,255,.90))
+         drop-shadow(0 0 5px rgba(105,194,235,.60)) !important;
+  animation:rankOriginalDrinkPulse 2.25s ease-in-out infinite;
+}
+.recent-item.vip-rank-3 .rank-original-emoji{
+  filter:grayscale(1) sepia(1) saturate(5.8) hue-rotate(328deg) brightness(1.05) contrast(1.22)
+         drop-shadow(0 0 2px rgba(255,224,188,.82))
+         drop-shadow(0 0 5px rgba(210,108,44,.60)) !important;
+  animation:rankOriginalDrinkPulse 2.5s ease-in-out infinite;
+}
+@keyframes rankOriginalDrinkPulse{
+  0%,100%{opacity:.96;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.055)}
+}
+
+/* Distinct 2~10 gem: persistent shine + small traveling faceted glint. Keep size hierarchy. */
+.recent-item[class*="vip-rank-"] .rank-corner-token.rank-corner-gem,
+.receipt-box.vip-rank-surface .rank-corner-token.rank-corner-gem{
+  overflow:visible;
+  filter:
+    brightness(var(--rc-bright,1.04))
+    saturate(var(--rc-sat,1.08))
+    drop-shadow(0 1px 1px rgba(0,0,0,.8))
+    drop-shadow(0 0 var(--rc-blur1,3px) var(--rc-glow,rgba(255,255,255,.4)))
+    drop-shadow(0 0 var(--rc-blur2,6px) var(--rc-glow,rgba(255,255,255,.4)))
+    drop-shadow(0 0 11px var(--rc-glow2,rgba(255,255,255,.25)));
+}
+.rank-corner-gem::before{
+  content:"";
+  position:absolute;
+  left:-3px;top:-4px;
+  width:9px;height:9px;
+  z-index:3;
+  pointer-events:none;
+  background:radial-gradient(circle,rgba(255,255,255,1) 0%,rgba(255,255,255,.74) 22%,transparent 72%);
+  filter:drop-shadow(0 0 4px var(--rc-glow,rgba(255,255,255,.4)));
+  opacity:.9;
+  animation:rankGemDiamondBlink 1.65s ease-in-out infinite alternate;
+}
+.rank-corner-gem::after{
+  content:"";
+  position:absolute;
+  inset:-4px;
+  border-radius:50%;
+  z-index:-1;
+  pointer-events:none;
+  background:radial-gradient(circle,var(--rc-glow2,rgba(255,255,255,.3)) 0%,transparent 68%);
+  opacity:.48;
+  animation:rankGemHalo 2.3s ease-in-out infinite;
+}
+@keyframes rankGemDiamondBlink{
+  0%,30%{opacity:.24;transform:scale(.5) translate(0,0)}
+  65%{opacity:1;transform:scale(1.18) translate(3px,1px)}
+  100%{opacity:.50;transform:scale(.7) translate(2px,0)}
+}
+@keyframes rankGemHalo{
+  0%,100%{opacity:.38;transform:scale(.98)}
+  50%{opacity:.78;transform:scale(1.12)}
+}
 </style>
 </head>
 <body>
@@ -3707,6 +3943,88 @@
     {dark:'#344154',main:'#7c8da3',hi:'#e8eef5',glow:'rgba(124,141,163,.72)'},
     {dark:'#4b5563',main:'#aeb8c5',hi:'#f8fafc',glow:'rgba(174,184,197,.68)'}
   ];
+
+
+  var VIP_RANK_GEMS = [
+    {type:'crown', glow:'rgba(255,190,35,.92)'},
+    {name:'platinum', dark:'#6a7681', main:'#d8e2ea', hi:'#ffffff', glow:'rgba(187,227,255,.92)', glow2:'rgba(230,196,255,.34)', size:'24px', blur1:'4px', blur2:'9px', speed:'1.80s', bright:'1.10', sat:'1.12'},
+    {name:'amber', dark:'#7a3516', main:'#d97c34', hi:'#ffd4ab', glow:'rgba(233,140,74,.88)', glow2:'rgba(255,209,142,.30)', size:'23px', blur1:'4px', blur2:'8px', speed:'1.92s', bright:'1.09', sat:'1.11'},
+    {name:'amethyst', dark:'#4b1f72', main:'#9b5cf7', hi:'#ead9ff', glow:'rgba(177,116,255,.84)', glow2:'rgba(226,195,255,.26)', size:'22.5px', blur1:'3.5px', blur2:'7.5px', speed:'2.02s', bright:'1.08', sat:'1.10'},
+    {name:'paraiba', dark:'#0a6d62', main:'#22d6b7', hi:'#ddfff8', glow:'rgba(57,255,220,.82)', glow2:'rgba(188,255,244,.24)', size:'22px', blur1:'3.5px', blur2:'7px', speed:'2.08s', bright:'1.07', sat:'1.10'},
+    {name:'pink', dark:'#7b1847', main:'#ef4ea3', hi:'#ffd8eb', glow:'rgba(248,108,181,.80)', glow2:'rgba(255,204,228,.22)', size:'21.5px', blur1:'3.25px', blur2:'6.5px', speed:'2.14s', bright:'1.07', sat:'1.09'},
+    {name:'sapphire', dark:'#174285', main:'#3f84ff', hi:'#dcebff', glow:'rgba(88,153,255,.80)', glow2:'rgba(193,219,255,.21)', size:'21px', blur1:'3.1px', blur2:'6.2px', speed:'2.20s', bright:'1.06', sat:'1.08'},
+    {name:'aquamarine', dark:'#116378', main:'#46ccff', hi:'#e7fbff', glow:'rgba(93,219,255,.78)', glow2:'rgba(197,243,255,.20)', size:'20.5px', blur1:'3px', blur2:'6px', speed:'2.28s', bright:'1.05', sat:'1.07'},
+    {name:'labradorite', dark:'#344154', main:'#7c8da3', hi:'#eef5fb', glow:'rgba(142,177,214,.72)', glow2:'rgba(218,230,244,.17)', size:'20px', blur1:'2.8px', blur2:'5.5px', speed:'2.36s', bright:'1.04', sat:'1.06'},
+    {name:'moonstone', dark:'#5f6773', main:'#c1cad6', hi:'#ffffff', glow:'rgba(224,232,244,.74)', glow2:'rgba(255,255,255,.16)', size:'19.5px', blur1:'2.7px', blur2:'5.2px', speed:'2.45s', bright:'1.03', sat:'1.05'}
+  ];
+  function buildRankCornerTokenHTML(rank){
+    var g = VIP_RANK_GEMS[Math.max(0, Math.min(9, rank-1))] || VIP_RANK_GEMS[0];
+    if(rank===1){
+      return '<span class="rank-corner-token rank-corner-crown" aria-hidden="true">'+
+        '<svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg">'+
+          '<defs><radialGradient id="crownGem" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#fffef7"/><stop offset="35%" stop-color="#fff1a3"/><stop offset="100%" stop-color="#f4b613"/></radialGradient></defs>'+
+          '<path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/>'+
+          '<path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/>'+
+          '<circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/>'+
+          '<path d="M24 11l5.5 5.5L24 22l-5.5-5.5L24 11Z" fill="url(#crownGem)" stroke="#fff7c7" stroke-width="1.3"/>'+
+        '</svg></span>';
+    }
+    return '<span class="rank-corner-token rank-corner-gem" aria-hidden="true" style="--rc-glow:'+g.glow+';--rc-glow2:'+(g.glow2||g.glow)+';--rc-size:'+(g.size||'22px')+';--rc-blur1:'+(g.blur1||'3px')+';--rc-blur2:'+(g.blur2||'6px')+';--rc-speed:'+(g.speed||'2.2s')+';--rc-bright:'+(g.bright||'1.04')+';--rc-sat:'+(g.sat||'1.08')+'">'+
+      '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">'+
+        '<defs>'+ 
+          '<radialGradient id="gem-'+rank+'" cx="34%" cy="28%" r="75%">'+
+            '<stop offset="0%" stop-color="#ffffff"/>'+
+            '<stop offset="34%" stop-color="'+g.hi+'"/>'+
+            '<stop offset="100%" stop-color="'+g.main+'"/>'+
+          '</radialGradient>'+
+        '</defs>'+
+        '<path d="M16 3 26 12 16 29 6 12 16 3Z" fill="url(#gem-'+rank+')" stroke="'+g.dark+'" stroke-width="1.6"/>'+
+        '<path d="M16 3 10 12h12L16 3Zm-6 9 6 17 6-17H10Z" fill="none" stroke="'+g.dark+'" stroke-width="1.2" opacity=".75"/>'+
+        '<path d="M16 3v26M6 12h20" stroke="'+g.dark+'" stroke-width="1" opacity=".42"/>'+
+        '<circle cx="11" cy="8" r="1.3" fill="#fff" opacity=".95"/>'+
+      '</svg></span>';
+  }
+
+  function buildTop3DrinkIconHTML(rank){
+    var c = VIP_RANK_COLORS[Math.max(0, Math.min(9, rank-1))] || VIP_RANK_COLORS[0];
+    return '<span class="rank-top3-svg-wrap" style="--rt-main:'+c.main+';--rt-hi:'+c.hi+';--rt-dark:'+c.dark+';--vr-glow:'+c.glow+'">'+
+      '<svg class="rank-top3-svg" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+
+      '<path class="sil-fill" d="M8 7h20l-7.2 10.3v4.3l4.6 6.7h-4.9L18 23.8l-2.5 4.5h-4.9l4.6-6.7v-4.3L8 7z"/>'+
+      '<path class="sil-hi" d="M11.3 9.6h13.4l-3.1 4.2h-7.6z"/>'+
+      '<path class="sil-stroke" d="M8 7h20l-7.2 10.3v4.3l4.6 6.7h-4.9L18 23.8l-2.5 4.5h-4.9l4.6-6.7v-4.3L8 7z"/>'+
+      '<circle class="sil-spark" cx="26.4" cy="7.9" r="1.2"/>'+
+      '<circle class="sil-spark" cx="29.1" cy="10.8" r="0.8"/>'+
+      '</svg></span>';
+  }
+  function buildTop3FlowerIconHTML(rank){
+    var c = VIP_RANK_COLORS[Math.max(0, Math.min(9, rank-1))] || VIP_RANK_COLORS[0];
+    return '<span class="rank-top3-svg-wrap" style="--rt-main:'+c.main+';--rt-hi:'+c.hi+';--rt-dark:'+c.dark+';--vr-glow:'+c.glow+'">'+
+      '<svg class="rank-top3-svg" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+
+      '<circle class="sil-fill" cx="18" cy="8.8" r="5.2"/><circle class="sil-fill" cx="26" cy="14.3" r="5.2"/><circle class="sil-fill" cx="22.9" cy="24.2" r="5.2"/><circle class="sil-fill" cx="13.1" cy="24.2" r="5.2"/><circle class="sil-fill" cx="10" cy="14.3" r="5.2"/>'+
+      '<circle class="sil-hi" cx="16.8" cy="8" r="1.8"/><circle class="sil-hi" cx="25" cy="13.1" r="1.8"/><circle class="sil-hi" cx="23.7" cy="22.9" r="1.8"/><circle class="sil-hi" cx="12.3" cy="22.9" r="1.8"/><circle class="sil-hi" cx="11" cy="13.1" r="1.8"/>'+
+      '<circle cx="18" cy="18" r="4.2" fill="#fff7de" stroke="'+c.dark+'" stroke-width="1.2"/>'+
+      '<circle class="sil-spark" cx="28.4" cy="8.2" r="1.0"/><circle class="sil-spark" cx="7.8" cy="10.2" r="0.8"/>'+
+      '</svg></span>';
+  }
+  function setTop3OriginalIconGlow(target, kind, rank){
+    if(!target || !(rank>=1 && rank<=3)) return;
+    var el = target.querySelector(kind==='recent' ? '.recent-icon' : '.receipt-icon');
+    if(!el) return;
+    el.classList.add('rank-top3-glow');
+    el.innerHTML = kind==='recent'
+      ? '<span class="rank-original-emoji">🍹</span>'
+      : buildTop3FlowerIconHTML(rank);
+  }
+  function clearTop3OriginalIconGlow(target, kind){
+    if(!target) return;
+    var el = target.querySelector(kind==='recent' ? '.recent-icon' : '.receipt-icon');
+    // Never rewrite the original VIP text canvas or Horn Pull bell canvas.
+    // Also do nothing for ordinary untouched icons.
+    if(!el || !el.classList.contains('rank-top3-glow')) return;
+    el.classList.remove('rank-top3-glow');
+    el.innerHTML = kind==='recent' ? '🍹' : '🌸';
+  }
+
   function setVipRankMap(list){
     var next=Object.create(null);
     VIP_RANK_LIST=(list||[]).slice(0,10);
@@ -3717,7 +4035,8 @@
     VIP_RANK_MAP=next;
     // Also repair an alert created while the first rank lookup was loading.
     document.querySelectorAll('#recent-wrap .recent-item').forEach(function(item){
-      if(item._vipOrderData && !item.classList.contains('hide')){
+      if(item._vipOrderData && !item.classList.contains('hide') &&
+         Number(item._vipOrderData.tip_amount)<6000 && item._vipOrderData.staff_name!=='Horn Pull'){
         try { applyVipRankBorder(item,item._vipOrderData.from,item._vipOrderData); }
         catch(err){ clearVipRankDecoration(item);reportOverlayError('rank decoration',err); }
       }
@@ -3740,16 +4059,19 @@
     return VIP_RANK_LOADING;
   }
   function clearVipRankDecoration(item){
+    if(!item) return;
+    // Under no circumstances rewrite the VIP or Horn notification DOM.
     for(var n=1;n<=10;n++) item.classList.remove('vip-rank-'+n);
     ['--vr-dark','--vr-main','--vr-hi','--vr-glow'].forEach(function(k){item.style.removeProperty(k);});
-    item.querySelectorAll('.vip-rank-border,.vip-sunray-layer,.vip-rank1-crown,.rank1-corner-glints,.vip-rank-label,.rank1-br-crown').forEach(function(el){el.remove();});
+    item.querySelectorAll('.vip-rank-border,.vip-sunray-layer,.vip-rank1-crown,.rank1-corner-glints,.vip-rank-label,.rank1-br-crown,.rank-corner-token').forEach(function(el){el.remove();});
+    clearTop3OriginalIconGlow(item,'recent');
     delete item.dataset.vipRank;
   }
   function applyVipRankBorder(item,fromName,data){
-    // Existing special effects always win; optional decoration never gates delivery.
+    // Do not even clear/rebuild any part of a special alert.
+    if(data && (Number(data.tip_amount)>=6000 || data.staff_name==='Horn Pull')) return;
     var key=payerKey(fromName);
-    var special=data && (Number(data.tip_amount)>=6000 || data.staff_name==='Horn Pull');
-    var rank=!special && key!=='anonymous' ? VIP_RANK_MAP[key] : 0;
+    var rank=key!=='anonymous' ? VIP_RANK_MAP[key] : 0;
     if(!Number.isInteger(rank) || rank<1 || rank>10){clearVipRankDecoration(item);return;}
     if(item.dataset.vipRank===String(rank) && item.querySelector('.vip-rank-label')) return;
     clearVipRankDecoration(item);
@@ -3765,7 +4087,8 @@
     item.insertAdjacentHTML('beforeend',`<span class="vip-rank1-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
     item.insertAdjacentHTML('beforeend',`<span class="rank1-corner-glints" aria-hidden="true"><i class="tl"></i><i class="tr"></i><i class="br"></i><i class="bl"></i></span>`);
     item.insertAdjacentHTML('beforeend',`<span class="vip-rank-label" aria-hidden="true">VIP</span>`);
-    item.insertAdjacentHTML('beforeend',`<span class="rank1-br-crown" aria-hidden="true"><svg viewBox="0 0 48 40" xmlns="http://www.w3.org/2000/svg"><path d="M5 31 2 11l12 9L24 3l10 17 12-9-3 20H5Z" fill="#FFD54A" stroke="#FFF4B0" stroke-width="2"/><path d="M7 34h34v4H7z" rx="2" fill="#FFB514"/><circle cx="3" cy="9" r="3" fill="#FFF8D2"/><circle cx="24" cy="3" r="3" fill="#FFF8D2"/><circle cx="45" cy="9" r="3" fill="#FFF8D2"/></svg></span>`);
+    item.insertAdjacentHTML('beforeend',buildRankCornerTokenHTML(rank));
+    if(rank<=3) setTop3OriginalIconGlow(item,'recent',rank);
   }
 
   function clearVipRankPopupDecoration(box){
@@ -3773,7 +4096,8 @@
     box.classList.remove('vip-rank-surface');
     for(var n=1;n<=10;n++) box.classList.remove('vip-rank-'+n);
     ['--vr-dark','--vr-main','--vr-hi','--vr-glow'].forEach(function(k){box.style.removeProperty(k);});
-    box.querySelectorAll('.vip-rank-border,.vip-sunray-layer,.vip-rank-label,.vip-rank1-crown,.rank1-corner-glints,.rank1-br-crown').forEach(function(el){el.remove();});
+    box.querySelectorAll('.vip-rank-border,.vip-sunray-layer,.vip-rank-label,.vip-rank1-crown,.rank1-corner-glints,.rank1-br-crown,.rank-corner-token').forEach(function(el){el.remove();});
+    clearTop3OriginalIconGlow(box,'popup');
     delete box.dataset.vipRank;
   }
   function applyVipRankPopupDecoration(box,fromName,data){
@@ -3794,6 +4118,7 @@
     rays.innerHTML='<i class="vip-sunray s1"></i><i class="vip-sunray s2"></i><i class="vip-sunray s3"></i>';
     box.appendChild(rays);
     box.insertAdjacentHTML('beforeend','<span class="vip-rank-label" aria-hidden="true">VIP</span>');
+    if(rank<=3) setTop3OriginalIconGlow(box,'popup',rank);
   }
 
   // TEST ONLY: append ?testvipborder=all to preview all 10 rank border colors at once.
@@ -4015,8 +4340,11 @@ var VIP_BADGE_IMAGES = [
       '</div>';
     document.getElementById('popup-wrap').appendChild(popup);
     var receiptBox=popup.querySelector('.receipt-box');
-    try { applyVipRankPopupDecoration(receiptBox,data.from,data); }
-    catch(err){ clearVipRankPopupDecoration(receiptBox); reportOverlayError('left rank decoration',err); }
+    if(!isVip && !isHornPullPopup){
+      try { applyVipRankPopupDecoration(receiptBox,data.from,data); }
+      catch(err){ clearVipRankPopupDecoration(receiptBox); reportOverlayError('left rank decoration',err); }
+    }
+    // >=6000 VIP and Horn Pull: do not modify their alert boxes at all.
     var popDur = (isVip || isHornPullPopup) ? VIP_POPUP_DURATION : POPUP_DURATION;
     if(isVip){
       setTimeout(function(){
@@ -4066,8 +4394,11 @@ var VIP_BADGE_IMAGES = [
     // Insert the base notification first. Decoration failures cannot hide an order.
     wrap.insertBefore(item,wrap.firstChild);
     item._vipOrderData=data;
-    try { applyVipRankBorder(item,data.from,data); }
-    catch(err){clearVipRankDecoration(item);reportOverlayError('rank decoration',err);}
+    if(!isVip && !isHornPull){
+      try { applyVipRankBorder(item,data.from,data); }
+      catch(err){clearVipRankDecoration(item);reportOverlayError('rank decoration',err);}
+    }
+    // >=6000 VIP and Horn Pull: leave original canvas and effects untouched.
     if(isVip){
       setTimeout(function(){
         startAuroraBorder(item,msgDur);
@@ -4212,7 +4543,7 @@ var VIP_BADGE_IMAGES = [
 
   // Preview modes use only local fixtures; they never poll production endpoints.
   if(OVERLAY_PARAMS.get('testvipborder')==='all') setTimeout(showVipRankBorderTestAll,500);
-  if(OVERLAY_PARAMS.get('testalerts')==='all') setTimeout(showAlertRegressionPreview,500);
+  if(OVERLAY_PARAMS.get('testalerts')==='all' || OVERLAY_PARAMS.get('testalerts')==='1' || OVERLAY_PARAMS.get('testalerts')==='true') setTimeout(showAlertRegressionPreview,500);
   if(!OVERLAY_PREVIEW){
     runMonthlyCycle();
     setInterval(runMonthlyCycle,10*60*1000);
