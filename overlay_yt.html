@@ -5842,5 +5842,266 @@ function applyVipRankBorder(item,fromName,data){
 
 
 </style>
+<!-- 2026-10-20: Right-side VIP milestone gem arrival sequence ONLY. Baseline untouched. -->
+<style id="recent-vip-milestones-sequential-stamp">
+/* Existing 300-drink milestone count, position, 1-3 solar frames, crowns and diamonds remain untouched. */
+#recent-wrap .recent-item[class*="vip-rank-"]{
+  --vip-ms-impact-size:42px;
+  --vip-ms-halo-size:60px;
+  --vip-ms-card-inset:-8px;
+  --vip-ms-card-radius:16px;
+  --vip-ms-card-brightness-peak:1.95;
+  --vip-ms-card-shadow-a:28px;
+  --vip-ms-card-shadow-b:42px;
+  --vip-ms-card-shadow-spread-a:5px;
+  --vip-ms-card-shadow-spread-b:10px;
+  --vip-ms-card-inset-shadow:18px;
+  --vip-ms-card-inset-spread:3px;
+}
+#recent-wrap .recent-item.vip-rank-1{
+  --vip-ms-impact-size:53px;
+  --vip-ms-halo-size:90px;
+  --vip-ms-card-inset:-18px;
+  --vip-ms-card-radius:22px;
+  --vip-ms-card-brightness-peak:2.35;
+  --vip-ms-card-shadow-a:46px;
+  --vip-ms-card-shadow-b:86px;
+  --vip-ms-card-shadow-spread-a:12px;
+  --vip-ms-card-shadow-spread-b:26px;
+  --vip-ms-card-inset-shadow:32px;
+  --vip-ms-card-inset-spread:7px;
+}
+#recent-wrap .recent-item.vip-rank-2{
+  --vip-ms-impact-size:49px;
+  --vip-ms-halo-size:82px;
+  --vip-ms-card-inset:-15px;
+  --vip-ms-card-radius:20px;
+  --vip-ms-card-brightness-peak:2.18;
+  --vip-ms-card-shadow-a:40px;
+  --vip-ms-card-shadow-b:72px;
+  --vip-ms-card-shadow-spread-a:10px;
+  --vip-ms-card-shadow-spread-b:20px;
+  --vip-ms-card-inset-shadow:26px;
+  --vip-ms-card-inset-spread:6px;
+}
+#recent-wrap .recent-item.vip-rank-3{
+  --vip-ms-impact-size:46px;
+  --vip-ms-halo-size:75px;
+  --vip-ms-card-inset:-12px;
+  --vip-ms-card-radius:18px;
+  --vip-ms-card-brightness-peak:2.06;
+  --vip-ms-card-shadow-a:34px;
+  --vip-ms-card-shadow-b:58px;
+  --vip-ms-card-shadow-spread-a:8px;
+  --vip-ms-card-shadow-spread-b:16px;
+  --vip-ms-card-inset-shadow:22px;
+  --vip-ms-card-inset-spread:5px;
+}
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-rank-milestones-strip.vip-ms-sequencing {
+  overflow:visible !important;
+  z-index:10035 !important;
+}
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-rank-milestones-strip.vip-ms-sequencing .rrd:not(.vip-ms-arrived){
+  opacity:0;
+  transform:rotate(45deg) translateY(-12px) scale(.16);
+  animation:vipMsDiamondSet .72s cubic-bezier(.17,.88,.26,1.26) var(--vip-ms-delay,0s) 1 both !important;
+  position:relative;
+  transform-origin:center center;
+  z-index:2;
+}
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-rank-milestones-strip.vip-ms-sequencing .rrd.vip-ms-arrived {
+  opacity:1;
+  animation:rrDiamondTwinkle 2.25s ease-in-out infinite !important;
+}
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-rank-milestones-strip.vip-ms-sequencing .rrd.vip-ms-arrived:nth-child(2){animation-delay:-.42s !important;}
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-rank-milestones-strip.vip-ms-sequencing .rrd.vip-ms-arrived:nth-child(3){animation-delay:-.91s !important;}
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-rank-milestones-strip.vip-ms-sequencing .rrd.vip-ms-arrived:nth-child(4){animation-delay:-1.38s !important;}
+@keyframes vipMsDiamondSet {
+  0%,16% {opacity:0;transform:translateY(-14px) rotate(45deg) scale(.20);filter:brightness(1)}
+  42% {opacity:1;transform:translateY(1px) rotate(45deg) scale(1.42);filter:brightness(1.65)}
+  60% {opacity:1;transform:translateY(0) rotate(45deg) scale(.88);filter:brightness(1.40)}
+  79% {opacity:1;transform:translateY(0) rotate(45deg) scale(1.12);filter:brightness(1.16)}
+  100% {opacity:1;transform:translateY(0) rotate(45deg) scale(1);filter:brightness(1)}
+}
+/* A faceted, short-lived white/platinum flash for EACH diamond at the exact stamp moment. */
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-ms-sequencing .rrd:not(.vip-ms-arrived)::before,
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-ms-sequencing .rrd:not(.vip-ms-arrived)::after {
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  left:50%;top:50%;
+  opacity:0;
+}
+/* core sparkle burst at stamp moment */
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-ms-sequencing .rrd:not(.vip-ms-arrived)::before {
+  z-index:3;
+  width:var(--vip-ms-impact-size);height:var(--vip-ms-impact-size);
+  transform:translate(-50%,-50%) rotate(-45deg) scale(.1);
+  background:
+    linear-gradient(90deg,transparent 0%,rgba(255,255,255,.10) 34%,rgba(255,255,255,.72) 49%,rgba(255,255,255,.09) 64%,transparent 100%) center/100% 4px no-repeat,
+    linear-gradient(0deg,transparent 0%,rgba(255,255,255,.10) 34%,rgba(255,255,255,.72) 49%,rgba(255,255,255,.09) 64%,transparent 100%) center/4px 100% no-repeat,
+    radial-gradient(circle,rgba(255,255,255,.75) 0%,rgba(230,246,255,.55) 14%,rgba(193,232,255,.36) 28%,rgba(255,255,255,0) 68%);
+  filter:drop-shadow(0 0 4px rgba(255,255,255,.66)) drop-shadow(0 0 10px rgba(201,231,255,.56)) drop-shadow(0 0 17px rgba(255,242,196,.25));
+  animation:vipMsGemImpact .86s cubic-bezier(.16,.84,.24,1) var(--vip-ms-delay,0s) 1 both;
+}
+/* larger surrounding aura that wraps the milestone area */
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-ms-sequencing .rrd:not(.vip-ms-arrived)::after {
+  z-index:2;
+  width:var(--vip-ms-halo-size);height:var(--vip-ms-halo-size);
+  transform:translate(-50%,-50%) rotate(0deg) scale(.18);
+  border-radius:50%;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.70) 0%, rgba(249,253,255,.44) 10%, rgba(218,240,255,.23) 24%, rgba(255,255,255,0) 58%),
+    radial-gradient(circle, rgba(255,245,204,.29) 0 34%, rgba(255,245,204,0) 62%),
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 18%, rgba(255,255,255,.38) 22%, rgba(255,255,255,0) 28%, rgba(255,255,255,0) 46%, rgba(255,255,255,.32) 50%, rgba(255,255,255,0) 56%, rgba(255,255,255,0) 74%, rgba(255,255,255,.26) 78%, rgba(255,255,255,0) 84%, rgba(255,255,255,0) 100%);
+  filter:blur(.6px) drop-shadow(0 0 6px rgba(255,255,255,.58)) drop-shadow(0 0 13px rgba(191,224,255,.44)) drop-shadow(0 0 23px rgba(255,230,170,.20));
+  animation:vipMsGemHalo .96s ease-out var(--vip-ms-delay,0s) 1 both;
+}
+@keyframes vipMsGemImpact {
+  0%,18%{opacity:0;transform:translate(-50%,-50%) rotate(-45deg) scale(.12)}
+  34%{opacity:.70;transform:translate(-50%,-50%) rotate(-45deg) scale(.82)}
+  50%{opacity:.77;transform:translate(-50%,-50%) rotate(-45deg) scale(1.22)}
+  68%{opacity:.60;transform:translate(-50%,-50%) rotate(-45deg) scale(1.04)}
+  100%{opacity:0;transform:translate(-50%,-50%) rotate(-45deg) scale(1.55)}
+}
+@keyframes vipMsGemHalo {
+  0%,20%{opacity:0;transform:translate(-50%,-50%) scale(.18)}
+  38%{opacity:.58;transform:translate(-50%,-50%) scale(.72)}
+  56%{opacity:.67;transform:translate(-50%,-50%) scale(1.06)}
+  76%{opacity:.33;transform:translate(-50%,-50%) scale(1.30)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.48)}
+}
+/* Temporary DRINK card light flash for each landed milestone: make the light wrap wider around the diamond area. */
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-ms-card-light-layer{
+  position:absolute;inset:0;pointer-events:none;z-index:10027;
+  border-radius:inherit;
+}
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-ms-card-light {
+  position:absolute;inset:var(--vip-ms-card-inset);border-radius:var(--vip-ms-card-radius);pointer-events:none;
+  opacity:0;
+  background:
+    radial-gradient(ellipse 78% 92% at 78% 3%, rgba(255,255,255,.94) 0%,rgba(238,248,255,.72) 12%,rgba(211,239,255,.42) 28%,rgba(255,248,214,.26) 42%,transparent 76%),
+    radial-gradient(ellipse 54% 64% at 76% 10%, rgba(255,255,255,.36) 0%, rgba(255,255,255,0) 68%),
+    linear-gradient(110deg,transparent 10%,rgba(255,255,255,.04) 24%,rgba(255,255,255,.78) 44%,rgba(255,255,255,.09) 58%,transparent 82%);
+  background-size:100% 100%,100% 100%,220% 100%;
+  box-shadow:0 0 0 0 rgba(255,255,255,0),inset 0 0 0 0 rgba(255,255,255,0);
+  mix-blend-mode:screen;
+  animation:vipMsCardBurst .92s ease-out var(--vip-ms-delay,0s) 1 both;
+}
+@keyframes vipMsCardBurst {
+  0%,18%{opacity:0;filter:brightness(1);background-position:center,center,150% 50%}
+  34%{opacity:.82;filter:brightness(1.36)}
+  48%{opacity:1;filter:brightness(var(--vip-ms-card-brightness-peak));background-position:center,center,70% 50%;box-shadow:0 0 var(--vip-ms-card-shadow-a) var(--vip-ms-card-shadow-spread-a) rgba(255,255,255,.38),0 0 var(--vip-ms-card-shadow-b) var(--vip-ms-card-shadow-spread-b) rgba(255,232,168,.20),inset 0 0 var(--vip-ms-card-inset-shadow) var(--vip-ms-card-inset-spread) rgba(255,255,255,.54)}
+  70%{opacity:.56;filter:brightness(1.12);background-position:center,center,-6% 50%}
+  100%{opacity:0;filter:brightness(1);background-position:center,center,-70% 50%;box-shadow:0 0 0 0 rgba(255,255,255,0),inset 0 0 0 0 rgba(255,255,255,0)}
+}
+#recent-wrap .recent-item[class*="vip-rank-"] .vip-rank-milestones-strip.vip-ms-sequencing .rrd-more {
+  opacity:0;animation:vipMsExtraVisible .36s ease-out var(--vip-ms-extra-delay,1s) 1 both !important;
+}
+@keyframes vipMsExtraVisible {from{opacity:0;transform:translateY(-5px) scale(.65)}to{opacity:1;transform:translateY(0) scale(1)}}
+</style>
+<script id="recent-vip-milestones-sequential-stamp-runtime">
+(function(){
+  'use strict';
+  var oldApply = window.applyVipRankBorder;
+  if(typeof oldApply !== 'function') return;
+  window.applyVipRankBorder = function(item, fromName, data){
+    oldApply(item, fromName, data);
+    // This change never runs on left receipts, normal purchases, VIP 6000+ or Horn Pull.
+    if(!item || !item.closest('#recent-wrap')) return;
+    if(data && (Number(data.tip_amount)>=6000 || data.staff_name==='Horn Pull')) return;
+    if(!item.dataset || !(Number(item.dataset.vipRank)>=1 && Number(item.dataset.vipRank)<=10)) return;
+    var strip = item.querySelector('.vip-rank-milestones-strip');
+    if(!strip || strip.classList.contains('vip-ms-sequencing')) return;
+    var gems = Array.prototype.slice.call(strip.querySelectorAll('.rrd'));
+    if(!gems.length) return;
+    var start = 0.25, step = 0.80, max = 0.72;
+    strip.classList.add('vip-ms-sequencing');
+    var layer = document.createElement('span');
+    layer.className = 'vip-ms-card-light-layer';
+    layer.setAttribute('aria-hidden','true');
+    gems.forEach(function(gem,index){
+      var delay = start + index*step;
+      gem.style.setProperty('--vip-ms-delay',delay.toFixed(2)+'s');
+      gem.addEventListener('animationend',function(e){
+        if(e.animationName==='vipMsDiamondSet') gem.classList.add('vip-ms-arrived');
+      });
+      var light = document.createElement('i');
+      light.className = 'vip-ms-card-light';
+      light.style.setProperty('--vip-ms-delay',delay.toFixed(2)+'s');
+      layer.appendChild(light);
+    });
+    var extra = strip.querySelector('.rrd-more');
+    if(extra) extra.style.setProperty('--vip-ms-extra-delay',(start + gems.length*step).toFixed(2)+'s');
+    item.appendChild(layer);
+    // Remove only the temporary flash layer; no changes to the gems or existing effects.
+    layer.lastElementChild.addEventListener('animationend',function(e){
+      if(e.animationName==='vipMsCardBurst' && layer.parentNode) layer.remove();
+    });
+  };
+})();
+</script>
+
+
+<style id="vip-ms-top3-cardglow-safe-patch">
+/* 2026-10-20 safe patch: when each milestone diamond stamps, expand the CARD border glow for top 1~3.
+   No change to VIP 6000+, Horn Pull, left popup, diamond count, crown/gem placement, or existing base layout. */
+#recent-wrap .recent-item.vip-rank-1,
+#recent-wrap .recent-item.vip-rank-2,
+#recent-wrap .recent-item.vip-rank-3{overflow:visible !important;}
+
+#recent-wrap .recent-item.vip-rank-1{
+  --vip-ms-card-inset:-24px; --vip-ms-card-radius:24px;
+  --vip-ms-card-brightness-peak:2.65; --vip-ms-card-shadow-a:72px; --vip-ms-card-shadow-b:124px;
+  --vip-ms-card-shadow-spread-a:16px; --vip-ms-card-shadow-spread-b:32px;
+  --vip-ms-card-inset-shadow:36px; --vip-ms-card-inset-spread:8px;
+  --vip-ms-rank-hi:rgba(255,248,184,.98); --vip-ms-rank-mid:rgba(255,214,88,.92);
+  --vip-ms-rank-core:rgba(255,173,22,.80); --vip-ms-rank-soft:rgba(255,164,24,.42);
+  --vip-ms-rank-line:rgba(255,246,190,.82);
+}
+#recent-wrap .recent-item.vip-rank-2{
+  --vip-ms-card-inset:-20px; --vip-ms-card-radius:22px;
+  --vip-ms-card-brightness-peak:2.28; --vip-ms-card-shadow-a:58px; --vip-ms-card-shadow-b:96px;
+  --vip-ms-card-shadow-spread-a:12px; --vip-ms-card-shadow-spread-b:24px;
+  --vip-ms-card-inset-shadow:28px; --vip-ms-card-inset-spread:6px;
+  --vip-ms-rank-hi:rgba(255,255,255,.96); --vip-ms-rank-mid:rgba(214,239,255,.90);
+  --vip-ms-rank-core:rgba(145,205,243,.76); --vip-ms-rank-soft:rgba(124,180,224,.34);
+  --vip-ms-rank-line:rgba(239,249,255,.82);
+}
+#recent-wrap .recent-item.vip-rank-3{
+  --vip-ms-card-inset:-16px; --vip-ms-card-radius:20px;
+  --vip-ms-card-brightness-peak:2.06; --vip-ms-card-shadow-a:46px; --vip-ms-card-shadow-b:74px;
+  --vip-ms-card-shadow-spread-a:10px; --vip-ms-card-shadow-spread-b:18px;
+  --vip-ms-card-inset-shadow:24px; --vip-ms-card-inset-spread:5px;
+  --vip-ms-rank-hi:rgba(255,246,235,.96); --vip-ms-rank-mid:rgba(255,206,138,.86);
+  --vip-ms-rank-core:rgba(237,152,76,.72); --vip-ms-rank-soft:rgba(204,101,36,.30);
+  --vip-ms-rank-line:rgba(255,228,196,.78);
+}
+
+#recent-wrap .recent-item.vip-rank-1 .vip-ms-card-light,
+#recent-wrap .recent-item.vip-rank-2 .vip-ms-card-light,
+#recent-wrap .recent-item.vip-rank-3 .vip-ms-card-light{
+  inset:var(--vip-ms-card-inset) !important;
+  border-radius:var(--vip-ms-card-radius) !important;
+  background:
+    radial-gradient(ellipse 92% 118% at 78% 6%, var(--vip-ms-rank-hi) 0%, var(--vip-ms-rank-mid) 12%, var(--vip-ms-rank-core) 24%, rgba(255,255,255,0) 62%),
+    radial-gradient(ellipse 82% 98% at 74% 10%, rgba(255,255,255,.58) 0%, rgba(255,255,255,0) 64%),
+    linear-gradient(110deg, transparent 8%, rgba(255,255,255,.05) 18%, var(--vip-ms-rank-line) 34%, rgba(255,255,255,.78) 41%, var(--vip-ms-rank-mid) 47%, rgba(255,255,255,.10) 55%, transparent 72%),
+    radial-gradient(ellipse 112% 114% at 50% 50%, rgba(255,255,255,0) 54%, var(--vip-ms-rank-soft) 72%, rgba(255,255,255,0) 86%);
+  background-size:100% 100%,100% 100%,240% 100%,100% 100% !important;
+  mix-blend-mode:screen;
+  animation:vipMsCardBurstTop3Safe .94s ease-out var(--vip-ms-delay,0s) 1 both !important;
+}
+
+@keyframes vipMsCardBurstTop3Safe {
+  0%,16%{opacity:0;filter:brightness(1);transform:scale(.965);background-position:center,center,155% 50%,center;box-shadow:0 0 0 0 rgba(255,255,255,0), inset 0 0 0 0 rgba(255,255,255,0)}
+  30%{opacity:.72;filter:brightness(1.18);transform:scale(.985)}
+  44%{opacity:1;filter:brightness(var(--vip-ms-card-brightness-peak));transform:scale(1.012);background-position:center,center,86% 50%,center;box-shadow:0 0 var(--vip-ms-card-shadow-a) var(--vip-ms-card-shadow-spread-a) var(--vip-ms-rank-mid),0 0 var(--vip-ms-card-shadow-b) var(--vip-ms-card-shadow-spread-b) var(--vip-ms-rank-soft),inset 0 0 var(--vip-ms-card-inset-shadow) var(--vip-ms-card-inset-spread) var(--vip-ms-rank-line)}
+  62%{opacity:.86;filter:brightness(1.36);transform:scale(1.025);background-position:center,center,18% 50%,center}
+  78%{opacity:.44;filter:brightness(1.08);transform:scale(1.008);background-position:center,center,-28% 50%,center}
+  100%{opacity:0;filter:brightness(1);transform:scale(1);background-position:center,center,-72% 50%,center;box-shadow:0 0 0 0 rgba(255,255,255,0), inset 0 0 0 0 rgba(255,255,255,0)}
+}
+</style>
+
 </body>
 </html>
