@@ -376,9 +376,10 @@
   }
 
   function poll() {
-    fetch('/.netlify/functions/webhook')
-      .then(function(r){ return r.json(); })
+    fetch('/.netlify/functions/dashboard-orders')
+      .then(function(r){ if (!r.ok) throw new Error('Dashboard order lookup failed'); return r.json(); })
       .then(function(data) {
+        if (!Array.isArray(data.orders)) throw new Error('Invalid dashboard order response');
         setConnected(true);
         var doneIds = getDoneIds();
         var newOrders = data.orders || [];
