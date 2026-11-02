@@ -9,6 +9,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const TZ = 'Asia/Bangkok';
 const ONE_DAY_SECONDS = 86400;
 const THAI_OFFSET_SECONDS = 7 * 3600;
+const BUSINESS_DAY_START_HOUR = 5; // Keep the previous operating day's orders until 05:00 Thailand time
 
 function thaiDateString(date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -16,6 +17,11 @@ function thaiDateString(date = new Date()) {
   }).formatToParts(date);
   const value = type => parts.find(part => part.type === type).value;
   return `${value('year')}-${value('month')}-${value('day')}`;
+}
+
+// Until 04:59:59 Thailand time, the active business day is yesterday.
+function thaiBusinessDateString(date = new Date()) {
+  return thaiDateString(new Date(date.getTime() - BUSINESS_DAY_START_HOUR * 3600 * 1000));
 }
 
 function startOfThaiDay(dateString) {
@@ -27,7 +33,7 @@ function startOfThaiDay(dateString) {
   if (new Date(utcDay).toISOString().slice(0, 10) !== dateString) {
     throw new Error('Invalid calendar date.');
   }
-  return Math.floor(utcDay / 1000) - THAI_OFFSET_SECONDS;
+  return Math.floor(utcDay / 1000) - THAI_OFFSET_SECONDS + BUSINESS_DAY_START_HOUR * 3600;
 }
 
 function json(statusCode, payload) {
@@ -47,17 +53,17 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return json(200, {});
   if (event.httpMethod !== 'GET') return json(405, { error: 'Method Not Allowed' });
 
-  // Optional read-only historical check for recent payment dates.
-  // The staff dashboard itself does NOT pass a date; it always gets today.
-  const requestedDate = (event.queryStringParameters || {}).date || thaiDateString();
+  // Optional read-only historical check for recent Thai business dates (05:00 to 05:00).
+  // The staff dashboard does NOT pass a date; it uses the 05:00-to-05:00 Thai business day.
+  const requestedDate = (event.queryStringParameters || {}).date || thaiBusinessDateString();
   let start, end;
   try {
     start = startOfThaiDay(requestedDate);
     end = start + ONE_DAY_SECONDS;
-    const currentDayStart = startOfThaiDay(thaiDateString());
+    const currentDayStart = startOfThaiDay(thaiBusinessDateString());
     // Stripe's Events API provides the most recent 30 days only.
     if (start > currentDayStart || start < currentDayStart - 28 * ONE_DAY_SECONDS) {
-      return json(400, { error: 'Only dates in the last 29 Thai calendar days are available.' });
+      return json(400, { error: 'Only business dates in the last 29 days are available.' });
     }
   } catch (err) {
     return json(400, { error: err.message });
