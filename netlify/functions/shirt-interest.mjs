@@ -49,7 +49,7 @@ export default async (request) => {
     }
 
     if (method === 'GET') {
-      return json({ counts: await countsFromStore(store) });
+      return json({status:'ok', products: 6});
     }
 
     // Browsers must submit from the site itself; this is a basic guard,
@@ -77,10 +77,9 @@ export default async (request) => {
     // Pseudonymous visitor key; never store raw phone or email for interest clicks.
     const digest = createHash('sha256').update(visitorId).digest('hex');
     const key = `likes/${productId}/${digest}`;
-    const exists = await store.getMetadata(key);
-    if (!exists) await store.set(key, '1');
-    // Count from individual keys (no shared counter overwrite under concurrent votes).
-    return json({ counts: await countsFromStore(store), alreadyLiked: Boolean(exists) });
+    const saved = await store.set(key, '1', {onlyIfNew:true});
+    // Only owner-authorized requests can read counts.
+    return json({saved:true, alreadyLiked:!saved.modified});
   } catch (error) {
     console.error('shirt-interest: storage error', error);
     return json({ error: 'Interest database is temporarily unavailable' }, 503);
