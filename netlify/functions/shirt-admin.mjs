@@ -81,8 +81,11 @@ export default async function handler(request){
        const old=await store.getWithMetadata(key,{type:'json'});
        if(!old?.data || old.data.paymentStatus!=='paid')return json({error:'Paid order not found'},404);
        const changed={...old.data,fulfillmentStatus:status,updatedAt:new Date().toISOString()};
-       const result=await store.setJSON(key,changed,{onlyIfMatch:old.etag});
-       if(result.modified)return json({ok:true});
+       await store.setJSON(key,changed,{onlyIfMatch:old.etag});
+       const confirmed=await store.get(key,{type:'json'});
+       if(confirmed?.fulfillmentStatus===status && confirmed?.updatedAt===changed.updatedAt) {
+         return json({ok:true});
+       }
      }
      return json({error:'Order changed. Refresh and retry.'},409);
    }

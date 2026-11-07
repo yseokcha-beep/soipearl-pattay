@@ -38,8 +38,12 @@ export default async function handler(request){
      if(order.paymentStatus==='paid')return json({received:true,alreadyProcessed:true});
      const updated={...order,paymentStatus:'paid',paidAt:new Date().toISOString(),fulfillmentStatus:'paid',
        checkoutSessionId:session.id,paymentIntentId:session.payment_intent||null};
-     const done=await store.setJSON(key,updated,{onlyIfMatch:result.etag});
-     if(done.modified)return json({received:true});
+     await store.setJSON(key,updated,{onlyIfMatch:result.etag});
+     // Read-back verification works with both old and new Blobs SDK return shapes.
+     const confirmed=await store.get(key,{type:'json'});
+     if(confirmed?.paymentStatus==='paid' && confirmed?.checkoutSessionId===session.id) {
+       return json({received:true});
+     }
    }
    return json({error:'Concurrent order update; retry'},503);
  }catch(e){console.error('shirt-webhook',e);return json({error:'Order save failed; Stripe will retry'},503);}

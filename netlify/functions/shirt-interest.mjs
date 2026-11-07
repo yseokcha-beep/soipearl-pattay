@@ -77,9 +77,20 @@ export default async (request) => {
     // Pseudonymous visitor key; never store raw phone or email for interest clicks.
     const digest = createHash('sha256').update(visitorId).digest('hex');
     const key = `likes/${productId}/${digest}`;
-    const saved = await store.set(key, '1', {onlyIfNew:true});
+    // Netlify Blobs SDK versions differ: some return undefined from set(),
+    // so never assume the write result contains a `.modified` field.
+    // Counting is by unique key (product + browser), not by incrementing a counter.
+    const previous = await store.get(key, { type: 'text' });
+    if (previous !== null && previous !== undefined) {
+      return json({ saved: true, alreadyLiked: true });
+    }
+    await store.set(key, '1', { onlyIfNew: true });
+    const verified = await store.get(key, { type: 'text' });
+    if (verified === null || verified === undefined) {
+      throw new Error('Interest write was not visible after storage operation');
+    }
     // Only owner-authorized requests can read counts.
-    return json({saved:true, alreadyLiked:!saved.modified});
+    return json({ saved: true, alreadyLiked: false });
   } catch (error) {
     console.error('shirt-interest: storage error', error);
     return json({ error: 'Interest database is temporarily unavailable' }, 503);
