@@ -3844,6 +3844,8 @@
   }
   function payerName(v){ return textValue(v,'Anonymous').trim() || 'Anonymous'; }
   function payerKey(v){ return payerName(v).toLowerCase(); }
+  var EXCLUDED_VIP_PAYER_KEYS = ['wee'];
+  function isExcludedVipPayerName(v){ return EXCLUDED_VIP_PAYER_KEYS.indexOf(payerKey(v)) !== -1; }
   function escapeHtml(v){
     return textValue(v,'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});
   }
@@ -4359,7 +4361,7 @@
 
   function setVipRankMap(list){
     var next=Object.create(null);
-    VIP_RANK_LIST=(list||[]).slice(0,10);
+    VIP_RANK_LIST=(list||[]).filter(function(p){ return !isExcludedVipPayerName(p && p.name); }).slice(0,10);
     VIP_RANK_LIST.forEach(function(p,i){
       var key=payerKey(p.name);
       if(key!=='anonymous') next[key]=i+1;
@@ -4487,6 +4489,7 @@
       if(payment && seen[payment]) return;
       if(payment) seen[payment]=true;
       var key=payerKey(o.from);
+      if(excludeAnonymous && isExcludedVipPayerName(o.from)) return;
       counts[key]=(counts[key]||0)+Math.round(o.tip_amount/210);
       if(!display[key]) display[key]=payerName(o.from);
     });
