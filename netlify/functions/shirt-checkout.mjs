@@ -4,11 +4,31 @@ import {getStore} from '@netlify/blobs';
 import {randomUUID} from 'node:crypto';
 import {SHIRT_NAMES,UNIT_BAHT,validateOrder,json} from '../lib/shirt-core.mjs';
 
-const stripeKey=()=>process.env.SHIRT_STRIPE_SECRET_KEY||process.env.STRIPE_SECRET_KEY;
-const configured=()=>process.env.SHIRT_SALES_ENABLED==='true'&&Boolean(stripeKey())&&Boolean(process.env.SHIRT_STRIPE_WEBHOOK_SECRET);
+// Read the same variables as the original, with Netlify's documented runtime
+// environment accessor as a fallback. Values never leave the server.
+const env = (name) => {
+  const v = process.env[name];
+  if (v) return v;
+  try {
+    return typeof Netlify !== 'undefined' && Netlify.env && typeof Netlify.env.get === 'function'
+      ? Netlify.env.get(name) : undefined;
+  } catch (_) { return undefined; }
+};
+const stripeKey=()=>env('SHIRT_STRIPE_SECRET_KEY')||env('STRIPE_SECRET_KEY');
+const checks=()=>({
+  salesEnabled:env('SHIRT_SALES_ENABLED')==='true',
+  stripeKeyPresent:Boolean(stripeKey()),
+  shirtWebhookSecretPresent:Boolean(env('SHIRT_STRIPE_WEBHOOK_SECRET')),
+});
+const configured=()=>Object.values(checks()).every(Boolean);
 
 export default async function handler(request){
- if(request.method==='GET')return json({enabled:configured()});
+ if(request.method==='GET'){
+   const result={enabled:configured()};
+   // Temporary troubleshooting diagnostics: booleans only, no secrets.
+   if(new URL(request.url).searchParams.get('check')==='1')result.checks=checks();
+   return json(result);
+ }
  if(request.method!=='POST')return json({error:'Method not allowed'},405);
  if(!configured())return json({error:'Shirt checkout is not enabled or signed webhook is not configured'},503);
  const url=new URL(request.url),origin=request.headers.get('origin');
